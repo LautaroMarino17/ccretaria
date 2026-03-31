@@ -1,0 +1,10 @@
+Archivos involucrados en la grabación de historia clínica
+Frontend:
+
+record-history.component.ts — UI de grabación (MediaRecorder, botón grabar/detener, envío del audio, muestra el resultado estructurado)
+Backend:
+
+routers/recording.py — endpoint POST /recording/transcribe-and-structure, recibe el audio webm
+services/transcription_service.py — convierte el audio a numpy y llama a Whisper
+services/llm_service.py — llama a Ollama/llama3 para estructurar la transcripción en JSON clínico
+routers/clinical_history.py — endpoint POST /clinical-history/ que guarda el resultado en Firestore

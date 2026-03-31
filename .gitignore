@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+backend/firebase-adminsdk.json
+backend/venv/
+backend/__pycache__/
+*.pyc
+frontend/src/environments/environment.prod.ts

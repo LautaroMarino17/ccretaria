@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
-from routers import auth, patients, clinical_history, appointments, recording, routines
+from routers import auth, patients, clinical_history, appointments, recording, routines, evaluations
 
 app = FastAPI(
     title="SecretarIA API",
@@ -28,6 +28,7 @@ app.include_router(clinical_history.router, prefix="/clinical-history", tags=["c
 app.include_router(appointments.router, prefix="/appointments", tags=["appointments"])
 app.include_router(recording.router, prefix="/recording", tags=["recording"])
 app.include_router(routines.router, prefix="/routines", tags=["routines"])
+app.include_router(evaluations.router, prefix="/evaluations", tags=["evaluations"])
 
 
 @app.get("/health")

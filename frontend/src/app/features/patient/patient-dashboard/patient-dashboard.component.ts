@@ -62,6 +62,19 @@ import { AuthService } from '../../../core/services/auth.service';
             <p>Ver y gestionar turnos</p>
           </div>
         </a>
+
+        <a routerLink="/patient/evaluations" class="info-card">
+          <div class="card-icon orange">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11l3 3L22 4"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </div>
+          <div>
+            <h3>Mis evaluaciones</h3>
+            <p>Testeos y mediciones</p>
+          </div>
+        </a>
       </div>
 
       <!-- Próximo turno -->
@@ -89,7 +102,7 @@ import { AuthService } from '../../../core/services/auth.service';
     .welcome-banner h1 { font-size: 24px; font-weight: 700; margin: 0 0 6px; }
     .welcome-banner p { margin: 0; opacity: 0.8; font-size: 15px; }
     .banner-icon { opacity: 0.6; }
-    .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+    .cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
     .info-card {
       display: flex; align-items: center; gap: 14px; padding: 20px;
       background: white; border-radius: 14px; text-decoration: none;
@@ -104,6 +117,7 @@ import { AuthService } from '../../../core/services/auth.service';
     .card-icon.blue { background: #eff6ff; color: #2563eb; }
     .card-icon.green { background: #f0fdf4; color: #16a34a; }
     .card-icon.purple { background: #faf5ff; color: #7c3aed; }
+    .card-icon.orange { background: #fff7ed; color: #ea580c; }
     .info-card h3 { font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 4px; }
     .info-card p { font-size: 13px; color: #6b7280; margin: 0; }
     .next-appt-card {
@@ -119,7 +133,8 @@ import { AuthService } from '../../../core/services/auth.service';
     .status-badge.scheduled { background: #fffbeb; color: #92400e; }
     .status-badge.confirmed { background: #f0fdf4; color: #166534; }
     .status-badge.cancelled { background: #fef2f2; color: #991b1b; }
-    @media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .cards-grid { grid-template-columns: 1fr; } }
   `]
 })
 export class PatientDashboardComponent implements OnInit {

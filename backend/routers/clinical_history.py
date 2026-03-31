@@ -32,6 +32,25 @@ class ClinicalHistoryCreate(BaseModel):
     observaciones: Optional[str] = ""
     transcripcion_original: Optional[str] = ""
     verificada: bool = False
+    imagen_url: Optional[str] = ""
+    estudio_nombre: Optional[str] = ""
+    estudio_url: Optional[str] = ""
+
+
+class ClinicalHistoryUpdate(BaseModel):
+    motivo_consulta: Optional[str] = None
+    enfermedad_actual: Optional[str] = None
+    antecedentes_personales: Optional[str] = None
+    antecedentes_familiares: Optional[str] = None
+    examen_fisico: Optional[str] = None
+    signos_vitales: Optional[SignosVitales] = None
+    diagnostico: Optional[str] = None
+    plan_terapeutico: Optional[str] = None
+    estudios_complementarios: Optional[str] = None
+    observaciones: Optional[str] = None
+    imagen_url: Optional[str] = None
+    estudio_nombre: Optional[str] = None
+    estudio_url: Optional[str] = None
 
 
 @router.get("/")
@@ -153,3 +172,32 @@ def get_clinical_history(
         raise HTTPException(status_code=404, detail="Historia clínica no encontrada")
 
     return {"id": doc.id, **doc.to_dict()}
+
+
+@router.patch("/{history_id}/patient/{patient_id}")
+def update_clinical_history(
+    history_id: str,
+    patient_id: str,
+    body: ClinicalHistoryUpdate,
+    user: dict = Depends(get_current_user)
+):
+    """Profesional: edita una historia clínica existente."""
+    require_professional(user)
+    db = get_firestore()
+    ref = db.collection("professionals").document(user["uid"]) \
+        .collection("patients").document(patient_id) \
+        .collection("clinical_histories").document(history_id)
+
+    if not ref.get().exists:
+        raise HTTPException(status_code=404, detail="Historia clínica no encontrada")
+
+    # Solo actualiza los campos que vienen con valor no-None
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if body.signos_vitales is not None:
+        updates["signos_vitales"] = body.signos_vitales.model_dump()
+
+    if not updates:
+        raise HTTPException(status_code=400, detail="No hay campos para actualizar")
+
+    ref.update(updates)
+    return {"message": "Historia clínica actualizada"}

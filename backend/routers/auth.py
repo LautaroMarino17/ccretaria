@@ -2,6 +2,7 @@ import random
 import string
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from typing import Optional
 from dependencies import get_current_user, require_professional
 from services.firebase_service import set_user_role, get_user, get_firestore
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
@@ -91,17 +92,23 @@ def get_link_code(user: dict = Depends(get_current_user)):
 
 class LinkProfessionalRequest(BaseModel):
     link_code: str
+    dni: str
 
 
 @router.post("/link-professional")
 def link_to_professional(body: LinkProfessionalRequest, user: dict = Depends(get_current_user)):
-    """Paciente: se vincula a un profesional usando el código DR-XXXX.
+    """Paciente: se vincula a un profesional usando el código DR-XXXX y su DNI.
+    Si no existe el paciente en la colección del profesional, lo crea automáticamente.
     Guarda professional_uid y patient_doc_id en patient_links/{uid} para acceso directo."""
     if user.get("role") != "patient":
         raise HTTPException(status_code=403, detail="Solo pacientes pueden vincularse")
 
     db = get_firestore()
     code = body.link_code.upper().strip()
+    dni = body.dni.strip()
+
+    if not dni:
+        raise HTTPException(status_code=400, detail="El DNI es requerido")
 
     # Buscar el profesional por código
     prof_docs = db.collection("professionals").where("link_code", "==", code).limit(1).stream()
@@ -111,21 +118,193 @@ def link_to_professional(body: LinkProfessionalRequest, user: dict = Depends(get
 
     prof_uid = prof_doc.id
 
-    # Buscar el doc del paciente en la subcolección del profesional por email
+    # Buscar el doc del paciente en la subcolección del profesional por DNI
     patient_docs = db.collection("professionals").document(prof_uid) \
-        .collection("patients").where("email", "==", user.get("email", "")).limit(1).stream()
+        .collection("patients").where("dni", "==", dni).limit(1).stream()
     patient_doc = next(patient_docs, None)
-    patient_doc_id = patient_doc.id if patient_doc else None
+
+    if patient_doc:
+        patient_doc_id = patient_doc.id
+    else:
+        # Auto-crear el paciente con los datos disponibles del usuario de Firebase
+        try:
+            prof_profile = get_user(user["uid"])
+            display_name = prof_profile.get("display_name") or ""
+        except Exception:
+            display_name = ""
+        parts = display_name.split(" ", 1)
+        nombre = parts[0] if parts else ""
+        apellido = parts[1] if len(parts) > 1 else ""
+
+        new_patient = {
+            "nombre": nombre,
+            "apellido": apellido,
+            "dni": dni,
+            "email": user.get("email", ""),
+            "fecha_nacimiento": "",
+            "sexo": "",
+            "professional_uid": prof_uid,
+            "self_registered": True,
+            "created_at": SERVER_TIMESTAMP
+        }
+        ref = db.collection("professionals").document(prof_uid).collection("patients")
+        doc = ref.add(new_patient)
+        patient_doc_id = doc[1].id
 
     # Guardar el vínculo
     db.collection("patient_links").document(user["uid"]).set({
         "professional_uid": prof_uid,
         "patient_doc_id": patient_doc_id,
         "patient_email": user.get("email", ""),
+        "patient_dni": dni,
         "linked_at": SERVER_TIMESTAMP
     })
 
     return {"professional_uid": prof_uid, "patient_doc_id": patient_doc_id}
+
+
+class LinkRequestCreate(BaseModel):
+    link_code: str
+    dni: str
+    nombre: str
+    apellido: str
+    mensaje: Optional[str] = ""
+
+
+class LinkRequestAction(BaseModel):
+    request_id: str
+    action: str  # "accept" | "reject"
+
+
+@router.post("/request-link")
+def request_link(body: LinkRequestCreate, user: dict = Depends(get_current_user)):
+    """Paciente: envía solicitud de vinculación que el profesional debe confirmar."""
+    if user.get("role") != "patient":
+        raise HTTPException(status_code=403, detail="Solo pacientes pueden solicitar vinculación")
+
+    db = get_firestore()
+    code = body.link_code.upper().strip()
+    dni = body.dni.strip()
+
+    if not dni:
+        raise HTTPException(status_code=400, detail="El DNI es requerido")
+
+    # Buscar el profesional
+    prof_docs = db.collection("professionals").where("link_code", "==", code).limit(1).stream()
+    prof_doc = next(prof_docs, None)
+    if prof_doc is None:
+        raise HTTPException(status_code=404, detail="Código inválido")
+
+    prof_uid = prof_doc.id
+
+    # Evitar solicitudes duplicadas pendientes
+    existing = db.collection("professionals").document(prof_uid) \
+        .collection("link_requests") \
+        .where("patient_uid", "==", user["uid"]) \
+        .where("status", "==", "pending").limit(1).stream()
+    if next(existing, None):
+        raise HTTPException(status_code=409, detail="Ya tenés una solicitud pendiente con este profesional")
+
+    req_data = {
+        "patient_uid": user["uid"],
+        "patient_email": user.get("email", ""),
+        "patient_nombre": body.nombre.strip(),
+        "patient_apellido": body.apellido.strip(),
+        "patient_dni": dni,
+        "mensaje": body.mensaje or "",
+        "status": "pending",
+        "created_at": SERVER_TIMESTAMP,
+    }
+    ref = db.collection("professionals").document(prof_uid).collection("link_requests")
+    doc = ref.add(req_data)
+    return {"id": doc[1].id, "message": "Solicitud enviada correctamente"}
+
+
+@router.get("/link-requests")
+def list_link_requests(user: dict = Depends(get_current_user)):
+    """Profesional: lista las solicitudes de vinculación pendientes."""
+    require_professional(user)
+    db = get_firestore()
+    docs = db.collection("professionals").document(user["uid"]) \
+        .collection("link_requests").where("status", "==", "pending").stream()
+    return [{"id": d.id, **d.to_dict()} for d in docs]
+
+
+@router.post("/link-requests/action")
+def action_link_request(body: LinkRequestAction, user: dict = Depends(get_current_user)):
+    """Profesional: acepta o rechaza una solicitud de vinculación."""
+    require_professional(user)
+    if body.action not in ("accept", "reject"):
+        raise HTTPException(status_code=400, detail="Acción inválida")
+
+    db = get_firestore()
+    req_ref = db.collection("professionals").document(user["uid"]) \
+        .collection("link_requests").document(body.request_id)
+    req_doc = req_ref.get()
+    if not req_doc.exists:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+
+    req_data = req_doc.to_dict()
+    if req_data.get("status") != "pending":
+        raise HTTPException(status_code=409, detail="Solicitud ya procesada")
+
+    if body.action == "reject":
+        req_ref.update({"status": "rejected"})
+        return {"message": "Solicitud rechazada"}
+
+    # Aceptar: crear o encontrar el paciente, luego crear el vínculo
+    prof_uid = user["uid"]
+    dni = req_data.get("patient_dni", "").strip()
+    patient_uid = req_data.get("patient_uid", "")
+
+    # Buscar si ya existe el paciente por DNI
+    patient_docs = db.collection("professionals").document(prof_uid) \
+        .collection("patients").where("dni", "==", dni).limit(1).stream()
+    patient_doc = next(patient_docs, None)
+
+    if patient_doc:
+        patient_doc_id = patient_doc.id
+    else:
+        new_patient = {
+            "nombre": req_data.get("patient_nombre", ""),
+            "apellido": req_data.get("patient_apellido", ""),
+            "dni": dni,
+            "email": req_data.get("patient_email", ""),
+            "fecha_nacimiento": "",
+            "sexo": "",
+            "professional_uid": prof_uid,
+            "self_registered": True,
+            "created_at": SERVER_TIMESTAMP,
+        }
+        ref = db.collection("professionals").document(prof_uid).collection("patients")
+        doc = ref.add(new_patient)
+        patient_doc_id = doc[1].id
+
+    # Guardar vínculo en patient_links
+    db.collection("patient_links").document(patient_uid).set({
+        "professional_uid": prof_uid,
+        "patient_doc_id": patient_doc_id,
+        "patient_email": req_data.get("patient_email", ""),
+        "patient_dni": dni,
+        "linked_at": SERVER_TIMESTAMP,
+    })
+
+    req_ref.update({"status": "accepted", "patient_doc_id": patient_doc_id})
+    return {"message": "Solicitud aceptada. Paciente vinculado.", "patient_doc_id": patient_doc_id}
+
+
+@router.get("/my-link-status")
+def get_my_link_status(user: dict = Depends(get_current_user)):
+    """Paciente: verifica si su solicitud fue aceptada, rechazada o está pendiente."""
+    if user.get("role") != "patient":
+        raise HTTPException(status_code=403, detail="Solo pacientes")
+    db = get_firestore()
+    # Buscar entre todas las solicitudes que coincidan con el patient_uid
+    docs = db.collection_group("link_requests") \
+        .where("patient_uid", "==", user["uid"]).stream()
+    results = sorted([{"id": d.id, **d.to_dict()} for d in docs],
+                     key=lambda x: str(x.get("created_at") or ""), reverse=True)
+    return results
 
 
 @router.get("/my-link")

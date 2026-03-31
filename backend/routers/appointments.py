@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from dependencies import get_current_user, require_professional
-from services.firebase_service import get_firestore
+from services.firebase_service import get_firestore, get_user
 from services.notification_service import check_and_notify
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
 
@@ -129,9 +129,13 @@ def book_appointment(body: AppointmentBook, user: dict = Depends(get_current_use
     if slot_data.get("booked"):
         raise HTTPException(status_code=409, detail="Este horario ya fue reservado")
 
-    # Obtener info del profesional
-    prof_doc = db.collection("professionals").document(body.professional_uid).get()
-    prof_name = prof_doc.to_dict().get("display_name", "") if prof_doc.exists else ""
+    # Obtener nombre del profesional desde Firebase Auth
+    try:
+        prof_profile = get_user(body.professional_uid)
+        prof_name = prof_profile.get("display_name") or prof_profile.get("email", "")
+    except Exception:
+        prof_doc = db.collection("professionals").document(body.professional_uid).get()
+        prof_name = prof_doc.to_dict().get("display_name", "") if prof_doc.exists else ""
 
     # Crear el turno
     appointment_data = {

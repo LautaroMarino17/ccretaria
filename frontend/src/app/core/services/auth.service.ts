@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import {
   Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signOut, onAuthStateChanged, User, updateProfile
+  signOut, onAuthStateChanged, User, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail
 } from '@angular/fire/auth';
 import { BehaviorSubject, from } from 'rxjs';
 import { AppUser, UserRole } from '../models/user.model';
@@ -71,6 +71,19 @@ export class AuthService {
       displayName: user.displayName,
       role
     });
+  }
+
+  changePassword(currentPassword: string, newPassword: string) {
+    const user = this.auth.currentUser!;
+    const credential = EmailAuthProvider.credential(user.email!, currentPassword);
+    return from(
+      reauthenticateWithCredential(user, credential)
+        .then(() => updatePassword(user, newPassword))
+    );
+  }
+
+  resetPassword(email: string) {
+    return from(sendPasswordResetEmail(this.auth, email));
   }
 
   logout() {

@@ -34,14 +34,34 @@ export class ApiService {
     );
   }
 
-  linkToProfessional(linkCode: string) {
+  linkToProfessional(linkCode: string, dni: string) {
     return this.withAuth(h =>
-      this.http.post<any>(`${this.base}/auth/link-professional`, { link_code: linkCode }, { headers: h })
+      this.http.post<any>(`${this.base}/auth/link-professional`, { link_code: linkCode, dni }, { headers: h })
     );
   }
 
   getMyLink() {
     return this.withAuth(h => this.http.get<any>(`${this.base}/auth/my-link`, { headers: h }));
+  }
+
+  requestLink(data: { link_code: string; dni: string; nombre: string; apellido: string; mensaje?: string }) {
+    return this.withAuth(h =>
+      this.http.post<any>(`${this.base}/auth/request-link`, data, { headers: h })
+    );
+  }
+
+  getLinkRequests() {
+    return this.withAuth(h => this.http.get<any[]>(`${this.base}/auth/link-requests`, { headers: h }));
+  }
+
+  actionLinkRequest(requestId: string, action: 'accept' | 'reject') {
+    return this.withAuth(h =>
+      this.http.post<any>(`${this.base}/auth/link-requests/action`, { request_id: requestId, action }, { headers: h })
+    );
+  }
+
+  getMyLinkStatus() {
+    return this.withAuth(h => this.http.get<any[]>(`${this.base}/auth/my-link-status`, { headers: h }));
   }
 
   // ── Pacientes ────────────────────────────────────────────────────
@@ -107,9 +127,40 @@ export class ApiService {
     );
   }
 
+  updateClinicalHistory(historyId: string, patientId: string, data: any) {
+    return this.withAuth(h =>
+      this.http.patch<any>(`${this.base}/clinical-history/${historyId}/patient/${patientId}`, data, { headers: h })
+    );
+  }
+
   deleteClinicalHistory(historyId: string, patientId: string) {
     return this.withAuth(h =>
       this.http.delete<any>(`${this.base}/clinical-history/${historyId}/patient/${patientId}`, { headers: h })
+    );
+  }
+
+  // ── Evaluaciones ────────────────────────────────────────────────
+  getEvaluations(patientId: string) {
+    return this.withAuth(h =>
+      this.http.get<any[]>(`${this.base}/evaluations/patient/${patientId}`, { headers: h })
+    );
+  }
+
+  createEvaluation(data: any) {
+    return this.withAuth(h =>
+      this.http.post<any>(`${this.base}/evaluations/`, data, { headers: h })
+    );
+  }
+
+  updateEvaluation(evalId: string, patientId: string, data: any) {
+    return this.withAuth(h =>
+      this.http.patch<any>(`${this.base}/evaluations/${evalId}/patient/${patientId}`, data, { headers: h })
+    );
+  }
+
+  deleteEvaluation(evalId: string, patientId: string) {
+    return this.withAuth(h =>
+      this.http.delete<any>(`${this.base}/evaluations/${evalId}/patient/${patientId}`, { headers: h })
     );
   }
 

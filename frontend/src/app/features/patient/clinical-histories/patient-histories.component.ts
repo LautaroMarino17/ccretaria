@@ -141,13 +141,9 @@ export class PatientHistoriesComponent implements OnInit {
   expanded = signal<string | null>(null);
 
   ngOnInit() {
-    this.api.getMyLink().subscribe({
-      next: (link) => {
-        this.api.getClinicalHistories(link.patient_doc_id).subscribe({
-          next: (data) => { this.histories.set(data); this.loading.set(false); },
-          error: () => this.loading.set(false)
-        });
-      },
+    // El backend para rol=patient resuelve el vínculo internamente desde patient_links
+    this.api.getClinicalHistories('me').subscribe({
+      next: (data) => { this.histories.set(data); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
   }

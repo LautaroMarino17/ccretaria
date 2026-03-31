@@ -37,7 +37,16 @@ import { UserRole } from '../../../core/models/user.model';
 
           <div class="field-group">
             <label for="password">Contraseña</label>
-            <input id="password" type="password" formControlName="password" placeholder="Mínimo 6 caracteres" />
+            <div class="password-wrap">
+              <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password" placeholder="Mínimo 6 caracteres" />
+              <button type="button" class="btn-eye" (click)="showPassword = !showPassword" tabindex="-1">
+                @if (showPassword) {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                } @else {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                }
+              </button>
+            </div>
           </div>
 
           <div class="field-group">
@@ -117,8 +126,13 @@ import { UserRole } from '../../../core/models/user.model';
     input {
       padding: 12px 14px; border: 1.5px solid #e5e7eb;
       border-radius: 10px; font-size: 15px; outline: none; transition: border-color 0.2s;
+      width: 100%; box-sizing: border-box;
     }
     input:focus { border-color: #4f46e5; }
+    .password-wrap { position: relative; display: flex; align-items: center; }
+    .password-wrap input { padding-right: 44px; }
+    .btn-eye { position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: #9ca3af; display: flex; padding: 0; }
+    .btn-eye:hover { color: #4f46e5; }
     .role-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .role-btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -156,6 +170,7 @@ export class RegisterComponent {
 
   loading = false;
   error = '';
+  showPassword = false;
 
   form = this.fb.group({
     displayName: ['', Validators.required],

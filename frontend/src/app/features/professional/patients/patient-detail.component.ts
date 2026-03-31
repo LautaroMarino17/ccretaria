@@ -15,9 +15,7 @@ import { ApiService } from '../../../core/services/api.service';
       } @else if (patient()) {
         <div class="page-header">
           <a routerLink="/professional/patients" class="btn-back">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
             Pacientes
           </a>
           <div class="header-info">
@@ -33,26 +31,21 @@ import { ApiService } from '../../../core/services/api.service';
         <div class="quick-actions">
           <a [routerLink]="['/professional/record', patientId]" class="action-card primary">
             <div class="action-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <circle cx="12" cy="12" r="3" fill="currentColor"/>
-              </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
             </div>
-            <div>
-              <h3>Nueva consulta</h3>
-              <p>Grabar y estructurar historia clínica</p>
-            </div>
+            <div><h3>Nueva consulta</h3><p>Grabar y estructurar historia clínica</p></div>
           </a>
           <a [routerLink]="['/professional/patients', patientId, 'routines']" class="action-card">
             <div class="action-icon secondary">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-              </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
-            <div>
-              <h3>Rutinas de ejercicios</h3>
-              <p>Gestionar planes asignados</p>
+            <div><h3>Rutinas</h3><p>Gestionar planes asignados</p></div>
+          </a>
+          <a [routerLink]="['/professional/patients', patientId, 'evaluations']" class="action-card">
+            <div class="action-icon green">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
             </div>
+            <div><h3>Evaluaciones</h3><p>Testeos y mediciones</p></div>
           </a>
         </div>
 
@@ -61,45 +54,29 @@ import { ApiService } from '../../../core/services/api.service';
           <div class="section-header">
             <h2>Datos del paciente</h2>
             <div class="section-actions">
-              <button class="btn-edit" (click)="editingPhone.set(!editingPhone())">
-                {{ editingPhone() ? 'Cancelar' : 'Editar teléfono' }}
-              </button>
+              <button class="btn-edit" (click)="editingPhone.set(!editingPhone())">{{ editingPhone() ? 'Cancelar' : 'Editar teléfono' }}</button>
               <button class="btn-danger" (click)="confirmDelete.set(true)">Eliminar paciente</button>
             </div>
           </div>
           <div class="data-grid">
-            <div class="data-item">
-              <span class="data-label">Fecha de nacimiento</span>
-              <span class="data-value">{{ patient().fecha_nacimiento || '—' }}</span>
-            </div>
+            <div class="data-item"><span class="data-label">Fecha de nacimiento</span><span class="data-value">{{ patient().fecha_nacimiento || '—' }}</span></div>
             <div class="data-item">
               <span class="data-label">Teléfono</span>
               @if (editingPhone()) {
                 <div class="phone-edit-row">
                   <input [(ngModel)]="newPhone" [placeholder]="patient().telefono || 'Ingresá el teléfono'" />
-                  <button class="btn-save" (click)="savePhone()" [disabled]="savingPhone()">
-                    {{ savingPhone() ? '...' : 'Guardar' }}
-                  </button>
+                  <button class="btn-save" (click)="savePhone()" [disabled]="savingPhone()">{{ savingPhone() ? '...' : 'Guardar' }}</button>
                 </div>
               } @else {
                 <span class="data-value">{{ patient().telefono || '—' }}</span>
               }
             </div>
-            <div class="data-item">
-              <span class="data-label">Email</span>
-              <span class="data-value">{{ patient().email || '—' }}</span>
-            </div>
-            <div class="data-item">
-              <span class="data-label">Obra social</span>
-              <span class="data-value">{{ patient().obra_social || '—' }}</span>
-            </div>
-            <div class="data-item">
-              <span class="data-label">Nro. afiliado</span>
-              <span class="data-value">{{ patient().nro_afiliado || '—' }}</span>
-            </div>
+            <div class="data-item"><span class="data-label">Email</span><span class="data-value">{{ patient().email || '—' }}</span></div>
+            <div class="data-item"><span class="data-label">Obra social</span><span class="data-value">{{ patient().obra_social || '—' }}</span></div>
+            <div class="data-item"><span class="data-label">Nro. afiliado</span><span class="data-value">{{ patient().nro_afiliado || '—' }}</span></div>
           </div>
           @if (patient().diagnostico_inicial) {
-            <div class="data-item full">
+            <div class="data-item full mt-12">
               <span class="data-label">Diagnóstico inicial</span>
               <p class="data-value">{{ patient().diagnostico_inicial }}</p>
             </div>
@@ -111,12 +88,37 @@ import { ApiService } from '../../../core/services/api.service';
           <div class="modal-overlay" (click)="confirmDelete.set(false)">
             <div class="modal" (click)="$event.stopPropagation()">
               <h3>¿Eliminar paciente?</h3>
-              <p>Se borrarán todos sus datos, historias clínicas y rutinas. Esta acción no se puede deshacer.</p>
+              <p>Se borrarán todos sus datos, historias clínicas, evaluaciones y rutinas. Esta acción no se puede deshacer.</p>
               <div class="modal-actions">
                 <button class="btn-secondary" (click)="confirmDelete.set(false)">Cancelar</button>
-                <button class="btn-danger" (click)="deletePatient()" [disabled]="deleting()">
-                  {{ deleting() ? 'Eliminando...' : 'Sí, eliminar' }}
-                </button>
+                <button class="btn-danger" (click)="deletePatient()" [disabled]="deleting()">{{ deleting() ? 'Eliminando...' : 'Sí, eliminar' }}</button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Modal editar historia -->
+        @if (editingHistory()) {
+          <div class="modal-overlay" (click)="editingHistory.set(null)">
+            <div class="modal modal-lg" (click)="$event.stopPropagation()">
+              <h3>Editar historia clínica</h3>
+              <div class="edit-fields">
+                <div class="edit-field"><label>Motivo de consulta</label><textarea [(ngModel)]="editForm.motivo_consulta" rows="2"></textarea></div>
+                <div class="edit-field"><label>Diagnóstico</label><textarea [(ngModel)]="editForm.diagnostico" rows="2"></textarea></div>
+                <div class="edit-field"><label>Enfermedad actual</label><textarea [(ngModel)]="editForm.enfermedad_actual" rows="3"></textarea></div>
+                <div class="edit-field"><label>Examen físico</label><textarea [(ngModel)]="editForm.examen_fisico" rows="3"></textarea></div>
+                <div class="edit-field"><label>Plan terapéutico</label><textarea [(ngModel)]="editForm.plan_terapeutico" rows="3"></textarea></div>
+                <div class="edit-field"><label>Observaciones</label><textarea [(ngModel)]="editForm.observaciones" rows="2"></textarea></div>
+                <div class="edit-field"><label>Imagen (URL)</label><input [(ngModel)]="editForm.imagen_url" placeholder="https://..." /></div>
+                <div class="edit-field-row">
+                  <div class="edit-field"><label>Nombre del estudio</label><input [(ngModel)]="editForm.estudio_nombre" placeholder="Ej: Radiografía de rodilla" /></div>
+                  <div class="edit-field"><label>Enlace al estudio</label><input [(ngModel)]="editForm.estudio_url" placeholder="https://..." /></div>
+                </div>
+              </div>
+              @if (editError()) { <div class="error-banner">{{ editError() }}</div> }
+              <div class="modal-actions">
+                <button class="btn-secondary" (click)="editingHistory.set(null)">Cancelar</button>
+                <button class="btn-save" (click)="saveEdit()" [disabled]="saving()">{{ saving() ? 'Guardando...' : 'Guardar cambios' }}</button>
               </div>
             </div>
           </div>
@@ -130,24 +132,80 @@ import { ApiService } from '../../../core/services/api.service';
           } @else {
             <div class="history-list">
               @for (h of histories(); track h.id) {
-                <div class="history-item">
-                  <div class="history-date">
-                    {{ formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha) }}
+                <div class="history-card" [class.expanded]="expanded() === h.id">
+                  <div class="history-summary" (click)="toggleExpand(h.id)">
+                    <div class="history-left">
+                      <span class="history-date">{{ formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha) }}</span>
+                      <p class="history-motivo">{{ h.motivo_consulta || 'Sin motivo registrado' }}</p>
+                      @if (h.diagnostico) { <p class="history-dx">Dx: {{ h.diagnostico }}</p> }
+                      @if (h.professional_name) { <p class="history-prof">{{ h.professional_name }}</p> }
+                    </div>
+                    <div class="history-actions" (click)="$event.stopPropagation()">
+                      <button class="btn-icon-sm" (click)="printHistory(h)" title="Imprimir">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                      </button>
+                      <button class="btn-icon-sm" (click)="openEdit(h)" title="Editar">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button class="btn-icon-sm danger" (click)="deleteHistory(h.id)" title="Eliminar">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                      </button>
+                      <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
                   </div>
-                  <div class="history-content">
-                    <p class="history-motivo">{{ h.motivo_consulta || 'Sin motivo registrado' }}</p>
-                    @if (h.diagnostico) {
-                      <p class="history-dx">Dx: {{ h.diagnostico }}</p>
-                    }
-                    @if (h.professional_name) {
-                      <p class="history-prof">{{ h.professional_name }}</p>
-                    }
-                  </div>
-                  <button class="btn-delete-history" (click)="deleteHistory(h.id)" title="Eliminar">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
-                    </svg>
-                  </button>
+
+                  @if (expanded() === h.id) {
+                    <div class="history-detail">
+                      @if (h.enfermedad_actual) {
+                        <div class="detail-section"><label>Enfermedad actual</label><p>{{ h.enfermedad_actual }}</p></div>
+                      }
+                      @if (h.antecedentes_personales) {
+                        <div class="detail-section"><label>Antecedentes personales</label><p>{{ h.antecedentes_personales }}</p></div>
+                      }
+                      @if (h.antecedentes_familiares) {
+                        <div class="detail-section"><label>Antecedentes familiares</label><p>{{ h.antecedentes_familiares }}</p></div>
+                      }
+                      @if (h.examen_fisico) {
+                        <div class="detail-section"><label>Examen físico</label><p>{{ h.examen_fisico }}</p></div>
+                      }
+                      @if (h.signos_vitales) {
+                        <div class="detail-section">
+                          <label>Signos vitales</label>
+                          <div class="signos-row">
+                            @if (h.signos_vitales.tension_arterial) { <span class="signo-tag">TA: {{ h.signos_vitales.tension_arterial }}</span> }
+                            @if (h.signos_vitales.frecuencia_cardiaca) { <span class="signo-tag">FC: {{ h.signos_vitales.frecuencia_cardiaca }}</span> }
+                            @if (h.signos_vitales.temperatura) { <span class="signo-tag">Temp: {{ h.signos_vitales.temperatura }}</span> }
+                            @if (h.signos_vitales.peso) { <span class="signo-tag">Peso: {{ h.signos_vitales.peso }}</span> }
+                            @if (h.signos_vitales.saturacion) { <span class="signo-tag">SatO2: {{ h.signos_vitales.saturacion }}</span> }
+                          </div>
+                        </div>
+                      }
+                      @if (h.plan_terapeutico) {
+                        <div class="detail-section"><label>Plan terapéutico</label><p>{{ h.plan_terapeutico }}</p></div>
+                      }
+                      @if (h.estudios_complementarios) {
+                        <div class="detail-section"><label>Estudios complementarios</label><p>{{ h.estudios_complementarios }}</p></div>
+                      }
+                      @if (h.observaciones) {
+                        <div class="detail-section"><label>Observaciones</label><p>{{ h.observaciones }}</p></div>
+                      }
+                      @if (h.imagen_url) {
+                        <div class="detail-section">
+                          <label>Imagen adjunta</label>
+                          <img [src]="h.imagen_url" class="history-img" alt="Imagen adjunta" />
+                        </div>
+                      }
+                      @if (h.estudio_url) {
+                        <div class="detail-section">
+                          <label>Estudio médico</label>
+                          <a [href]="h.estudio_url" target="_blank" class="estudio-link">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            {{ h.estudio_nombre || h.estudio_url }}
+                          </a>
+                        </div>
+                      }
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -160,108 +218,101 @@ import { ApiService } from '../../../core/services/api.service';
     .page { max-width: 900px; }
     .loading-state { padding: 40px; text-align: center; color: #9ca3af; }
     .page-header { margin-bottom: 28px; }
-    .btn-back {
-      display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
-      background: white; border: 1px solid #e5e7eb; border-radius: 8px;
-      cursor: pointer; font-size: 14px; color: #374151; text-decoration: none;
-      margin-bottom: 20px;
-    }
+    .btn-back { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; font-size: 14px; color: #374151; text-decoration: none; margin-bottom: 20px; }
     .header-info { display: flex; align-items: center; gap: 16px; }
-    .patient-avatar-lg {
-      width: 56px; height: 56px; background: #eef2ff; color: #4f46e5;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 20px; flex-shrink: 0;
-    }
+    .patient-avatar-lg { width: 56px; height: 56px; background: #eef2ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; flex-shrink: 0; }
     h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
     .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
-    .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-    .action-card {
-      display: flex; align-items: center; gap: 14px; padding: 18px;
-      background: white; border-radius: 14px; text-decoration: none;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1.5px solid #e5e7eb;
-      transition: all 0.15s;
-    }
+
+    .quick-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .action-card { display: flex; align-items: center; gap: 12px; padding: 16px; background: white; border-radius: 14px; text-decoration: none; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1.5px solid #e5e7eb; transition: all 0.15s; }
     .action-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); border-color: #4f46e5; }
     .action-card.primary { background: #4f46e5; color: white; border-color: transparent; }
     .action-card.primary h3, .action-card.primary p { color: white; }
-    .action-icon {
-      width: 44px; height: 44px; background: rgba(255,255,255,0.2);
-      border-radius: 12px; display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
+    .action-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .action-icon.secondary { background: #eef2ff; color: #4f46e5; }
-    .action-card h3 { font-size: 14px; font-weight: 600; color: #111827; margin: 0 0 2px; }
-    .action-card p { font-size: 12px; color: #6b7280; margin: 0; }
-    .section-card {
-      background: white; border-radius: 16px; padding: 24px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 16px;
-    }
+    .action-icon.green { background: #f0fdf4; color: #16a34a; }
+    .action-card h3 { font-size: 13px; font-weight: 600; color: #111827; margin: 0 0 2px; }
+    .action-card p { font-size: 11px; color: #6b7280; margin: 0; }
+
+    .section-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 16px; }
     .section-card h2 { font-size: 16px; font-weight: 700; color: #111827; margin: 0 0 16px; }
     .data-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
     .data-item { display: flex; flex-direction: column; gap: 4px; }
     .data-item.full { grid-column: 1/-1; }
+    .mt-12 { margin-top: 12px; }
     .data-label { font-size: 12px; color: #9ca3af; font-weight: 500; }
     .data-value { font-size: 14px; color: #111827; }
-    .history-list { display: flex; flex-direction: column; gap: 10px; }
-    .history-item {
-      display: flex; gap: 14px; padding: 14px;
-      background: #f9fafb; border-radius: 10px;
-    }
-    .history-date { font-size: 12px; color: #9ca3af; white-space: nowrap; min-width: 80px; }
-    .history-motivo { font-size: 14px; color: #374151; margin: 0 0 4px; font-weight: 500; }
-    .history-dx { font-size: 13px; color: #6b7280; margin: 0 0 2px; }
-    .history-prof { font-size: 11px; color: #4f46e5; margin: 0; font-weight: 600; }
-    .btn-delete-history {
-      background: none; border: none; cursor: pointer; color: #d1d5db; padding: 4px;
-      border-radius: 6px; display: flex; align-items: center; flex-shrink: 0;
-      transition: color 0.15s, background 0.15s;
-    }
-    .btn-delete-history:hover { color: #dc2626; background: #fef2f2; }
-    .empty-small { font-size: 14px; color: #9ca3af; padding: 20px 0; text-align: center; }
+
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .section-header h2 { margin: 0; }
-    .section-actions { display: flex; gap: 8px; }
-    .btn-edit {
-      padding: 6px 12px; background: #f3f4f6; border: none; border-radius: 8px;
-      font-size: 13px; font-weight: 500; color: #374151; cursor: pointer;
-    }
+    .section-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-edit { padding: 6px 12px; background: #f3f4f6; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; }
     .btn-edit:hover { background: #e5e7eb; }
-    .btn-danger {
-      padding: 6px 12px; background: #fef2f2; border: none; border-radius: 8px;
-      font-size: 13px; font-weight: 500; color: #dc2626; cursor: pointer;
-    }
+    .btn-danger { padding: 6px 12px; background: #fef2f2; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; color: #dc2626; cursor: pointer; }
     .btn-danger:hover { background: #fee2e2; }
     .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
     .phone-edit-row { display: flex; gap: 8px; align-items: center; }
-    .phone-edit-row input {
-      padding: 6px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px;
-      font-size: 14px; outline: none; font-family: inherit;
-    }
+    .phone-edit-row input { padding: 6px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; flex: 1; }
     .phone-edit-row input:focus { border-color: #4f46e5; }
-    .btn-save {
-      padding: 6px 12px; background: #4f46e5; color: white; border: none;
-      border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
-    }
+    .btn-save { padding: 6px 12px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-      display: flex; align-items: center; justify-content: center; z-index: 100;
-    }
-    .modal {
-      background: white; border-radius: 16px; padding: 28px; max-width: 400px; width: 90%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    }
+
+    /* Histories */
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+    .history-card { background: #f9fafb; border-radius: 12px; border: 1.5px solid #e5e7eb; overflow: hidden; transition: border-color 0.15s; }
+    .history-card.expanded { border-color: #4f46e5; }
+    .history-summary { display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 16px; cursor: pointer; gap: 10px; }
+    .history-summary:hover { background: #f3f4f6; }
+    .history-left { flex: 1; }
+    .history-date { font-size: 11px; color: #9ca3af; display: block; margin-bottom: 2px; }
+    .history-motivo { font-size: 14px; color: #374151; margin: 0 0 2px; font-weight: 500; }
+    .history-dx { font-size: 13px; color: #6b7280; margin: 0 0 2px; }
+    .history-prof { font-size: 11px; color: #4f46e5; margin: 0; font-weight: 600; }
+    .history-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .btn-icon-sm { width: 28px; height: 28px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280; transition: all 0.15s; }
+    .btn-icon-sm:hover { border-color: #4f46e5; color: #4f46e5; }
+    .btn-icon-sm.danger:hover { border-color: #dc2626; color: #dc2626; }
+    .chevron { color: #9ca3af; transition: transform 0.2s; margin-left: 4px; flex-shrink: 0; }
+    .history-card.expanded .chevron { transform: rotate(180deg); }
+
+    .history-detail { padding: 0 16px 16px; border-top: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 12px; padding-top: 14px; animation: slideDown 0.15s ease; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .detail-section label { display: block; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .detail-section p { font-size: 14px; color: #374151; margin: 0; line-height: 1.6; }
+    .signos-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .signo-tag { background: white; border: 1px solid #e5e7eb; color: #374151; padding: 3px 8px; border-radius: 6px; font-size: 12px; }
+    .history-img { max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 4px; }
+    .estudio-link { display: inline-flex; align-items: center; gap: 6px; color: #4f46e5; font-size: 13px; text-decoration: none; font-weight: 500; }
+    .estudio-link:hover { text-decoration: underline; }
+    .empty-small { font-size: 14px; color: #9ca3af; padding: 20px 0; text-align: center; }
+
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .modal { background: white; border-radius: 16px; padding: 28px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal-lg { max-width: 700px; max-height: 90vh; overflow-y: auto; }
     .modal h3 { font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 10px; }
     .modal p { font-size: 14px; color: #6b7280; margin: 0 0 20px; line-height: 1.6; }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-    .btn-secondary {
-      padding: 8px 16px; background: #f3f4f6; border: none; border-radius: 8px;
-      font-size: 14px; cursor: pointer; color: #374151;
-    }
-    @media (max-width: 640px) {
-      .quick-actions { grid-template-columns: 1fr; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-secondary { padding: 8px 16px; background: #f3f4f6; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; color: #374151; }
+
+    .edit-fields { display: flex; flex-direction: column; gap: 12px; }
+    .edit-field { display: flex; flex-direction: column; gap: 4px; }
+    .edit-field label { font-size: 12px; font-weight: 600; color: #6b7280; }
+    .edit-field input, .edit-field textarea { padding: 8px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; resize: vertical; }
+    .edit-field input:focus, .edit-field textarea:focus { border-color: #4f46e5; }
+    .edit-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .error-banner { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 10px; }
+
+    @media (max-width: 768px) {
+      .quick-actions { grid-template-columns: 1fr 1fr; }
       .data-grid { grid-template-columns: 1fr 1fr; }
       .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .edit-field-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .quick-actions { grid-template-columns: 1fr; }
+      .data-grid { grid-template-columns: 1fr; }
     }
   `]
 })
@@ -278,7 +329,13 @@ export class PatientDetailComponent implements OnInit {
   savingPhone = signal(false);
   confirmDelete = signal(false);
   deleting = signal(false);
+  expanded = signal<string | null>(null);
+  editingHistory = signal<string | null>(null);
+  saving = signal(false);
+  editError = signal('');
   newPhone = '';
+
+  editForm: any = {};
 
   ngOnInit() {
     this.api.getPatient(this.patientId).subscribe({
@@ -287,6 +344,85 @@ export class PatientDetailComponent implements OnInit {
     this.api.getClinicalHistories(this.patientId).subscribe({
       next: (data) => this.histories.set(data)
     });
+  }
+
+  toggleExpand(id: string) {
+    this.expanded.set(this.expanded() === id ? null : id);
+  }
+
+  openEdit(h: any) {
+    this.editingHistory.set(h.id);
+    this.editError.set('');
+    this.editForm = {
+      motivo_consulta: h.motivo_consulta || '',
+      diagnostico: h.diagnostico || '',
+      enfermedad_actual: h.enfermedad_actual || '',
+      examen_fisico: h.examen_fisico || '',
+      plan_terapeutico: h.plan_terapeutico || '',
+      observaciones: h.observaciones || '',
+      imagen_url: h.imagen_url || '',
+      estudio_nombre: h.estudio_nombre || '',
+      estudio_url: h.estudio_url || ''
+    };
+  }
+
+  saveEdit() {
+    const id = this.editingHistory();
+    if (!id) return;
+    this.saving.set(true);
+    this.editError.set('');
+    // Remove empty strings so PATCH doesn't wipe fields
+    const payload: any = {};
+    for (const [k, v] of Object.entries(this.editForm)) {
+      if (v !== '') payload[k] = v;
+    }
+    this.api.updateClinicalHistory(id, this.patientId, payload).subscribe({
+      next: () => {
+        this.histories.update(hs => hs.map(h => h.id === id ? { ...h, ...this.editForm } : h));
+        this.editingHistory.set(null);
+        this.saving.set(false);
+      },
+      error: (err) => {
+        this.editError.set(err.error?.detail || 'Error al guardar');
+        this.saving.set(false);
+      }
+    });
+  }
+
+  printHistory(h: any) {
+    const patient = this.patient();
+    const date = this.formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha);
+    const sv = h.signos_vitales;
+    const signosHtml = sv ? `
+      <p><b>Signos vitales:</b>
+        ${sv.tension_arterial ? `TA: ${sv.tension_arterial}` : ''}
+        ${sv.frecuencia_cardiaca ? ` · FC: ${sv.frecuencia_cardiaca}` : ''}
+        ${sv.temperatura ? ` · Temp: ${sv.temperatura}` : ''}
+        ${sv.peso ? ` · Peso: ${sv.peso}` : ''}
+        ${sv.saturacion ? ` · SatO2: ${sv.saturacion}` : ''}
+      </p>` : '';
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Historia clínica - ${patient?.nombre} ${patient?.apellido}</title>
+      <style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#111}h1{font-size:22px;margin-bottom:4px}
+      .sub{color:#666;font-size:14px;margin-bottom:24px}.section{margin-bottom:16px}.section label{font-size:11px;font-weight:700;color:#666;text-transform:uppercase;display:block;margin-bottom:4px}
+      .section p{margin:0;line-height:1.6;font-size:14px}hr{border:none;border-top:1px solid #eee;margin:16px 0}
+      @media print{body{margin:20px}}</style></head>
+      <body>
+      <h1>${patient?.apellido}, ${patient?.nombre}</h1>
+      <div class="sub">DNI: ${patient?.dni} · Fecha de consulta: ${date}${h.professional_name ? ` · Prof: ${h.professional_name}` : ''}</div>
+      <hr>
+      ${h.motivo_consulta ? `<div class="section"><label>Motivo de consulta</label><p>${h.motivo_consulta}</p></div>` : ''}
+      ${h.diagnostico ? `<div class="section"><label>Diagnóstico</label><p>${h.diagnostico}</p></div>` : ''}
+      ${h.enfermedad_actual ? `<div class="section"><label>Enfermedad actual</label><p>${h.enfermedad_actual}</p></div>` : ''}
+      ${h.antecedentes_personales ? `<div class="section"><label>Antecedentes personales</label><p>${h.antecedentes_personales}</p></div>` : ''}
+      ${h.examen_fisico ? `<div class="section"><label>Examen físico</label><p>${h.examen_fisico}</p></div>` : ''}
+      ${signosHtml}
+      ${h.plan_terapeutico ? `<div class="section"><label>Plan terapéutico</label><p>${h.plan_terapeutico}</p></div>` : ''}
+      ${h.estudios_complementarios ? `<div class="section"><label>Estudios complementarios</label><p>${h.estudios_complementarios}</p></div>` : ''}
+      ${h.observaciones ? `<div class="section"><label>Observaciones</label><p>${h.observaciones}</p></div>` : ''}
+      ${h.estudio_url ? `<div class="section"><label>Estudio adjunto</label><p><a href="${h.estudio_url}">${h.estudio_nombre || h.estudio_url}</a></p></div>` : ''}
+      </body></html>`;
+    const win = window.open('', '_blank');
+    if (win) { win.document.write(html); win.document.close(); win.print(); }
   }
 
   savePhone() {
@@ -326,9 +462,7 @@ export class PatientDetailComponent implements OnInit {
   formatDate(date: any): string {
     if (!date) return '—';
     try {
-      return new Date(date).toLocaleDateString('es-AR', {
-        day: '2-digit', month: 'short', year: 'numeric'
-      });
+      return new Date(date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch { return '—'; }
   }
 }

@@ -98,7 +98,7 @@ def delete_patient(patient_id: str, user: dict = Depends(get_current_user)):
     if not patient_ref.get().exists:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
     # Eliminar subcolecciones
-    for subcol in ["routines", "clinical_histories"]:
+    for subcol in ["routines", "clinical_histories", "evaluations"]:
         for doc in patient_ref.collection(subcol).stream():
             doc.reference.delete()
     patient_ref.delete()

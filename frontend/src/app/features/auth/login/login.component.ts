@@ -1,13 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, FormsModule],
   template: `
     <div class="auth-layout">
       <div class="auth-card">
@@ -35,17 +35,48 @@ import { AuthService } from '../../../core/services/auth.service';
 
           <div class="field-group">
             <label for="password">Contraseña</label>
-            <input
-              id="password"
-              type="password"
-              formControlName="password"
-              placeholder="••••••••"
-              autocomplete="current-password"
-            />
+            <div class="password-wrap">
+              <input
+                id="password"
+                [type]="showPassword ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="••••••••"
+                autocomplete="current-password"
+              />
+              <button type="button" class="btn-eye" (click)="showPassword = !showPassword" tabindex="-1">
+                @if (showPassword) {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                } @else {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                }
+              </button>
+            </div>
           </div>
 
           @if (error) {
             <div class="error-banner">{{ error }}</div>
+          }
+
+          <div class="forgot-link-row">
+            <button type="button" class="btn-link" (click)="toggleForgot()">¿Olvidaste tu contraseña?</button>
+          </div>
+
+          @if (showForgot) {
+            <div class="forgot-box">
+              <p>Ingresá tu email y te enviamos un link para restablecer tu contraseña.</p>
+              <div class="forgot-row">
+                <input type="email" [(ngModel)]="forgotEmail" placeholder="tu@email.com" [ngModelOptions]="{standalone: true}" />
+                <button type="button" class="btn-forgot-send" (click)="sendReset()" [disabled]="!forgotEmail || resetLoading">
+                  {{ resetLoading ? '...' : 'Enviar' }}
+                </button>
+              </div>
+              @if (resetSent) {
+                <div class="success-small">¡Email enviado! Revisá tu bandeja de entrada.</div>
+              }
+              @if (resetError) {
+                <div class="error-small">{{ resetError }}</div>
+              }
+            </div>
           }
 
           <button type="submit" class="btn-primary" [disabled]="loading || form.invalid">
@@ -138,11 +169,29 @@ import { AuthService } from '../../../core/services/auth.service';
       font-size: 15px;
       outline: none;
       transition: border-color 0.2s;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     input:focus {
       border-color: #4f46e5;
     }
+
+    .password-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-wrap input { padding-right: 44px; }
+
+    .btn-eye {
+      position: absolute; right: 12px;
+      background: none; border: none; cursor: pointer;
+      color: #9ca3af; display: flex; padding: 0;
+    }
+
+    .btn-eye:hover { color: #4f46e5; }
 
     .error-banner {
       background: #fef2f2;
@@ -195,6 +244,19 @@ import { AuthService } from '../../../core/services/auth.service';
       font-weight: 600;
       text-decoration: none;
     }
+
+    .forgot-link-row { text-align: right; margin-top: -6px; }
+    .btn-link { background: none; border: none; color: #4f46e5; font-size: 13px; cursor: pointer; padding: 0; text-decoration: underline; }
+
+    .forgot-box { background: #f0f4ff; border-radius: 10px; padding: 14px; font-size: 13px; color: #374151; }
+    .forgot-box p { margin: 0 0 10px; }
+    .forgot-row { display: flex; gap: 8px; }
+    .forgot-row input { flex: 1; padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; }
+    .forgot-row input:focus { border-color: #4f46e5; }
+    .btn-forgot-send { padding: 9px 16px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-forgot-send:disabled { opacity: 0.5; cursor: not-allowed; }
+    .success-small { margin-top: 8px; color: #166534; font-size: 13px; }
+    .error-small { margin-top: 8px; color: #dc2626; font-size: 13px; }
   `]
 })
 export class LoginComponent {
@@ -204,6 +266,12 @@ export class LoginComponent {
 
   loading = false;
   error = '';
+  showPassword = false;
+  showForgot = false;
+  forgotEmail = '';
+  resetLoading = false;
+  resetSent = false;
+  resetError = '';
 
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -225,6 +293,31 @@ export class LoginComponent {
       error: (err) => {
         this.error = this.mapFirebaseError(err.code);
         this.loading = false;
+      }
+    });
+  }
+
+  toggleForgot() {
+    this.showForgot = !this.showForgot;
+    this.resetSent = false;
+    this.resetError = '';
+    this.forgotEmail = '';
+  }
+
+  sendReset() {
+    if (!this.forgotEmail) return;
+    this.resetLoading = true;
+    this.resetError = '';
+    this.authService.resetPassword(this.forgotEmail).subscribe({
+      next: () => { this.resetLoading = false; this.resetSent = true; },
+      error: (err) => {
+        this.resetLoading = false;
+        const code = err?.code || '';
+        if (code === 'auth/user-not-found' || code === 'auth/invalid-email') {
+          this.resetError = 'No existe una cuenta con ese email';
+        } else {
+          this.resetError = 'Error al enviar el email. Intentá de nuevo.';
+        }
       }
     });
   }

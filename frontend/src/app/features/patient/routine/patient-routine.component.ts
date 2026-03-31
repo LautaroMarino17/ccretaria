@@ -123,13 +123,9 @@ export class PatientRoutineComponent implements OnInit {
   loading = signal(true);
 
   ngOnInit() {
-    this.api.getMyLink().subscribe({
-      next: (link: any) => {
-        this.api.getRoutines(link.patient_doc_id).subscribe({
-          next: (data) => { this.routines.set(data); this.loading.set(false); },
-          error: () => this.loading.set(false)
-        });
-      },
+    // El backend para rol=patient ignora el patient_id del URL y resuelve el vínculo internamente
+    this.api.getRoutines('me').subscribe({
+      next: (data) => { this.routines.set(data); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
   }

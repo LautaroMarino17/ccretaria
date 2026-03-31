@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, professionalGuard, patientGuard } from './core/guards/auth.guard';
 
+
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
@@ -60,6 +61,11 @@ export const routes: Routes = [
         path: 'patients/:patientId/routines',
         loadComponent: () => import('./features/professional/routines/manage-routines.component')
           .then(m => m.ManageRoutinesComponent)
+      },
+      {
+        path: 'patients/:patientId/evaluations',
+        loadComponent: () => import('./features/professional/evaluations/professional-evaluations.component')
+          .then(m => m.ProfessionalEvaluationsComponent)
       }
     ]
   },
@@ -90,6 +96,24 @@ export const routes: Routes = [
         path: 'appointments',
         loadComponent: () => import('./features/patient/appointments/patient-appointments.component')
           .then(m => m.PatientAppointmentsComponent)
+      },
+      {
+        path: 'evaluations',
+        loadComponent: () => import('./features/patient/evaluations/patient-evaluations.component')
+          .then(m => m.PatientEvaluationsComponent)
+      }
+    ]
+  },
+
+  // ── Perfil (ambos roles) ─────────────────────────────────────────
+  {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () => import('./shared/layout/shell/shell.component').then(m => m.ShellComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
       }
     ]
   },

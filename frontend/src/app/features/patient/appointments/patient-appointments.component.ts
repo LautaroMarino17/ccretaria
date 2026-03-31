@@ -25,17 +25,29 @@ import { ApiService } from '../../../core/services/api.service';
       <!-- Panel de reserva -->
       @if (showBooking()) {
         <div class="booking-card">
+          <!-- Tabs -->
+          <div class="booking-tabs">
+            <button class="tab-btn" [class.active]="bookingTab() === 'slots'" (click)="bookingTab.set('slots')">Reservar turno</button>
+            <button class="tab-btn" [class.active]="bookingTab() === 'request'" (click)="bookingTab.set('request')">Solicitar vinculación</button>
+          </div>
+
+          @if (bookingTab() === 'slots') {
           <h3>Reservar turno</h3>
 
           <div class="field">
             <label>Código de tu profesional</label>
+            <input [(ngModel)]="linkCode" placeholder="Ej: DR-A3X9" style="text-transform:uppercase" />
+            <span class="field-hint">Pedíselo a tu profesional — lo ve en su panel de inicio</span>
+          </div>
+          <div class="field">
+            <label>Tu DNI</label>
             <div class="input-row">
-              <input [(ngModel)]="linkCode" placeholder="Ej: DR-A3X9" style="text-transform:uppercase" />
-              <button class="btn-search" (click)="loadSlots()" [disabled]="!linkCode || loadingSlots()">
+              <input [(ngModel)]="patientDni" placeholder="Ej: 30123456" type="text" inputmode="numeric" />
+              <button class="btn-search" (click)="loadSlots()" [disabled]="!linkCode || !patientDni || loadingSlots()">
                 {{ loadingSlots() ? '...' : 'Ver disponibilidad' }}
               </button>
             </div>
-            <span class="field-hint">Pedíselo a tu profesional — lo ve en su panel de inicio</span>
+            <span class="field-hint">Usamos tu DNI para encontrarte en el sistema</span>
           </div>
 
           @if (availableSlots().length > 0) {
@@ -77,6 +89,39 @@ import { ApiService } from '../../../core/services/api.service';
           }
           @if (bookingSuccess()) {
             <div class="success-banner">¡Turno reservado correctamente!</div>
+          }
+          } @else {
+            <!-- Tab: Solicitar vinculación -->
+            <h3>Solicitar vinculación</h3>
+            <p class="tab-desc">Enviá una solicitud a tu profesional. Una vez que la acepte, vas a poder ver tus historias, rutinas y evaluaciones.</p>
+            <div class="field">
+              <label>Código del profesional</label>
+              <input [(ngModel)]="reqLinkCode" placeholder="Ej: DR-A3X9" style="text-transform:uppercase" />
+            </div>
+            <div class="field">
+              <label>Tu nombre</label>
+              <input [(ngModel)]="reqNombre" placeholder="Juan" />
+            </div>
+            <div class="field">
+              <label>Tu apellido</label>
+              <input [(ngModel)]="reqApellido" placeholder="Pérez" />
+            </div>
+            <div class="field">
+              <label>Tu DNI</label>
+              <input [(ngModel)]="reqDni" placeholder="Ej: 30123456" inputmode="numeric" />
+            </div>
+            <div class="field">
+              <label>Mensaje (opcional)</label>
+              <input [(ngModel)]="reqMensaje" placeholder="Ej: Soy paciente desde 2023..." />
+            </div>
+            @if (reqError()) { <div class="error-banner">{{ reqError() }}</div> }
+            @if (reqSuccess()) { <div class="success-banner">¡Solicitud enviada! Tu profesional la revisará pronto.</div> }
+            <div class="form-actions">
+              <button class="btn-secondary" (click)="showBooking.set(false)">Cancelar</button>
+              <button class="btn-primary" (click)="sendRequest()" [disabled]="reqLoading() || !reqLinkCode || !reqNombre || !reqApellido || !reqDni">
+                {{ reqLoading() ? 'Enviando...' : 'Enviar solicitud' }}
+              </button>
+            </div>
           }
         </div>
       }
@@ -126,6 +171,10 @@ import { ApiService } from '../../../core/services/api.service';
     /* Booking */
     .booking-card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
     .booking-card h3 { font-size: 16px; font-weight: 700; color: #111827; margin: 0 0 18px; }
+    .booking-tabs { display: flex; gap: 4px; background: #f3f4f6; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 8px; border: none; background: none; border-radius: 8px; font-size: 13px; font-weight: 500; color: #6b7280; cursor: pointer; transition: all 0.15s; }
+    .tab-btn.active { background: white; color: #4f46e5; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .tab-desc { font-size: 13px; color: #6b7280; margin: -10px 0 16px; line-height: 1.5; }
     .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
     label { font-size: 13px; font-weight: 500; color: #374151; }
     .input-row { display: flex; gap: 10px; }
@@ -199,9 +248,21 @@ export class PatientAppointmentsComponent implements OnInit {
   selectedSlot = signal<any>(null);
   bookingError = signal('');
   bookingSuccess = signal(false);
+  bookingTab = signal<'slots' | 'request'>('slots');
   resolvedProfessionalUid = '';
   linkCode = '';
+  patientDni = '';
   bookingNotes = '';
+
+  // Solicitud de vinculación
+  reqLinkCode = '';
+  reqNombre = '';
+  reqApellido = '';
+  reqDni = '';
+  reqMensaje = '';
+  reqLoading = signal(false);
+  reqError = signal('');
+  reqSuccess = signal(false);
 
   ngOnInit() { this.loadAppointments(); }
 
@@ -230,6 +291,32 @@ export class PatientAppointmentsComponent implements OnInit {
     this.bookingSuccess.set(false);
     this.bookingError.set('');
     this.selectedSlot.set(null);
+    this.reqError.set('');
+    this.reqSuccess.set(false);
+  }
+
+  sendRequest() {
+    this.reqLoading.set(true);
+    this.reqError.set('');
+    this.reqSuccess.set(false);
+    this.api.requestLink({
+      link_code: this.reqLinkCode.trim().toUpperCase(),
+      dni: this.reqDni.trim(),
+      nombre: this.reqNombre.trim(),
+      apellido: this.reqApellido.trim(),
+      mensaje: this.reqMensaje.trim()
+    }).subscribe({
+      next: () => {
+        this.reqLoading.set(false);
+        this.reqSuccess.set(true);
+        this.reqLinkCode = ''; this.reqNombre = ''; this.reqApellido = ''; this.reqDni = ''; this.reqMensaje = '';
+        setTimeout(() => { this.showBooking.set(false); this.reqSuccess.set(false); }, 3000);
+      },
+      error: (err) => {
+        this.reqLoading.set(false);
+        this.reqError.set(err.error?.detail || 'Error al enviar la solicitud');
+      }
+    });
   }
 
   loadSlots() {
@@ -243,7 +330,7 @@ export class PatientAppointmentsComponent implements OnInit {
       next: (prof) => {
         this.resolvedProfessionalUid = prof.professional_uid;
         // Guardar vínculo para que rutinas e historias funcionen sin índices
-        this.api.linkToProfessional(code).subscribe();
+        this.api.linkToProfessional(code, this.patientDni.trim()).subscribe();
         this.api.getAvailableSlots(prof.professional_uid).subscribe({
           next: (data) => { this.availableSlots.set(data); this.loadingSlots.set(false); this.slotsLoaded.set(true); },
           error: () => { this.loadingSlots.set(false); this.slotsLoaded.set(true); }

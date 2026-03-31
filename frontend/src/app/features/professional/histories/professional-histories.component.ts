@@ -11,16 +11,11 @@ import { ApiService } from '../../../core/services/api.service';
   template: `
     <div class="page">
       <div class="page-header">
-        <div>
-          <h1>Historias clínicas</h1>
-          <p class="subtitle">Todas las consultas de tus pacientes</p>
-        </div>
+        <div><h1>Historias clínicas</h1><p class="subtitle">Todas las consultas de tus pacientes</p></div>
       </div>
 
       <div class="search-bar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input [(ngModel)]="search" placeholder="Buscar por paciente, motivo o diagnóstico..." />
       </div>
 
@@ -28,52 +23,36 @@ import { ApiService } from '../../../core/services/api.service';
         <div class="loading-text">Cargando...</div>
       } @else if (filtered().length === 0) {
         <div class="empty-state">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           <p>{{ search ? 'Sin resultados' : 'No hay historias clínicas registradas' }}</p>
         </div>
       } @else {
         <div class="history-list">
           @for (h of filtered(); track h.id) {
-            <div class="history-card" (click)="toggle(h.id)" [class.expanded]="expanded() === h.id">
-              <div class="history-summary">
+            <div class="history-card" [class.expanded]="expanded() === h.id">
+              <div class="history-summary" (click)="toggle(h.id)">
                 <div class="history-left">
                   <span class="history-date">{{ formatDate(h.fecha) }}</span>
-                  <a class="patient-link" [routerLink]="['/professional/patients', h.patient_id]" (click)="$event.stopPropagation()">
-                    {{ h.patient_name }}
-                  </a>
+                  <a class="patient-link" [routerLink]="['/professional/patients', h.patient_id]" (click)="$event.stopPropagation()">{{ h.patient_name }}</a>
                   <h3>{{ h.motivo_consulta || 'Consulta sin título' }}</h3>
-                  @if (h.diagnostico) {
-                    <p class="history-dx">Dx: {{ h.diagnostico }}</p>
-                  }
+                  @if (h.diagnostico) { <p class="history-dx">Dx: {{ h.diagnostico }}</p> }
                 </div>
-                <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
+                <div class="history-actions" (click)="$event.stopPropagation()">
+                  <button class="btn-icon-sm" (click)="printHistory(h)" title="Imprimir">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  </button>
+                  <button class="btn-icon-sm" (click)="openEdit(h)" title="Editar">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
               </div>
 
               @if (expanded() === h.id) {
                 <div class="history-detail">
-                  @if (h.enfermedad_actual) {
-                    <div class="detail-section">
-                      <label>Enfermedad actual</label>
-                      <p>{{ h.enfermedad_actual }}</p>
-                    </div>
-                  }
-                  @if (h.antecedentes_personales) {
-                    <div class="detail-section">
-                      <label>Antecedentes personales</label>
-                      <p>{{ h.antecedentes_personales }}</p>
-                    </div>
-                  }
-                  @if (h.examen_fisico) {
-                    <div class="detail-section">
-                      <label>Examen físico</label>
-                      <p>{{ h.examen_fisico }}</p>
-                    </div>
-                  }
+                  @if (h.enfermedad_actual) { <div class="detail-section"><label>Enfermedad actual</label><p>{{ h.enfermedad_actual }}</p></div> }
+                  @if (h.antecedentes_personales) { <div class="detail-section"><label>Antecedentes personales</label><p>{{ h.antecedentes_personales }}</p></div> }
+                  @if (h.examen_fisico) { <div class="detail-section"><label>Examen físico</label><p>{{ h.examen_fisico }}</p></div> }
                   @if (h.signos_vitales) {
                     <div class="detail-section">
                       <label>Signos vitales</label>
@@ -86,16 +65,19 @@ import { ApiService } from '../../../core/services/api.service';
                       </div>
                     </div>
                   }
-                  @if (h.plan_terapeutico) {
-                    <div class="detail-section">
-                      <label>Plan terapéutico</label>
-                      <p>{{ h.plan_terapeutico }}</p>
-                    </div>
+                  @if (h.plan_terapeutico) { <div class="detail-section"><label>Plan terapéutico</label><p>{{ h.plan_terapeutico }}</p></div> }
+                  @if (h.estudios_complementarios) { <div class="detail-section"><label>Estudios complementarios</label><p>{{ h.estudios_complementarios }}</p></div> }
+                  @if (h.observaciones) { <div class="detail-section"><label>Observaciones</label><p>{{ h.observaciones }}</p></div> }
+                  @if (h.imagen_url) {
+                    <div class="detail-section"><label>Imagen adjunta</label><img [src]="h.imagen_url" class="history-img" alt="Imagen adjunta" /></div>
                   }
-                  @if (h.observaciones) {
+                  @if (h.estudio_url) {
                     <div class="detail-section">
-                      <label>Observaciones</label>
-                      <p>{{ h.observaciones }}</p>
+                      <label>Estudio médico</label>
+                      <a [href]="h.estudio_url" target="_blank" class="estudio-link">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        {{ h.estudio_nombre || h.estudio_url }}
+                      </a>
                     </div>
                   }
                 </div>
@@ -105,6 +87,33 @@ import { ApiService } from '../../../core/services/api.service';
         </div>
       }
     </div>
+
+    <!-- Modal editar historia -->
+    @if (editingHistory()) {
+      <div class="modal-overlay" (click)="editingHistory.set(null)">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <h3>Editar historia clínica</h3>
+          <div class="edit-fields">
+            <div class="edit-field"><label>Motivo de consulta</label><textarea [(ngModel)]="editForm.motivo_consulta" rows="2"></textarea></div>
+            <div class="edit-field"><label>Diagnóstico</label><textarea [(ngModel)]="editForm.diagnostico" rows="2"></textarea></div>
+            <div class="edit-field"><label>Enfermedad actual</label><textarea [(ngModel)]="editForm.enfermedad_actual" rows="3"></textarea></div>
+            <div class="edit-field"><label>Examen físico</label><textarea [(ngModel)]="editForm.examen_fisico" rows="3"></textarea></div>
+            <div class="edit-field"><label>Plan terapéutico</label><textarea [(ngModel)]="editForm.plan_terapeutico" rows="3"></textarea></div>
+            <div class="edit-field"><label>Observaciones</label><textarea [(ngModel)]="editForm.observaciones" rows="2"></textarea></div>
+            <div class="edit-field"><label>Imagen (URL)</label><input [(ngModel)]="editForm.imagen_url" placeholder="https://..." /></div>
+            <div class="edit-field-row">
+              <div class="edit-field"><label>Nombre del estudio</label><input [(ngModel)]="editForm.estudio_nombre" placeholder="Ej: Radiografía" /></div>
+              <div class="edit-field"><label>Enlace al estudio</label><input [(ngModel)]="editForm.estudio_url" placeholder="https://..." /></div>
+            </div>
+          </div>
+          @if (editError()) { <div class="error-banner">{{ editError() }}</div> }
+          <div class="modal-actions">
+            <button class="btn-secondary" (click)="editingHistory.set(null)">Cancelar</button>
+            <button class="btn-save" (click)="saveEdit()" [disabled]="saving()">{{ saving() ? 'Guardando...' : 'Guardar cambios' }}</button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .page { max-width: 900px; }
@@ -112,50 +121,59 @@ import { ApiService } from '../../../core/services/api.service';
     h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
     .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
 
-    .search-bar {
-      display: flex; align-items: center; gap: 10px;
-      background: white; border: 1.5px solid #e5e7eb; border-radius: 12px;
-      padding: 10px 14px; margin-bottom: 20px;
-    }
+    .search-bar { display: flex; align-items: center; gap: 10px; background: white; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 10px 14px; margin-bottom: 20px; }
     .search-bar input { border: none; outline: none; font-size: 14px; flex: 1; font-family: inherit; }
 
-    .history-list { display: flex; flex-direction: column; gap: 10px; }
-    .history-card {
-      background: white; border-radius: 14px; overflow: hidden;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05); cursor: pointer;
-      border: 1.5px solid #e5e7eb; transition: border-color 0.15s;
-    }
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+    .history-card { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1.5px solid #e5e7eb; transition: border-color 0.15s; }
     .history-card.expanded { border-color: #4f46e5; }
-    .history-summary { display: flex; align-items: flex-start; justify-content: space-between; padding: 18px 20px; }
+    .history-summary { display: flex; align-items: flex-start; justify-content: space-between; padding: 16px 18px; cursor: pointer; gap: 10px; }
+    .history-summary:hover { background: #fafafa; }
     .history-left { flex: 1; }
     .history-date { font-size: 12px; color: #9ca3af; font-weight: 500; display: block; margin-bottom: 2px; }
-    .patient-link {
-      display: inline-block; font-size: 12px; font-weight: 700; color: #4f46e5;
-      text-decoration: none; margin-bottom: 4px;
-    }
+    .patient-link { display: inline-block; font-size: 12px; font-weight: 700; color: #4f46e5; text-decoration: none; margin-bottom: 4px; }
     .patient-link:hover { text-decoration: underline; }
     .history-summary h3 { font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 4px; }
     .history-dx { font-size: 13px; color: #6b7280; margin: 0; }
-    .chevron { transition: transform 0.2s; flex-shrink: 0; color: #9ca3af; margin-top: 4px; }
+    .history-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .btn-icon-sm { width: 28px; height: 28px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280; transition: all 0.15s; }
+    .btn-icon-sm:hover { border-color: #4f46e5; color: #4f46e5; background: #eef2ff; }
+    .chevron { color: #9ca3af; transition: transform 0.2s; margin-left: 4px; flex-shrink: 0; }
     .history-card.expanded .chevron { transform: rotate(180deg); }
 
-    .history-detail {
-      padding: 16px 20px 20px; border-top: 1px solid #f3f4f6;
-      display: flex; flex-direction: column; gap: 14px;
-      animation: slideDown 0.15s ease;
-    }
+    .history-detail { padding: 16px 18px 18px; border-top: 1px solid #f3f4f6; display: flex; flex-direction: column; gap: 14px; animation: slideDown 0.15s ease; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     .detail-section label { display: block; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .detail-section p { font-size: 14px; color: #374151; margin: 0; line-height: 1.6; }
     .signos-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .signo-tag { background: #f3f4f6; color: #374151; padding: 4px 10px; border-radius: 6px; font-size: 13px; }
-    .transcription-details { background: #f9fafb; border-radius: 10px; padding: 12px 14px; }
-    .transcription-details summary { font-size: 13px; font-weight: 500; cursor: pointer; color: #6b7280; }
-    .transcription-text { font-size: 13px; color: #9ca3af; margin-top: 10px; line-height: 1.7; white-space: pre-wrap; }
+    .history-img { max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 4px; }
+    .estudio-link { display: inline-flex; align-items: center; gap: 6px; color: #4f46e5; font-size: 13px; text-decoration: none; font-weight: 500; }
+    .estudio-link:hover { text-decoration: underline; }
 
     .loading-text { padding: 32px; text-align: center; color: #9ca3af; }
     .empty-state { text-align: center; padding: 56px; display: flex; flex-direction: column; align-items: center; gap: 12px; color: #9ca3af; }
     .empty-state p { font-size: 15px; margin: 0; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+    .modal { background: white; border-radius: 16px; padding: 28px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal h3 { font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 16px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-secondary { padding: 8px 16px; background: #f3f4f6; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; color: #374151; }
+    .btn-save { padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+    .edit-fields { display: flex; flex-direction: column; gap: 12px; }
+    .edit-field { display: flex; flex-direction: column; gap: 4px; }
+    .edit-field label { font-size: 12px; font-weight: 600; color: #6b7280; }
+    .edit-field input, .edit-field textarea { padding: 8px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; resize: vertical; }
+    .edit-field input:focus, .edit-field textarea:focus { border-color: #4f46e5; }
+    .edit-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .error-banner { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 10px; }
+
+    @media (max-width: 640px) {
+      .edit-field-row { grid-template-columns: 1fr; }
+    }
   `]
 })
 export class ProfessionalHistoriesComponent implements OnInit {
@@ -164,7 +182,12 @@ export class ProfessionalHistoriesComponent implements OnInit {
   histories = signal<any[]>([]);
   loading = signal(true);
   expanded = signal<string | null>(null);
+  editingHistory = signal<string | null>(null);
+  saving = signal(false);
+  editError = signal('');
   search = '';
+  editForm: any = {};
+  private editPatientId = '';
 
   get filtered() {
     return () => {
@@ -187,6 +210,77 @@ export class ProfessionalHistoriesComponent implements OnInit {
 
   toggle(id: string) {
     this.expanded.set(this.expanded() === id ? null : id);
+  }
+
+  openEdit(h: any) {
+    this.editingHistory.set(h.id);
+    this.editPatientId = h.patient_id;
+    this.editError.set('');
+    this.editForm = {
+      motivo_consulta: h.motivo_consulta || '',
+      diagnostico: h.diagnostico || '',
+      enfermedad_actual: h.enfermedad_actual || '',
+      examen_fisico: h.examen_fisico || '',
+      plan_terapeutico: h.plan_terapeutico || '',
+      observaciones: h.observaciones || '',
+      imagen_url: h.imagen_url || '',
+      estudio_nombre: h.estudio_nombre || '',
+      estudio_url: h.estudio_url || ''
+    };
+  }
+
+  saveEdit() {
+    const id = this.editingHistory();
+    if (!id) return;
+    this.saving.set(true);
+    this.editError.set('');
+    const payload: any = {};
+    for (const [k, v] of Object.entries(this.editForm)) {
+      if (v !== '') payload[k] = v;
+    }
+    this.api.updateClinicalHistory(id, this.editPatientId, payload).subscribe({
+      next: () => {
+        this.histories.update(hs => hs.map(h => h.id === id ? { ...h, ...this.editForm } : h));
+        this.editingHistory.set(null);
+        this.saving.set(false);
+      },
+      error: (err) => {
+        this.editError.set(err.error?.detail || 'Error al guardar');
+        this.saving.set(false);
+      }
+    });
+  }
+
+  printHistory(h: any) {
+    const date = this.formatDate(h.fecha);
+    const sv = h.signos_vitales;
+    const signosHtml = sv ? `<p><b>Signos vitales:</b>
+      ${sv.tension_arterial ? `TA: ${sv.tension_arterial}` : ''}
+      ${sv.frecuencia_cardiaca ? ` · FC: ${sv.frecuencia_cardiaca}` : ''}
+      ${sv.temperatura ? ` · Temp: ${sv.temperatura}` : ''}
+      ${sv.peso ? ` · Peso: ${sv.peso}` : ''}
+      ${sv.saturacion ? ` · SatO2: ${sv.saturacion}` : ''}</p>` : '';
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Historia clínica - ${h.patient_name}</title>
+      <style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#111}h1{font-size:22px;margin-bottom:4px}
+      .sub{color:#666;font-size:14px;margin-bottom:24px}.section{margin-bottom:16px}.section label{font-size:11px;font-weight:700;color:#666;text-transform:uppercase;display:block;margin-bottom:4px}
+      .section p{margin:0;line-height:1.6;font-size:14px}hr{border:none;border-top:1px solid #eee;margin:16px 0}@media print{body{margin:20px}}</style></head>
+      <body>
+      <h1>${h.patient_name}</h1>
+      <div class="sub">Fecha de consulta: ${date}${h.professional_name ? ` · Prof: ${h.professional_name}` : ''}</div>
+      <hr>
+      ${h.motivo_consulta ? `<div class="section"><label>Motivo de consulta</label><p>${h.motivo_consulta}</p></div>` : ''}
+      ${h.diagnostico ? `<div class="section"><label>Diagnóstico</label><p>${h.diagnostico}</p></div>` : ''}
+      ${h.enfermedad_actual ? `<div class="section"><label>Enfermedad actual</label><p>${h.enfermedad_actual}</p></div>` : ''}
+      ${h.antecedentes_personales ? `<div class="section"><label>Antecedentes personales</label><p>${h.antecedentes_personales}</p></div>` : ''}
+      ${h.examen_fisico ? `<div class="section"><label>Examen físico</label><p>${h.examen_fisico}</p></div>` : ''}
+      ${signosHtml}
+      ${h.plan_terapeutico ? `<div class="section"><label>Plan terapéutico</label><p>${h.plan_terapeutico}</p></div>` : ''}
+      ${h.estudios_complementarios ? `<div class="section"><label>Estudios complementarios</label><p>${h.estudios_complementarios}</p></div>` : ''}
+      ${h.observaciones ? `<div class="section"><label>Observaciones</label><p>${h.observaciones}</p></div>` : ''}
+      ${h.estudio_url ? `<div class="section"><label>Estudio adjunto</label><p><a href="${h.estudio_url}">${h.estudio_nombre || h.estudio_url}</a></p></div>` : ''}
+      </body></html>`;
+    const win = window.open('', '_blank');
+    if (win) { win.document.write(html); win.document.close(); win.print(); }
   }
 
   formatDate(date: any): string {

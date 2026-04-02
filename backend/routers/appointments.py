@@ -46,19 +46,20 @@ def create_slot(body: AvailableSlotCreate, user: dict = Depends(get_current_user
     except ValueError:
         raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use ISO 8601")
 
-    if dt < datetime.utcnow():
+    dt_naive = dt.replace(tzinfo=None) if dt.tzinfo else dt
+    if dt_naive < datetime.utcnow():
         raise HTTPException(status_code=400, detail="No se pueden crear horarios en fechas pasadas")
 
     db = get_firestore()
     ref = db.collection("professionals").document(user["uid"]).collection("available_slots")
 
     # Validar que no exista ya un slot en ese mismo horario
-    existing = ref.where("datetime", "==", dt).limit(1).stream()
+    existing = ref.where("datetime", "==", dt_naive).limit(1).stream()
     if next(existing, None):
         raise HTTPException(status_code=409, detail="Ya existe un horario en esa fecha y hora")
 
     data = {
-        "datetime": dt,
+        "datetime": dt_naive,
         "duration_minutes": body.duration_minutes,
         "notes": body.notes,
         "lugar": body.lugar,
@@ -412,7 +413,8 @@ def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_cur
     except ValueError:
         raise HTTPException(status_code=400, detail="Formato de fecha inválido")
 
-    if dt < datetime.utcnow():
+    dt_naive = dt.replace(tzinfo=None) if dt.tzinfo else dt
+    if dt_naive < datetime.utcnow():
         raise HTTPException(status_code=400, detail="No se pueden asignar turnos en fechas pasadas")
 
     db = get_firestore()
@@ -426,7 +428,7 @@ def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_cur
     slots_ref = db.collection("professionals").document(user["uid"]).collection("available_slots")
 
     # Validar que no haya slot (y por ende turno) en el mismo horario
-    existing_slot = slots_ref.where("datetime", "==", dt).limit(1).stream()
+    existing_slot = slots_ref.where("datetime", "==", dt_naive).limit(1).stream()
     if next(existing_slot, None):
         raise HTTPException(status_code=409, detail="Ya existe un horario ocupado en esa fecha y hora")
 
@@ -461,7 +463,7 @@ def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_cur
         "patient_doc_id": body.patient_id,
         "professional_uid": user["uid"],
         "professional_name": prof_name,
-        "appointment_datetime": dt,
+        "appointment_datetime": dt_naive,
         "duration_minutes": duration,
         "notes": body.notes,
         "lugar": body.lugar,
@@ -476,7 +478,7 @@ def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_cur
 
     # Crear slot booked para que aparezca en el calendario
     slot_data = {
-        "datetime": dt,
+        "datetime": dt_naive,
         "duration_minutes": duration,
         "notes": body.notes,
         "lugar": body.lugar,

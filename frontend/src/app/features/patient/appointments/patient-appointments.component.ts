@@ -64,8 +64,9 @@ import { ApiService } from '../../../core/services/api.service';
           <button class="nav-btn" (click)="prevDay()" [disabled]="isToday()" [style.opacity]="isToday() ? '0.3' : '1'" [style.cursor]="isToday() ? 'not-allowed' : 'pointer'">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <div class="date-display">
-            <span class="date-day">{{ formatNavDate() }}</span>
+          <div class="date-display-wrap">
+            <span class="date-day" (click)="datePickerRef.showPicker()">{{ formatNavDate() }}</span>
+            <input #datePickerRef type="date" class="date-picker-hidden" [min]="todayStr()" [value]="toDateStr(currentDate)" (change)="onDatePick($event)" />
           </div>
           <button class="nav-btn" (click)="nextDay()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
@@ -232,8 +233,10 @@ import { ApiService } from '../../../core/services/api.service';
     .date-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
     .nav-btn { width: 36px; height: 36px; background: white; border: 1.5px solid #e5e7eb; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #374151; transition: all 0.15s; }
     .nav-btn:hover { border-color: #4f46e5; color: #4f46e5; }
-    .date-display { flex: 1; text-align: center; }
-    .date-day { font-size: 16px; font-weight: 700; color: #111827; }
+    .date-display-wrap { flex: 1; display: flex; justify-content: center; position: relative; }
+    .date-day { font-size: 16px; font-weight: 700; color: #111827; cursor: pointer; padding: 4px 10px; border-radius: 8px; transition: background 0.15s; }
+    .date-day:hover { background: #eef2ff; color: #4f46e5; }
+    .date-picker-hidden { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
     .btn-today { padding: 7px 14px; background: #eef2ff; color: #4f46e5; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-toggle-cal { display: flex; align-items: center; gap: 5px; padding: 7px 14px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-toggle-cal:hover { background: #e5e7eb; }
@@ -404,6 +407,16 @@ export class PatientAppointmentsComponent implements OnInit {
     });
   }
 
+  todayStr(): string { return this.toDateStr(new Date()); }
+
+  onDatePick(event: Event) {
+    const val = (event.target as HTMLInputElement).value;
+    if (!val) return;
+    const [y, m, d] = val.split('-').map(Number);
+    this.currentDate = new Date(y, m - 1, d);
+    this.loadDay();
+  }
+
   isToday(): boolean {
     const t = new Date();
     return this.currentDate.getFullYear() === t.getFullYear() &&
@@ -508,7 +521,7 @@ export class PatientAppointmentsComponent implements OnInit {
     } catch { return ''; }
   }
 
-  private toDateStr(d: Date): string {
+  toDateStr(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 }

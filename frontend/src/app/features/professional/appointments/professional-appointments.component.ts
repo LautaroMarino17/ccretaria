@@ -97,7 +97,10 @@ interface HourRow {
           <button class="nav-btn" (click)="prevDay()" [disabled]="isToday()" [style.opacity]="isToday() ? '0.3' : '1'" [style.cursor]="isToday() ? 'not-allowed' : 'pointer'">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <div class="date-display">{{ formatNavDate() }}</div>
+          <div class="date-display-wrap">
+            <span class="date-display" (click)="datePickerRef.showPicker()">{{ formatNavDate() }}</span>
+            <input #datePickerRef type="date" class="date-picker-hidden" [min]="todayStr()" [value]="toDateStr(currentDate)" (change)="onDatePick($event)" />
+          </div>
           <button class="nav-btn" (click)="nextDay()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
@@ -275,7 +278,10 @@ interface HourRow {
     .date-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .nav-btn { width: 36px; height: 36px; background: white; border: 1.5px solid #e5e7eb; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #374151; flex-shrink: 0; }
     .nav-btn:hover { border-color: #4f46e5; color: #4f46e5; }
-    .date-display { flex: 1; text-align: center; font-size: 16px; font-weight: 700; color: #111827; text-transform: capitalize; }
+    .date-display-wrap { flex: 1; display: flex; justify-content: center; position: relative; }
+    .date-display { font-size: 16px; font-weight: 700; color: #111827; text-transform: capitalize; cursor: pointer; padding: 4px 10px; border-radius: 8px; transition: background 0.15s; }
+    .date-display:hover { background: #eef2ff; color: #4f46e5; }
+    .date-picker-hidden { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
     .btn-today { padding: 7px 14px; background: #eef2ff; color: #4f46e5; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
 
     /* Legend */
@@ -558,6 +564,15 @@ export class ProfessionalAppointmentsComponent implements OnInit {
 
   todayStr(): string { return this.toDateStr(new Date()); }
 
+  onDatePick(event: Event) {
+    const val = (event.target as HTMLInputElement).value;
+    if (!val) return;
+    const [y, m, d] = val.split('-').map(Number);
+    const picked = new Date(y, m - 1, d);
+    this.currentDate = picked;
+    this.loadDay();
+  }
+
   padHour(h: number): string { return String(h).padStart(2, '0'); }
 
   formatNavDate(): string {
@@ -579,7 +594,7 @@ export class ProfessionalAppointmentsComponent implements OnInit {
     try { return (dt.seconds ? new Date(dt.seconds * 1000) : new Date(dt)).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }); } catch { return ''; }
   }
 
-  private toDateStr(d: Date): string {
+  toDateStr(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 }

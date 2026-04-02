@@ -28,6 +28,31 @@ def set_role(body: SetRoleRequest):
     try:
         set_user_role(body.uid, body.role)
 
+        if body.role == "patient":
+            # Auto-vincular si algún profesional ya tiene este email en su lista de pacientes
+            try:
+                db = get_firestore()
+                existing_link = db.collection("patient_links").document(body.uid).get()
+                if not existing_link.exists:
+                    user_profile = get_user(body.uid)
+                    email = user_profile.get("email", "")
+                    if email:
+                        patient_docs = db.collection_group("patients") \
+                            .where("email", "==", email).limit(1).stream()
+                        patient_doc = next(patient_docs, None)
+                        if patient_doc:
+                            patient_doc_id = patient_doc.id
+                            prof_uid = patient_doc.reference.parent.parent.id
+                            db.collection("patient_links").document(body.uid).set({
+                                "professional_uid": prof_uid,
+                                "patient_doc_id": patient_doc_id,
+                                "patient_email": email,
+                                "linked_at": SERVER_TIMESTAMP,
+                                "auto_linked": True
+                            })
+            except Exception:
+                pass  # No fallar el registro por esto
+
         if body.role == "professional":
             db = get_firestore()
             prof_ref = db.collection("professionals").document(body.uid)

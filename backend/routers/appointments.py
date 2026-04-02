@@ -143,21 +143,36 @@ def book_appointment(body: AppointmentBook, user: dict = Depends(get_current_use
         raise HTTPException(status_code=409, detail="Este horario ya fue reservado")
 
     # Validar que el paciente no tenga otro turno activo y no vencido con este profesional
+    # (tanto por patient_uid como por patient_doc_id si está vinculado)
     now = datetime.utcnow()
-    existing_appts = db.collection("professionals").document(body.professional_uid) \
-        .collection("appointments") \
-        .where("patient_uid", "==", user["uid"]).stream()
-    for ea in existing_appts:
-        ea_data = ea.to_dict()
-        if ea_data.get("status") in ("pending_confirmation", "confirmed"):
-            ea_dt = ea_data.get("appointment_datetime")
-            if ea_dt:
-                ea_dt_naive = ea_dt.replace(tzinfo=None) if hasattr(ea_dt, "tzinfo") and ea_dt.tzinfo else ea_dt
-                if ea_dt_naive > now:
-                    raise HTTPException(
-                        status_code=409,
-                        detail="Ya tenés un turno activo con este profesional. Cancelalo antes de reservar otro."
-                    )
+
+    def _check_active_appointment(appts_stream):
+        for ea in appts_stream:
+            ea_data = ea.to_dict()
+            if ea_data.get("status") in ("pending_confirmation", "confirmed"):
+                ea_dt = ea_data.get("appointment_datetime")
+                if ea_dt:
+                    ea_dt_naive = ea_dt.replace(tzinfo=None) if hasattr(ea_dt, "tzinfo") and ea_dt.tzinfo else ea_dt
+                    if ea_dt_naive > now:
+                        local_dt = ea_dt_naive - timedelta(hours=3)
+                        raise HTTPException(
+                            status_code=409,
+                            detail=f"Ya tenés un turno activo el {local_dt.strftime('%d/%m/%Y a las %H:%M')}. Cancelalo antes de reservar otro."
+                        )
+
+    _check_active_appointment(
+        db.collection("professionals").document(body.professional_uid)
+          .collection("appointments").where("patient_uid", "==", user["uid"]).stream()
+    )
+    # También verificar por patient_doc_id si el paciente está vinculado
+    link_doc = db.collection("patient_links").document(user["uid"]).get()
+    if link_doc.exists:
+        patient_doc_id = link_doc.to_dict().get("patient_doc_id")
+        if patient_doc_id:
+            _check_active_appointment(
+                db.collection("professionals").document(body.professional_uid)
+                  .collection("appointments").where("patient_doc_id", "==", patient_doc_id).stream()
+            )
 
     # Obtener nombre del profesional desde Firebase Auth
     try:
@@ -434,20 +449,29 @@ def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_cur
 
     # Validar que el paciente no tenga ya un turno activo y no vencido con este profesional
     now = datetime.utcnow()
-    existing_appts = db.collection("professionals").document(user["uid"]) \
-        .collection("appointments") \
-        .where("patient_doc_id", "==", body.patient_id).stream()
-    for ea in existing_appts:
-        ea_data = ea.to_dict()
-        if ea_data.get("status") in ("pending_confirmation", "confirmed"):
-            ea_dt = ea_data.get("appointment_datetime")
-            if ea_dt:
-                ea_dt_naive = ea_dt.replace(tzinfo=None) if hasattr(ea_dt, "tzinfo") and ea_dt.tzinfo else ea_dt
-                if ea_dt_naive > now:
-                    raise HTTPException(
-                        status_code=409,
-                        detail=f"El paciente ya tiene un turno activo el {ea_dt_naive.strftime('%d/%m/%Y a las %H:%M')}. Cancelalo antes de asignar otro."
-                    )
+
+    def _active_appt_error(appt_data):
+        ea_dt = appt_data.get("appointment_datetime")
+        if ea_dt and appt_data.get("status") in ("pending_confirmation", "confirmed"):
+            ea_dt_naive = ea_dt.replace(tzinfo=None) if hasattr(ea_dt, "tzinfo") and ea_dt.tzinfo else ea_dt
+            if ea_dt_naive > now:
+                local_dt = ea_dt_naive - timedelta(hours=3)
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"El paciente ya tiene un turno activo el {local_dt.strftime('%d/%m/%Y a las %H:%M')}. Cancelalo antes de asignar otro."
+                )
+
+    for ea in db.collection("professionals").document(user["uid"]) \
+            .collection("appointments").where("patient_doc_id", "==", body.patient_id).stream():
+        _active_appt_error(ea.to_dict())
+
+    # También verificar si el paciente está registrado en la app (por patient_uid)
+    link_docs = db.collection("patient_links").where("patient_doc_id", "==", body.patient_id).limit(1).stream()
+    link = next(link_docs, None)
+    if link:
+        for ea in db.collection("professionals").document(user["uid"]) \
+                .collection("appointments").where("patient_uid", "==", link.id).stream():
+            _active_appt_error(ea.to_dict())
 
     try:
         prof_profile = get_user(user["uid"])

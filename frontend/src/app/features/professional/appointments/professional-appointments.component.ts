@@ -295,6 +295,7 @@ interface HourRow {
     .cal-row.row-empty { background: white; cursor: pointer; }
     .cal-row.row-empty:hover { background: #f9fafb; }
     .cal-row.row-empty:hover .empty-hint { color: #4f46e5; }
+    .cal-row.row-past { background: #fafafa; cursor: default; opacity: 0.45; }
     .cal-row.row-available { background: #f0fdf4; }
     .cal-row.row-pending { background: #fefce8; }
     .cal-row.row-occupied { background: #eef2ff; }
@@ -460,7 +461,10 @@ export class ProfessionalAppointmentsComponent implements OnInit {
   goToday() { this.currentDate = new Date(); this.loadDay(); }
 
   rowClass(row: HourRow): string {
-    if (!row.slot) return 'row-empty';
+    if (!row.slot) {
+      if (this.isToday() && row.hour <= new Date().getHours()) return 'row-past';
+      return 'row-empty';
+    }
     const s = row.slot.appointment_status || '';
     if (!row.slot.booked) return 'row-available';
     if (s === 'pending_confirmation') return 'row-pending';
@@ -469,8 +473,9 @@ export class ProfessionalAppointmentsComponent implements OnInit {
   }
 
   onRowClick(row: HourRow) {
-    if (row.slot) return; // solo filas vacías
-    this.newSlot = { duration_minutes: 30, notes: '', lugar: '' };
+    if (row.slot) return;
+    if (this.isToday() && row.hour <= new Date().getHours()) return; // hora pasada hoy
+    this.newSlot = { duration_minutes: 60, notes: '', lugar: '' };
     this.newSlotHour.set(row.hour);
   }
 
@@ -523,10 +528,14 @@ export class ProfessionalAppointmentsComponent implements OnInit {
 
   assignAppt() {
     if (!this.assignForm.date) return;
+    const d = new Date(`${this.assignForm.date}T${this.padHour(this.assignForm.hour)}:00:00`);
+    if (d <= new Date()) {
+      this.assignError.set('No se pueden asignar turnos en horarios ya transcurridos');
+      return;
+    }
     this.savingAssign.set(true);
     this.assignError.set('');
     this.assignSuccess.set(false);
-    const d = new Date(`${this.assignForm.date}T${this.padHour(this.assignForm.hour)}:00:00`);
     const datetimeIso = d.toISOString();
     this.api.assignAppointment({
       patient_id: this.assignForm.patient_id,

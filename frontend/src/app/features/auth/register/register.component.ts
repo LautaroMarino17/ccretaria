@@ -49,6 +49,14 @@ import { UserRole } from '../../../core/models/user.model';
             </div>
           </div>
 
+          @if (form.value.role === 'patient') {
+            <div class="field-group">
+              <label for="dni">DNI <span class="required">*</span></label>
+              <input id="dni" type="text" formControlName="dni" placeholder="Ej: 44884488" inputmode="numeric" />
+              <span class="field-hint">Sin puntos ni espacios</span>
+            </div>
+          }
+
           <div class="field-group">
             <label>Tipo de cuenta</label>
             <div class="role-selector">
@@ -80,7 +88,7 @@ import { UserRole } from '../../../core/models/user.model';
             <div class="error-banner">{{ error }}</div>
           }
 
-          <button type="submit" class="btn-primary" [disabled]="loading || form.invalid || !form.value.role">
+          <button type="submit" class="btn-primary" [disabled]="loading || form.invalid || !form.value.role || (form.value.role === 'patient' && !form.value.dni)">
             @if (loading) {
               <span class="spinner"></span>
             } @else {
@@ -160,6 +168,8 @@ import { UserRole } from '../../../core/models/user.model';
     @keyframes spin { to { transform: rotate(360deg); } }
     .auth-footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px; }
     .auth-footer a { color: #4f46e5; font-weight: 600; text-decoration: none; }
+    .required { color: #dc2626; }
+    .field-hint { font-size: 12px; color: #9ca3af; margin-top: 2px; }
   `]
 })
 export class RegisterComponent {
@@ -176,7 +186,8 @@ export class RegisterComponent {
     displayName: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
-    role: ['' as UserRole | '']
+    role: ['' as UserRole | ''],
+    dni: ['']
   });
 
   onSubmit() {
@@ -184,15 +195,14 @@ export class RegisterComponent {
     this.loading = true;
     this.error = '';
 
-    const { email, password, displayName, role } = this.form.value;
+    const { email, password, displayName, role, dni } = this.form.value;
 
     this.authService.register(email!, password!, displayName!).subscribe({
       next: async (cred) => {
+        const rolePayload: any = { uid: cred.user.uid, role };
+        if (role === 'patient' && dni) rolePayload.dni = dni.trim();
         // Asignar el rol en el backend
-        this.http.post(`${environment.apiUrl}/auth/set-role`, {
-          uid: cred.user.uid,
-          role
-        }).subscribe({
+        this.http.post(`${environment.apiUrl}/auth/set-role`, rolePayload).subscribe({
           next: async () => {
             // Refrescar token y actualizar estado del servicio de auth
             await this.authService.refreshUser();

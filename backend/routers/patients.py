@@ -27,25 +27,25 @@ class RoutineRequest(BaseModel):
     patient_info: dict
 
 
-def _registry_key(email: str) -> str:
-    """Normaliza el email para usarlo como clave del registry."""
-    return email.strip().lower()
-
-
-def _register_patient(db, prof_uid: str, patient_doc_id: str, email: str):
-    """Registra/actualiza la entrada del paciente en el registry global."""
-    key = _registry_key(email)
-    reg_ref = db.collection("patient_registry").document(key)
+def _register_patient(db, prof_uid: str, patient_doc_id: str, dni: str, email: str = ""):
+    """Registra/actualiza la entrada del paciente en el registry global usando DNI como clave."""
+    if not dni:
+        return
+    reg_ref = db.collection("patient_registry").document(dni.strip())
     reg_doc = reg_ref.get()
     if reg_doc.exists:
-        professionals = reg_doc.to_dict().get("professionals", [])
-        # Verificar si ya está este profesional
+        data = reg_doc.to_dict()
+        professionals = data.get("professionals", [])
         if not any(p["prof_uid"] == prof_uid for p in professionals):
             professionals.append({"prof_uid": prof_uid, "patient_doc_id": patient_doc_id})
-            reg_ref.update({"professionals": professionals})
+            updates = {"professionals": professionals}
+            if email:
+                updates["email"] = email.strip().lower()
+            reg_ref.update(updates)
     else:
         reg_ref.set({
-            "email": key,
+            "dni": dni.strip(),
+            "email": email.strip().lower() if email else "",
             "professionals": [{"prof_uid": prof_uid, "patient_doc_id": patient_doc_id}],
             "created_at": SERVER_TIMESTAMP
         })
@@ -112,12 +112,11 @@ def create_patient(body: PatientCreate, user: dict = Depends(get_current_user)):
     doc = ref.add(data)
     patient_doc_id = doc[1].id
 
-    # Registrar en el registry global si tiene email
-    if body.email:
-        try:
-            _register_patient(db, user["uid"], patient_doc_id, body.email)
-        except Exception:
-            pass
+    # Registrar en el registry global por DNI
+    try:
+        _register_patient(db, user["uid"], patient_doc_id, body.dni, body.email or "")
+    except Exception:
+        pass
 
     return {"id": patient_doc_id, "message": "Paciente creado correctamente"}
 
@@ -163,12 +162,11 @@ def delete_patient(patient_id: str, user: dict = Depends(get_current_user)):
     if not patient_doc.exists:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
-    # Quitar del registry global si tiene email
+    # Quitar del registry global por DNI
     try:
-        email = patient_doc.to_dict().get("email", "")
-        if email:
-            key = _registry_key(email)
-            reg_ref = db.collection("patient_registry").document(key)
+        dni = patient_doc.to_dict().get("dni", "")
+        if dni:
+            reg_ref = db.collection("patient_registry").document(dni.strip())
             reg_doc = reg_ref.get()
             if reg_doc.exists:
                 professionals = [

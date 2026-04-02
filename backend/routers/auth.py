@@ -13,6 +13,7 @@ router = APIRouter()
 class SetRoleRequest(BaseModel):
     uid: str
     role: str
+    dni: Optional[str] = None  # Requerido para pacientes
 
 
 def _generate_code() -> str:
@@ -29,74 +30,83 @@ def set_role(body: SetRoleRequest):
         set_user_role(body.uid, body.role)
 
         if body.role == "patient":
-            # Sincronizar con TODOS los médicos que tienen este email en el registry global
+            # Sincronizar con TODOS los médicos que tienen este DNI en el registry global
             try:
                 db = get_firestore()
                 user_profile = get_user(body.uid)
-                email = (user_profile.get("email", "") or "").strip().lower()
                 display_name = user_profile.get("display_name", "")
-                if email:
-                    parts = display_name.split(" ", 1) if display_name else []
-                    nombre_real = parts[0] if parts else ""
-                    apellido_real = parts[1] if len(parts) > 1 else ""
+                email = (user_profile.get("email", "") or "").strip().lower()
+                dni = (body.dni or "").strip()
 
-                    # Buscar en el registry global
-                    reg_doc = db.collection("patient_registry").document(email).get()
-                    professionals_in_registry = reg_doc.to_dict().get("professionals", []) if reg_doc.exists else []
+                parts = display_name.split(" ", 1) if display_name else []
+                nombre_real = parts[0] if parts else ""
+                apellido_real = parts[1] if len(parts) > 1 else ""
 
-                    # Si no está en el registry todavía, buscar por collection_group (retrocompat)
-                    if not professionals_in_registry:
-                        patient_docs = db.collection_group("patients") \
-                            .where("email", "==", email).stream()
-                        for pd in patient_docs:
-                            prof_uid_found = pd.reference.parent.parent.id
-                            professionals_in_registry.append({
-                                "prof_uid": prof_uid_found,
-                                "patient_doc_id": pd.id
-                            })
+                professionals_in_registry = []
 
-                    # Sincronizar con CADA profesional que tiene este paciente
-                    primary_link_set = db.collection("patient_links").document(body.uid).get().exists
-                    for entry in professionals_in_registry:
-                        prof_uid = entry["prof_uid"]
-                        patient_doc_id = entry["patient_doc_id"]
-                        patient_ref = db.collection("professionals").document(prof_uid) \
-                            .collection("patients").document(patient_doc_id)
+                # 1) Buscar por DNI en el registry (fuente de verdad)
+                if dni:
+                    reg_doc = db.collection("patient_registry").document(dni).get()
+                    if reg_doc.exists:
+                        professionals_in_registry = reg_doc.to_dict().get("professionals", [])
+                        # Actualizar email en el registry si no lo tenía
+                        if email and not reg_doc.to_dict().get("email"):
+                            reg_doc.reference.update({"email": email})
 
-                        # Actualizar nombre real en el doc del paciente
-                        updates = {"patient_uid_app": body.uid}
-                        if nombre_real:
-                            updates["nombre"] = nombre_real
-                        if apellido_real is not None:
-                            updates["apellido"] = apellido_real
+                # 2) Fallback: buscar por email si no encontró nada por DNI
+                if not professionals_in_registry and email:
+                    patient_docs = db.collection_group("patients") \
+                        .where("email", "==", email).stream()
+                    for pd in patient_docs:
+                        prof_uid_found = pd.reference.parent.parent.id
+                        professionals_in_registry.append({
+                            "prof_uid": prof_uid_found,
+                            "patient_doc_id": pd.id
+                        })
+
+                # Sincronizar con CADA profesional que tiene este paciente
+                primary_link_set = db.collection("patient_links").document(body.uid).get().exists
+                for entry in professionals_in_registry:
+                    prof_uid = entry["prof_uid"]
+                    patient_doc_id = entry["patient_doc_id"]
+                    patient_ref = db.collection("professionals").document(prof_uid) \
+                        .collection("patients").document(patient_doc_id)
+
+                    # Actualizar nombre real en el doc del paciente
+                    pat_updates = {"patient_uid_app": body.uid}
+                    if nombre_real:
+                        pat_updates["nombre"] = nombre_real
+                    if apellido_real is not None:
+                        pat_updates["apellido"] = apellido_real
+                    try:
+                        patient_ref.update(pat_updates)
+                    except Exception:
+                        pass
+
+                    # Actualizar appointments
+                    appts = db.collection("professionals").document(prof_uid) \
+                        .collection("appointments") \
+                        .where("patient_doc_id", "==", patient_doc_id).stream()
+                    appt_updates = {"patient_uid": body.uid}
+                    if display_name:
+                        appt_updates["patient_name"] = display_name
+                    for appt in appts:
                         try:
-                            patient_ref.update(updates)
+                            appt.reference.update(appt_updates)
                         except Exception:
                             pass
 
-                        # Actualizar appointments
-                        appts = db.collection("professionals").document(prof_uid) \
-                            .collection("appointments") \
-                            .where("patient_doc_id", "==", patient_doc_id).stream()
-                        appt_updates = {"patient_uid": body.uid}
-                        if display_name:
-                            appt_updates["patient_name"] = display_name
-                        for appt in appts:
-                            try:
-                                appt.reference.update(appt_updates)
-                            except Exception:
-                                pass
-
-                        # Crear el patient_link primario con el primer profesional encontrado
-                        if not primary_link_set:
-                            db.collection("patient_links").document(body.uid).set({
-                                "professional_uid": prof_uid,
-                                "patient_doc_id": patient_doc_id,
-                                "patient_email": email,
-                                "linked_at": SERVER_TIMESTAMP,
-                                "auto_linked": True
-                            })
-                            primary_link_set = True
+                    # Crear el patient_link primario con el primer profesional encontrado
+                    if not primary_link_set:
+                        db.collection("patient_links").document(body.uid).set({
+                            "professional_uid": prof_uid,
+                            "patient_doc_id": patient_doc_id,
+                            "patient_email": email,
+                            "patient_dni": dni,
+                            "linked_at": SERVER_TIMESTAMP,
+                            "auto_linked": True
+                        })
+                        primary_link_set = True
             except Exception:
                 pass  # No fallar el registro por esto
 
@@ -233,13 +243,12 @@ def link_to_professional(body: LinkProfessionalRequest, user: dict = Depends(get
         "linked_at": SERVER_TIMESTAMP
     })
 
-    # Registrar en el registry global
-    if patient_email:
-        try:
-            from routers.patients import _register_patient
-            _register_patient(db, prof_uid, patient_doc_id, patient_email)
-        except Exception:
-            pass
+    # Registrar en el registry global por DNI
+    try:
+        from routers.patients import _register_patient
+        _register_patient(db, prof_uid, patient_doc_id, dni, patient_email)
+    except Exception:
+        pass
 
     return {"professional_uid": prof_uid, "patient_doc_id": patient_doc_id}
 
@@ -371,13 +380,12 @@ def action_link_request(body: LinkRequestAction, user: dict = Depends(get_curren
         "linked_at": SERVER_TIMESTAMP,
     })
 
-    # Registrar en el registry global
-    if patient_email:
-        try:
-            from routers.patients import _register_patient
-            _register_patient(db, prof_uid, patient_doc_id, patient_email)
-        except Exception:
-            pass
+    # Registrar en el registry global por DNI
+    try:
+        from routers.patients import _register_patient
+        _register_patient(db, prof_uid, patient_doc_id, dni, patient_email)
+    except Exception:
+        pass
 
     req_ref.update({"status": "accepted", "patient_doc_id": patient_doc_id})
     return {"message": "Solicitud aceptada. Paciente vinculado.", "patient_doc_id": patient_doc_id}
@@ -513,10 +521,12 @@ def sync_patient_registry(user: dict = Depends(get_current_user)):
     patients = db.collection("professionals").document(user["uid"]).collection("patients").stream()
     synced = 0
     for p in patients:
-        email = (p.to_dict().get("email") or "").strip().lower()
-        if email:
+        pdata = p.to_dict()
+        dni = (pdata.get("dni") or "").strip()
+        email = (pdata.get("email") or "").strip().lower()
+        if dni:
             try:
-                _register_patient(db, user["uid"], p.id, email)
+                _register_patient(db, user["uid"], p.id, dni, email)
                 synced += 1
             except Exception:
                 pass

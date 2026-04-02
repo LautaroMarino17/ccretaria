@@ -17,9 +17,7 @@ import { ApiService } from '../../../core/services/api.service';
         <div class="loading-text">Cargando...</div>
       } @else if (routines().length === 0) {
         <div class="empty-state">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-          </svg>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           <p>Tu profesional aún no te asignó ninguna rutina</p>
         </div>
       } @else {
@@ -29,39 +27,38 @@ import { ApiService } from '../../../core/services/api.service';
               <div class="routine-header">
                 <div>
                   <h2>{{ r.titulo }}</h2>
-                  @if (r.descripcion) {
-                    <p class="routine-desc">{{ r.descripcion }}</p>
-                  }
+                  @if (r.descripcion) { <p class="routine-desc">{{ r.descripcion }}</p> }
                 </div>
                 @if (r.professional_name) {
                   <span class="prof-badge">{{ r.professional_name }}</span>
                 }
               </div>
 
-              @if (r.ejercicios?.length > 0) {
-                <div class="exercises-list">
-                  @for (ex of r.ejercicios; track $index) {
-                    <div class="exercise-item">
-                      <div class="exercise-number">{{ $index + 1 }}</div>
-                      <div class="exercise-content">
-                        <h4>{{ ex.nombre }}</h4>
-                        @if (ex.descripcion) {
-                          <p class="ex-desc">{{ ex.descripcion }}</p>
-                        }
-                        <div class="ex-tags">
-                          @if (ex.series && ex.repeticiones) {
-                            <span class="tag blue">{{ ex.series }} series × {{ ex.repeticiones }} reps</span>
-                          }
-                          @if (ex.duracion) {
-                            <span class="tag green">{{ ex.duracion }}</span>
-                          }
-                          @if (ex.frecuencia) {
-                            <span class="tag purple">{{ ex.frecuencia }}</span>
-                          }
-                        </div>
-                      </div>
+              @for (circ of r.circuitos; track $index) {
+                <div class="circuit-block">
+                  <div class="circuit-header">
+                    <span class="circuit-name">{{ circ.nombre || 'Bloque ' + ($index + 1) }}</span>
+                    @if (circ.rondas) {
+                      <span class="rondas-badge">{{ circ.rondas }} rondas</span>
+                    }
+                  </div>
+
+                  <div class="exercises-table">
+                    <div class="table-head">
+                      <span>Ejercicio</span>
+                      <span>Descripción</span>
+                      <span>Rep / Seg / Mts</span>
+                      <span>Carga %</span>
                     </div>
-                  }
+                    @for (ex of circ.ejercicios; track $index) {
+                      <div class="table-row">
+                        <span class="ex-name">{{ ex.nombre }}</span>
+                        <span class="ex-desc">{{ ex.descripcion }}</span>
+                        <span class="ex-reps">{{ ex.reps_seg_mts }}</span>
+                        <span class="ex-carga">{{ ex.carga }}</span>
+                      </div>
+                    }
+                  </div>
                 </div>
               }
 
@@ -78,52 +75,52 @@ import { ApiService } from '../../../core/services/api.service';
     </div>
   `,
   styles: [`
-    .page { max-width: 800px; }
+    .page { max-width: 900px; }
     .page-header { margin-bottom: 24px; }
     h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
     .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
 
     .routines-list { display: flex; flex-direction: column; gap: 20px; }
-
     .routine-card { background: white; border-radius: 18px; padding: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
     .routine-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; gap: 12px; }
     .routine-card h2 { font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 6px; }
     .routine-desc { font-size: 14px; color: #6b7280; margin: 0; }
     .prof-badge { padding: 4px 12px; background: #eef2ff; color: #4f46e5; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 
-    .exercises-list { display: flex; flex-direction: column; gap: 12px; }
-    .exercise-item { display: flex; gap: 14px; padding: 14px; background: #f9fafb; border-radius: 12px; }
-    .exercise-number {
-      width: 32px; height: 32px; background: #4f46e5; color: white;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 700; flex-shrink: 0;
-    }
-    .exercise-content { flex: 1; }
-    .exercise-content h4 { font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 4px; }
-    .ex-desc { font-size: 13px; color: #6b7280; margin: 0 0 10px; line-height: 1.5; }
-    .ex-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-    .tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-    .tag.blue { background: #eff6ff; color: #2563eb; }
-    .tag.green { background: #f0fdf4; color: #16a34a; }
-    .tag.purple { background: #faf5ff; color: #7c3aed; }
+    .circuit-block { margin-bottom: 16px; }
+    .circuit-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .circuit-name { font-size: 14px; font-weight: 700; color: #1e1b4b; }
+    .rondas-badge { background: #4f46e5; color: white; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 700; }
 
-    .obs-box { background: #fffbeb; border-radius: 10px; padding: 14px; margin-top: 16px; }
-    .obs-label { display: block; font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .exercises-table { border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb; }
+    .table-head { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr; padding: 8px 14px; background: #f3f4f6; gap: 8px; }
+    .table-head span { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+    .table-row { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr; padding: 10px 14px; border-top: 1px solid #f3f4f6; gap: 8px; align-items: center; }
+    .ex-name { font-size: 14px; font-weight: 500; color: #111827; }
+    .ex-desc { font-size: 13px; color: #9ca3af; }
+    .ex-reps { font-size: 14px; font-weight: 600; color: #4f46e5; }
+    .ex-carga { font-size: 13px; color: #374151; font-weight: 500; }
+
+    .obs-box { background: #fffbeb; border-radius: 10px; padding: 14px; margin-top: 8px; }
+    .obs-label { display: block; font-size: 11px; font-weight: 600; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .obs-box p { font-size: 14px; color: #78350f; margin: 0; line-height: 1.6; }
 
     .loading-text { padding: 32px; text-align: center; color: #9ca3af; }
     .empty-state { text-align: center; padding: 56px; display: flex; flex-direction: column; align-items: center; gap: 12px; color: #9ca3af; }
     .empty-state p { font-size: 15px; margin: 0; }
+
+    @media (max-width: 600px) {
+      .table-head, .table-row { grid-template-columns: 1fr 1fr; }
+      .table-head span:nth-child(2), .ex-desc { display: none; }
+    }
   `]
 })
 export class PatientRoutineComponent implements OnInit {
   private api = inject(ApiService);
-
   routines = signal<any[]>([]);
   loading = signal(true);
 
   ngOnInit() {
-    // El backend para rol=patient ignora el patient_id del URL y resuelve el vínculo internamente
     this.api.getRoutines('me').subscribe({
       next: (data) => { this.routines.set(data); this.loading.set(false); },
       error: () => this.loading.set(false)

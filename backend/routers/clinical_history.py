@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from dependencies import get_current_user, require_professional
 from services.firebase_service import get_firestore, get_user
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
@@ -15,6 +15,11 @@ class SignosVitales(BaseModel):
     peso: Optional[str] = ""
     talla: Optional[str] = ""
     saturacion: Optional[str] = ""
+
+
+class ArchivoLink(BaseModel):
+    url: str
+    nombre: Optional[str] = ""
 
 
 class ClinicalHistoryCreate(BaseModel):
@@ -32,9 +37,8 @@ class ClinicalHistoryCreate(BaseModel):
     observaciones: Optional[str] = ""
     transcripcion_original: Optional[str] = ""
     verificada: bool = False
-    imagen_url: Optional[str] = ""
-    estudio_nombre: Optional[str] = ""
-    estudio_url: Optional[str] = ""
+    imagenes: Optional[List[ArchivoLink]] = []
+    estudios: Optional[List[ArchivoLink]] = []
 
 
 class ClinicalHistoryUpdate(BaseModel):
@@ -48,9 +52,8 @@ class ClinicalHistoryUpdate(BaseModel):
     plan_terapeutico: Optional[str] = None
     estudios_complementarios: Optional[str] = None
     observaciones: Optional[str] = None
-    imagen_url: Optional[str] = None
-    estudio_nombre: Optional[str] = None
-    estudio_url: Optional[str] = None
+    imagenes: Optional[List[ArchivoLink]] = None
+    estudios: Optional[List[ArchivoLink]] = None
 
 
 @router.get("/")
@@ -109,12 +112,12 @@ def list_clinical_histories(
     elif role == "patient":
         link_doc = db.collection("patient_links").document(user["uid"]).get()
         if not link_doc.exists:
-            raise HTTPException(status_code=404, detail="No estás vinculado a ningún profesional")
+            return []
         link = link_doc.to_dict()
         professional_uid = link.get("professional_uid", "")
         patient_doc_id = link.get("patient_doc_id", "")
         if not professional_uid or not patient_doc_id:
-            raise HTTPException(status_code=404, detail="Vínculo incompleto")
+            return []
     else:
         raise HTTPException(status_code=403, detail="Sin permisos")
 

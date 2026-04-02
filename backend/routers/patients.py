@@ -81,9 +81,9 @@ def update_patient(patient_id: str, body: dict, user: dict = Depends(get_current
         .collection("patients").document(patient_id)
     if not ref.get().exists:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
-    allowed = {k: v for k, v in body.items() if k == "telefono"}
+    allowed = {k: v for k, v in body.items() if k in ("telefono", "email")}
     if not allowed:
-        raise HTTPException(status_code=400, detail="Solo se puede editar el teléfono")
+        raise HTTPException(status_code=400, detail="Solo se puede editar teléfono o email")
     ref.update(allowed)
     return {"message": "Paciente actualizado"}
 

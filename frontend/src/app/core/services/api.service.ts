@@ -64,6 +64,22 @@ export class ApiService {
     return this.withAuth(h => this.http.get<any[]>(`${this.base}/auth/my-link-status`, { headers: h }));
   }
 
+  getProfessionalProfile() {
+    return this.withAuth(h => this.http.get<any>(`${this.base}/auth/professional-profile`, { headers: h }));
+  }
+
+  updateProfessionalProfile(data: { telefono?: string; lugares_atencion?: string[] }) {
+    return this.withAuth(h => this.http.patch<any>(`${this.base}/auth/professional-profile`, data, { headers: h }));
+  }
+
+  updateMyPhone(telefono: string) {
+    return this.withAuth(h => this.http.patch<any>(`${this.base}/auth/patient-phone`, { telefono }, { headers: h }));
+  }
+
+  assignAppointment(data: { patient_id: string; patient_name: string; datetime_iso: string; duration_minutes: number; notes?: string; lugar?: string }) {
+    return this.withAuth(h => this.http.post<any>(`${this.base}/appointments/assign`, data, { headers: h }));
+  }
+
   // ── Pacientes ────────────────────────────────────────────────────
   getPatients() {
     return this.withAuth(h => this.http.get<any[]>(`${this.base}/patients/`, { headers: h }));
@@ -79,6 +95,10 @@ export class ApiService {
 
   updatePatientPhone(id: string, telefono: string) {
     return this.withAuth(h => this.http.patch<any>(`${this.base}/patients/${id}`, { telefono }, { headers: h }));
+  }
+
+  updatePatientEmail(id: string, email: string) {
+    return this.withAuth(h => this.http.patch<any>(`${this.base}/patients/${id}`, { email }, { headers: h }));
   }
 
   deletePatient(id: string) {
@@ -194,7 +214,7 @@ export class ApiService {
     );
   }
 
-  createSlot(data: { datetime_iso: string; duration_minutes: number; notes?: string }) {
+  createSlot(data: { datetime_iso: string; duration_minutes: number; notes?: string; lugar?: string }) {
     return this.withAuth(h =>
       this.http.post<any>(`${this.base}/appointments/slots`, data, { headers: h })
     );
@@ -222,6 +242,30 @@ export class ApiService {
   cancelAppointment(appointmentId: string) {
     return this.withAuth(h =>
       this.http.patch<any>(`${this.base}/appointments/${appointmentId}/cancel`, {}, { headers: h })
+    );
+  }
+
+  cancelByProfessional(appointmentId: string) {
+    return this.withAuth(h =>
+      this.http.post<any>(`${this.base}/appointments/${appointmentId}/cancel-by-professional`, {}, { headers: h })
+    );
+  }
+
+  confirmAppointment(appointmentId: string) {
+    return this.withAuth(h =>
+      this.http.post<any>(`${this.base}/appointments/${appointmentId}/confirm`, {}, { headers: h })
+    );
+  }
+
+  rejectAppointment(appointmentId: string) {
+    return this.withAuth(h =>
+      this.http.post<any>(`${this.base}/appointments/${appointmentId}/reject`, {}, { headers: h })
+    );
+  }
+
+  getDaySlots(professionalUid: string, date: string) {
+    return this.withAuth(h =>
+      this.http.get<any[]>(`${this.base}/appointments/slots-day/${professionalUid}?date=${date}`, { headers: h })
     );
   }
 

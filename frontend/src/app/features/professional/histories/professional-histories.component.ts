@@ -38,6 +38,9 @@ import { ApiService } from '../../../core/services/api.service';
                   @if (h.diagnostico) { <p class="history-dx">Dx: {{ h.diagnostico }}</p> }
                 </div>
                 <div class="history-actions" (click)="$event.stopPropagation()">
+                  <button class="btn-icon-sm" (click)="downloadHistory(h)" title="Descargar">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </button>
                   <button class="btn-icon-sm" (click)="printHistory(h)" title="Imprimir">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   </button>
@@ -68,16 +71,30 @@ import { ApiService } from '../../../core/services/api.service';
                   @if (h.plan_terapeutico) { <div class="detail-section"><label>Plan terapéutico</label><p>{{ h.plan_terapeutico }}</p></div> }
                   @if (h.estudios_complementarios) { <div class="detail-section"><label>Estudios complementarios</label><p>{{ h.estudios_complementarios }}</p></div> }
                   @if (h.observaciones) { <div class="detail-section"><label>Observaciones</label><p>{{ h.observaciones }}</p></div> }
-                  @if (h.imagen_url) {
-                    <div class="detail-section"><label>Imagen adjunta</label><img [src]="h.imagen_url" class="history-img" alt="Imagen adjunta" /></div>
-                  }
-                  @if (h.estudio_url) {
+                  @if (h.imagenes?.length > 0) {
                     <div class="detail-section">
-                      <label>Estudio médico</label>
-                      <a [href]="h.estudio_url" target="_blank" class="estudio-link">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                        {{ h.estudio_nombre || h.estudio_url }}
-                      </a>
+                      <label>Imágenes</label>
+                      <div class="archivos-list">
+                        @for (img of h.imagenes; track $index) {
+                          <a [href]="img.url" target="_blank" class="estudio-link">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            {{ img.nombre || img.url }}
+                          </a>
+                        }
+                      </div>
+                    </div>
+                  }
+                  @if (h.estudios?.length > 0) {
+                    <div class="detail-section">
+                      <label>Estudios / Informes</label>
+                      <div class="archivos-list">
+                        @for (est of h.estudios; track $index) {
+                          <a [href]="est.url" target="_blank" class="estudio-link">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            {{ est.nombre || est.url }}
+                          </a>
+                        }
+                      </div>
                     </div>
                   }
                 </div>
@@ -100,10 +117,27 @@ import { ApiService } from '../../../core/services/api.service';
             <div class="edit-field"><label>Examen físico</label><textarea [(ngModel)]="editForm.examen_fisico" rows="3"></textarea></div>
             <div class="edit-field"><label>Plan terapéutico</label><textarea [(ngModel)]="editForm.plan_terapeutico" rows="3"></textarea></div>
             <div class="edit-field"><label>Observaciones</label><textarea [(ngModel)]="editForm.observaciones" rows="2"></textarea></div>
-            <div class="edit-field"><label>Imagen (URL)</label><input [(ngModel)]="editForm.imagen_url" placeholder="https://..." /></div>
-            <div class="edit-field-row">
-              <div class="edit-field"><label>Nombre del estudio</label><input [(ngModel)]="editForm.estudio_nombre" placeholder="Ej: Radiografía" /></div>
-              <div class="edit-field"><label>Enlace al estudio</label><input [(ngModel)]="editForm.estudio_url" placeholder="https://..." /></div>
+            <div class="edit-field">
+              <label>Imágenes</label>
+              @for (img of editForm.imagenes; track $index) {
+                <div class="link-row">
+                  <input [(ngModel)]="img.nombre" placeholder="Nombre" class="link-name" />
+                  <input [(ngModel)]="img.url" placeholder="https://..." class="link-url" />
+                  <button type="button" class="btn-rm" (click)="editForm.imagenes.splice($index, 1)">✕</button>
+                </div>
+              }
+              <button type="button" class="btn-add-link" (click)="editForm.imagenes.push({url:'',nombre:''})">+ Agregar imagen</button>
+            </div>
+            <div class="edit-field">
+              <label>Estudios / Informes</label>
+              @for (est of editForm.estudios; track $index) {
+                <div class="link-row">
+                  <input [(ngModel)]="est.nombre" placeholder="Nombre" class="link-name" />
+                  <input [(ngModel)]="est.url" placeholder="https://..." class="link-url" />
+                  <button type="button" class="btn-rm" (click)="editForm.estudios.splice($index, 1)">✕</button>
+                </div>
+              }
+              <button type="button" class="btn-add-link" (click)="editForm.estudios.push({url:'',nombre:''})">+ Agregar estudio</button>
             </div>
           </div>
           @if (editError()) { <div class="error-banner">{{ editError() }}</div> }
@@ -169,6 +203,12 @@ import { ApiService } from '../../../core/services/api.service';
     .edit-field input, .edit-field textarea { padding: 8px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; resize: vertical; }
     .edit-field input:focus, .edit-field textarea:focus { border-color: #4f46e5; }
     .edit-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .archivos-list { display: flex; flex-direction: column; gap: 6px; }
+    .link-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+    .link-name { flex: 1; min-width: 0; }
+    .link-url { flex: 2; min-width: 0; }
+    .btn-rm { padding: 4px 8px; background: #fef2f2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; flex-shrink: 0; }
+    .btn-add-link { padding: 5px 12px; background: #eef2ff; color: #4f46e5; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 2px; }
     .error-banner { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 10px; }
 
     @media (max-width: 640px) {
@@ -223,9 +263,8 @@ export class ProfessionalHistoriesComponent implements OnInit {
       examen_fisico: h.examen_fisico || '',
       plan_terapeutico: h.plan_terapeutico || '',
       observaciones: h.observaciones || '',
-      imagen_url: h.imagen_url || '',
-      estudio_nombre: h.estudio_nombre || '',
-      estudio_url: h.estudio_url || ''
+      imagenes: (h.imagenes || []).map((i: any) => ({ url: i.url || '', nombre: i.nombre || '' })),
+      estudios: (h.estudios || []).map((e: any) => ({ url: e.url || '', nombre: e.nombre || '' }))
     };
   }
 
@@ -251,16 +290,16 @@ export class ProfessionalHistoriesComponent implements OnInit {
     });
   }
 
-  printHistory(h: any) {
+  private buildHistoryHtml(h: any): string {
     const date = this.formatDate(h.fecha);
     const sv = h.signos_vitales;
-    const signosHtml = sv ? `<p><b>Signos vitales:</b>
+    const signosHtml = sv ? `<div class="section"><label>Signos vitales</label><p>
       ${sv.tension_arterial ? `TA: ${sv.tension_arterial}` : ''}
       ${sv.frecuencia_cardiaca ? ` · FC: ${sv.frecuencia_cardiaca}` : ''}
       ${sv.temperatura ? ` · Temp: ${sv.temperatura}` : ''}
       ${sv.peso ? ` · Peso: ${sv.peso}` : ''}
-      ${sv.saturacion ? ` · SatO2: ${sv.saturacion}` : ''}</p>` : '';
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Historia clínica - ${h.patient_name}</title>
+      ${sv.saturacion ? ` · SatO2: ${sv.saturacion}` : ''}</p></div>` : '';
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Historia clínica - ${h.patient_name}</title>
       <style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#111}h1{font-size:22px;margin-bottom:4px}
       .sub{color:#666;font-size:14px;margin-bottom:24px}.section{margin-bottom:16px}.section label{font-size:11px;font-weight:700;color:#666;text-transform:uppercase;display:block;margin-bottom:4px}
       .section p{margin:0;line-height:1.6;font-size:14px}hr{border:none;border-top:1px solid #eee;margin:16px 0}@media print{body{margin:20px}}</style></head>
@@ -279,8 +318,27 @@ export class ProfessionalHistoriesComponent implements OnInit {
       ${h.observaciones ? `<div class="section"><label>Observaciones</label><p>${h.observaciones}</p></div>` : ''}
       ${h.estudio_url ? `<div class="section"><label>Estudio adjunto</label><p><a href="${h.estudio_url}">${h.estudio_nombre || h.estudio_url}</a></p></div>` : ''}
       </body></html>`;
-    const win = window.open('', '_blank');
-    if (win) { win.document.write(html); win.document.close(); win.print(); }
+  }
+
+  downloadHistory(h: any) {
+    const html = this.buildHistoryHtml(h);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeName = (h.patient_name || 'paciente').replace(/\s+/g, '_').toLowerCase();
+    const date = this.formatDate(h.fecha).replace(/\s/g, '-');
+    a.href = url;
+    a.download = `historia_${safeName}_${date}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  printHistory(h: any) {
+    const html = this.buildHistoryHtml(h);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if (win) win.addEventListener('load', () => { win.print(); URL.revokeObjectURL(url); });
   }
 
   formatDate(date: any): string {

@@ -2,7 +2,7 @@ import random
 import string
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from dependencies import get_current_user, require_professional
 from services.firebase_service import set_user_role, get_user, get_firestore
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
@@ -307,16 +307,85 @@ def get_my_link_status(user: dict = Depends(get_current_user)):
     return results
 
 
+class ProfessionalProfileUpdate(BaseModel):
+    telefono: Optional[str] = None
+    lugares_atencion: Optional[List[str]] = None
+
+
+@router.get("/professional-profile")
+def get_professional_profile(user: dict = Depends(get_current_user)):
+    """Profesional: obtiene su perfil (teléfono y lugares de atención)."""
+    require_professional(user)
+    db = get_firestore()
+    doc = db.collection("professionals").document(user["uid"]).get()
+    data = doc.to_dict() if doc.exists else {}
+    return {
+        "telefono": data.get("telefono", ""),
+        "lugares_atencion": data.get("lugares_atencion", [])
+    }
+
+
+@router.patch("/professional-profile")
+def update_professional_profile(body: ProfessionalProfileUpdate, user: dict = Depends(get_current_user)):
+    """Profesional: actualiza teléfono y/o lugares de atención."""
+    require_professional(user)
+    db = get_firestore()
+    updates = {}
+    if body.telefono is not None:
+        updates["telefono"] = body.telefono
+    if body.lugares_atencion is not None:
+        updates["lugares_atencion"] = body.lugares_atencion
+    if not updates:
+        raise HTTPException(status_code=400, detail="No hay campos para actualizar")
+    db.collection("professionals").document(user["uid"]).set(updates, merge=True)
+    return {"message": "Perfil actualizado"}
+
+
+@router.patch("/patient-phone")
+def update_patient_phone(body: dict, user: dict = Depends(get_current_user)):
+    """Paciente: guarda su número de teléfono en su vínculo y en su doc de paciente."""
+    if user.get("role") != "patient":
+        raise HTTPException(status_code=403, detail="Solo pacientes")
+    telefono = body.get("telefono", "").strip()
+    db = get_firestore()
+    # Guardar en patient_links
+    db.collection("patient_links").document(user["uid"]).set({"telefono": telefono}, merge=True)
+    # También actualizar en el doc del paciente si está vinculado
+    link_doc = db.collection("patient_links").document(user["uid"]).get()
+    if link_doc.exists:
+        link = link_doc.to_dict()
+        prof_uid = link.get("professional_uid")
+        patient_doc_id = link.get("patient_doc_id")
+        if prof_uid and patient_doc_id:
+            db.collection("professionals").document(prof_uid) \
+                .collection("patients").document(patient_doc_id) \
+                .set({"telefono": telefono}, merge=True)
+    return {"message": "Teléfono actualizado"}
+
+
 @router.get("/my-link")
 def get_my_link(user: dict = Depends(get_current_user)):
-    """Paciente: obtiene su vínculo guardado (professional_uid, patient_doc_id)."""
+    """Paciente: obtiene su vínculo con nombre y código del profesional."""
     if user.get("role") != "patient":
         raise HTTPException(status_code=403, detail="Solo pacientes")
     db = get_firestore()
     doc = db.collection("patient_links").document(user["uid"]).get()
     if not doc.exists:
         raise HTTPException(status_code=404, detail="No vinculado")
-    return doc.to_dict()
+    data = doc.to_dict()
+    prof_uid = data.get("professional_uid", "")
+    # Enriquecer con nombre y código del profesional
+    try:
+        prof_profile = get_user(prof_uid)
+        data["professional_name"] = prof_profile.get("display_name") or prof_profile.get("email", "")
+    except Exception:
+        data["professional_name"] = ""
+    try:
+        prof_doc = db.collection("professionals").document(prof_uid).get()
+        data["link_code"] = prof_doc.to_dict().get("link_code", "") if prof_doc.exists else ""
+    except Exception:
+        data["link_code"] = ""
+    return data
 
 
 @router.get("/resolve-code/{code}")

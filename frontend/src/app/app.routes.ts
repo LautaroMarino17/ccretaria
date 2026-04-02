@@ -83,6 +83,11 @@ export const routes: Routes = [
           .then(m => m.PatientDashboardComponent)
       },
       {
+        path: 'link',
+        loadComponent: () => import('./features/patient/link/patient-link.component')
+          .then(m => m.PatientLinkComponent)
+      },
+      {
         path: 'histories',
         loadComponent: () => import('./features/patient/clinical-histories/patient-histories.component')
           .then(m => m.PatientHistoriesComponent)

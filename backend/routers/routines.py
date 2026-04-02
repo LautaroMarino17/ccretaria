@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from dependencies import get_current_user, require_professional
 from services.firebase_service import get_firestore, get_user
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
@@ -11,29 +11,30 @@ router = APIRouter()
 class Exercise(BaseModel):
     nombre: str
     descripcion: Optional[str] = ""
-    series: Optional[str] = ""
-    repeticiones: Optional[str] = ""
-    duracion: Optional[str] = ""
-    frecuencia: Optional[str] = ""
-    imagen_url: Optional[str] = ""
+    reps_seg_mts: Optional[str] = ""
+    carga: Optional[str] = ""
+
+
+class Circuit(BaseModel):
+    nombre: str
+    rondas: Optional[str] = ""
+    ejercicios: List[Exercise] = []
 
 
 class RoutineCreate(BaseModel):
     patient_id: str
     titulo: str
     descripcion: Optional[str] = ""
-    ejercicios: list[Exercise] = []
+    circuitos: List[Circuit] = []
     observaciones: Optional[str] = ""
 
 
 class RoutineUpdate(BaseModel):
     titulo: Optional[str] = None
     descripcion: Optional[str] = None
-    ejercicios: Optional[list[Exercise]] = None
+    circuitos: Optional[List[Circuit]] = None
     observaciones: Optional[str] = None
 
-
-# ── Profesional: CRUD completo ────────────────────────────────────
 
 @router.get("/patient/{patient_id}")
 def list_routines(patient_id: str, user: dict = Depends(get_current_user)):
@@ -49,7 +50,6 @@ def list_routines(patient_id: str, user: dict = Depends(get_current_user)):
         return results
 
     elif role == "patient":
-        # Leer el vínculo guardado en patient_links/{uid}
         link_doc = db.collection("patient_links").document(user["uid"]).get()
         if not link_doc.exists:
             return []
@@ -62,7 +62,6 @@ def list_routines(patient_id: str, user: dict = Depends(get_current_user)):
             .collection("patients").document(patient_doc_id) \
             .collection("routines").stream()
         results = [{"id": d.id, **d.to_dict()} for d in docs]
-        # Agregar nombre del profesional a cada rutina
         prof_names: dict = {}
         for r in results:
             uid = r.get("professional_uid", "")
@@ -80,11 +79,10 @@ def list_routines(patient_id: str, user: dict = Depends(get_current_user)):
 
 @router.post("/")
 def create_routine(body: RoutineCreate, user: dict = Depends(get_current_user)):
-    """Crea una rutina de ejercicios para un paciente."""
+    """Crea una rutina para un paciente."""
     require_professional(user)
     db = get_firestore()
 
-    # Verificar que el paciente existe
     patient_ref = db.collection("professionals").document(user["uid"]) \
         .collection("patients").document(body.patient_id).get()
     if not patient_ref.exists:

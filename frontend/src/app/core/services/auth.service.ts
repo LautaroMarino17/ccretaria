@@ -38,9 +38,16 @@ export class AuthService {
   }
 
   async getIdToken(): Promise<string> {
-    const user = this.auth.currentUser;
-    if (!user) throw new Error('No hay usuario autenticado');
-    return user.getIdToken();
+    return new Promise((resolve, reject) => {
+      const unsubscribe = onAuthStateChanged(this.auth, (user) => {
+        unsubscribe();
+        if (user) {
+          user.getIdToken().then(resolve).catch(reject);
+        } else {
+          reject(new Error('No hay usuario autenticado'));
+        }
+      });
+    });
   }
 
   get currentUser(): AppUser | null {

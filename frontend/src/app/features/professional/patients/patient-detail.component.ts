@@ -54,7 +54,8 @@ import { ApiService } from '../../../core/services/api.service';
           <div class="section-header">
             <h2>Datos del paciente</h2>
             <div class="section-actions">
-              <button class="btn-edit" (click)="editingPhone.set(!editingPhone())">{{ editingPhone() ? 'Cancelar' : 'Editar teléfono' }}</button>
+              <button class="btn-edit" (click)="editingPhone.set(!editingPhone()); editingEmail.set(false)">{{ editingPhone() ? 'Cancelar' : 'Editar teléfono' }}</button>
+              <button class="btn-edit" (click)="editingEmail.set(!editingEmail()); editingPhone.set(false)">{{ editingEmail() ? 'Cancelar' : 'Editar email' }}</button>
               <button class="btn-danger" (click)="confirmDelete.set(true)">Eliminar paciente</button>
             </div>
           </div>
@@ -71,7 +72,17 @@ import { ApiService } from '../../../core/services/api.service';
                 <span class="data-value">{{ patient().telefono || '—' }}</span>
               }
             </div>
-            <div class="data-item"><span class="data-label">Email</span><span class="data-value">{{ patient().email || '—' }}</span></div>
+            <div class="data-item">
+              <span class="data-label">Email</span>
+              @if (editingEmail()) {
+                <div class="phone-edit-row">
+                  <input [(ngModel)]="newEmail" [placeholder]="patient().email || 'Ingresá el email'" />
+                  <button class="btn-save" (click)="saveEmail()" [disabled]="savingEmail()">{{ savingEmail() ? '...' : 'Guardar' }}</button>
+                </div>
+              } @else {
+                <span class="data-value">{{ patient().email || '—' }}</span>
+              }
+            </div>
             <div class="data-item"><span class="data-label">Obra social</span><span class="data-value">{{ patient().obra_social || '—' }}</span></div>
             <div class="data-item"><span class="data-label">Nro. afiliado</span><span class="data-value">{{ patient().nro_afiliado || '—' }}</span></div>
           </div>
@@ -109,10 +120,27 @@ import { ApiService } from '../../../core/services/api.service';
                 <div class="edit-field"><label>Examen físico</label><textarea [(ngModel)]="editForm.examen_fisico" rows="3"></textarea></div>
                 <div class="edit-field"><label>Plan terapéutico</label><textarea [(ngModel)]="editForm.plan_terapeutico" rows="3"></textarea></div>
                 <div class="edit-field"><label>Observaciones</label><textarea [(ngModel)]="editForm.observaciones" rows="2"></textarea></div>
-                <div class="edit-field"><label>Imagen (URL)</label><input [(ngModel)]="editForm.imagen_url" placeholder="https://..." /></div>
-                <div class="edit-field-row">
-                  <div class="edit-field"><label>Nombre del estudio</label><input [(ngModel)]="editForm.estudio_nombre" placeholder="Ej: Radiografía de rodilla" /></div>
-                  <div class="edit-field"><label>Enlace al estudio</label><input [(ngModel)]="editForm.estudio_url" placeholder="https://..." /></div>
+                <div class="edit-field">
+                  <label>Imágenes</label>
+                  @for (img of editForm.imagenes; track $index) {
+                    <div class="link-row">
+                      <input [(ngModel)]="img.nombre" placeholder="Nombre (ej: RX rodilla)" class="link-name" />
+                      <input [(ngModel)]="img.url" placeholder="https://..." class="link-url" />
+                      <button type="button" class="btn-rm" (click)="editForm.imagenes.splice($index, 1)">✕</button>
+                    </div>
+                  }
+                  <button type="button" class="btn-add-link" (click)="editForm.imagenes.push({url:'',nombre:''})">+ Agregar imagen</button>
+                </div>
+                <div class="edit-field">
+                  <label>Estudios / Informes</label>
+                  @for (est of editForm.estudios; track $index) {
+                    <div class="link-row">
+                      <input [(ngModel)]="est.nombre" placeholder="Nombre (ej: Laboratorio)" class="link-name" />
+                      <input [(ngModel)]="est.url" placeholder="https://..." class="link-url" />
+                      <button type="button" class="btn-rm" (click)="editForm.estudios.splice($index, 1)">✕</button>
+                    </div>
+                  }
+                  <button type="button" class="btn-add-link" (click)="editForm.estudios.push({url:'',nombre:''})">+ Agregar estudio</button>
                 </div>
               </div>
               @if (editError()) { <div class="error-banner">{{ editError() }}</div> }
@@ -189,19 +217,30 @@ import { ApiService } from '../../../core/services/api.service';
                       @if (h.observaciones) {
                         <div class="detail-section"><label>Observaciones</label><p>{{ h.observaciones }}</p></div>
                       }
-                      @if (h.imagen_url) {
+                      @if (h.imagenes?.length > 0) {
                         <div class="detail-section">
-                          <label>Imagen adjunta</label>
-                          <img [src]="h.imagen_url" class="history-img" alt="Imagen adjunta" />
+                          <label>Imágenes</label>
+                          <div class="archivos-list">
+                            @for (img of h.imagenes; track $index) {
+                              <a [href]="img.url" target="_blank" class="estudio-link">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                {{ img.nombre || img.url }}
+                              </a>
+                            }
+                          </div>
                         </div>
                       }
-                      @if (h.estudio_url) {
+                      @if (h.estudios?.length > 0) {
                         <div class="detail-section">
-                          <label>Estudio médico</label>
-                          <a [href]="h.estudio_url" target="_blank" class="estudio-link">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                            {{ h.estudio_nombre || h.estudio_url }}
-                          </a>
+                          <label>Estudios / Informes</label>
+                          <div class="archivos-list">
+                            @for (est of h.estudios; track $index) {
+                              <a [href]="est.url" target="_blank" class="estudio-link">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                {{ est.nombre || est.url }}
+                              </a>
+                            }
+                          </div>
                         </div>
                       }
                     </div>
@@ -285,6 +324,12 @@ import { ApiService } from '../../../core/services/api.service';
     .history-img { max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 4px; }
     .estudio-link { display: inline-flex; align-items: center; gap: 6px; color: #4f46e5; font-size: 13px; text-decoration: none; font-weight: 500; }
     .estudio-link:hover { text-decoration: underline; }
+    .archivos-list { display: flex; flex-direction: column; gap: 6px; }
+    .link-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+    .link-name { flex: 1; min-width: 0; }
+    .link-url { flex: 2; min-width: 0; }
+    .btn-rm { padding: 4px 8px; background: #fef2f2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; flex-shrink: 0; }
+    .btn-add-link { padding: 5px 12px; background: #eef2ff; color: #4f46e5; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 2px; }
     .empty-small { font-size: 14px; color: #9ca3af; padding: 20px 0; text-align: center; }
 
     /* Modals */
@@ -327,6 +372,8 @@ export class PatientDetailComponent implements OnInit {
   loading = signal(true);
   editingPhone = signal(false);
   savingPhone = signal(false);
+  editingEmail = signal(false);
+  savingEmail = signal(false);
   confirmDelete = signal(false);
   deleting = signal(false);
   expanded = signal<string | null>(null);
@@ -334,6 +381,7 @@ export class PatientDetailComponent implements OnInit {
   saving = signal(false);
   editError = signal('');
   newPhone = '';
+  newEmail = '';
 
   editForm: any = {};
 
@@ -360,9 +408,8 @@ export class PatientDetailComponent implements OnInit {
       examen_fisico: h.examen_fisico || '',
       plan_terapeutico: h.plan_terapeutico || '',
       observaciones: h.observaciones || '',
-      imagen_url: h.imagen_url || '',
-      estudio_nombre: h.estudio_nombre || '',
-      estudio_url: h.estudio_url || ''
+      imagenes: (h.imagenes || []).map((i: any) => ({ url: i.url || '', nombre: i.nombre || '' })),
+      estudios: (h.estudios || []).map((e: any) => ({ url: e.url || '', nombre: e.nombre || '' })),
     };
   }
 
@@ -436,6 +483,20 @@ export class PatientDetailComponent implements OnInit {
         this.newPhone = '';
       },
       error: () => this.savingPhone.set(false)
+    });
+  }
+
+  saveEmail() {
+    if (!this.newEmail.trim()) return;
+    this.savingEmail.set(true);
+    this.api.updatePatientEmail(this.patientId, this.newEmail.trim()).subscribe({
+      next: () => {
+        this.patient.update(p => ({ ...p, email: this.newEmail.trim() }));
+        this.editingEmail.set(false);
+        this.savingEmail.set(false);
+        this.newEmail = '';
+      },
+      error: () => this.savingEmail.set(false)
     });
   }
 

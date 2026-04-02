@@ -43,12 +43,12 @@ def list_evaluations(patient_id: str, user: dict = Depends(get_current_user)):
     elif role == "patient":
         link_doc = db.collection("patient_links").document(user["uid"]).get()
         if not link_doc.exists:
-            raise HTTPException(status_code=404, detail="No estás vinculado a ningún profesional")
+            return []
         link = link_doc.to_dict()
         professional_uid = link.get("professional_uid", "")
         patient_doc_id = link.get("patient_doc_id", "")
         if not professional_uid or not patient_doc_id:
-            raise HTTPException(status_code=404, detail="Vínculo incompleto")
+            return []
     else:
         raise HTTPException(status_code=403, detail="Sin permisos")
 

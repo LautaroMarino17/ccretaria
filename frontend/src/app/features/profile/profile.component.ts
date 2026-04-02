@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { ApiService } from '../../core/services/api.service';
 
 @Component({
   selector: 'app-profile',
@@ -24,6 +25,38 @@ import { AuthService } from '../../core/services/auth.service';
             <p class="user-email">{{ user?.email }}</p>
             <span class="role-badge" [class]="user?.role">{{ roleLabel() }}</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Datos de contacto -->
+      <div class="section-card">
+        <h2>Datos de contacto</h2>
+
+        <!-- Teléfono (ambos roles) -->
+        <div class="field">
+          <label>Teléfono</label>
+          <div class="input-row">
+            <input [(ngModel)]="telefono" placeholder="Ej: +54 11 1234-5678" />
+          </div>
+        </div>
+
+        <!-- Lugares de atención (solo profesional) -->
+        @if (user?.role === 'professional') {
+          <div class="field">
+            <label>Lugares de atención</label>
+            <p class="field-hint">Ingresá cada lugar en una línea separada</p>
+            <textarea [(ngModel)]="lugaresText" rows="4"
+              placeholder="Ej:&#10;Consultorio Central - Av. Corrientes 1234, CABA&#10;Clínica Norte - Maipú 567, San Isidro"></textarea>
+          </div>
+        }
+
+        @if (contactSuccess()) { <div class="success-banner">Datos actualizados correctamente</div> }
+        @if (contactError()) { <div class="error-banner">{{ contactError() }}</div> }
+
+        <div class="form-actions">
+          <button class="btn-primary" (click)="saveContact()" [disabled]="savingContact()">
+            {{ savingContact() ? 'Guardando...' : 'Guardar datos' }}
+          </button>
         </div>
       </div>
 
@@ -72,12 +105,12 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
         </div>
 
-        @if (error()) { <div class="error-banner">{{ error() }}</div> }
-        @if (success()) { <div class="success-banner">Contraseña actualizada correctamente</div> }
+        @if (pwError()) { <div class="error-banner">{{ pwError() }}</div> }
+        @if (pwSuccess()) { <div class="success-banner">Contraseña actualizada correctamente</div> }
 
         <div class="form-actions">
-          <button class="btn-primary" (click)="changePassword()" [disabled]="saving() || !currentPassword || !newPassword || !confirmPassword">
-            {{ saving() ? 'Guardando...' : 'Cambiar contraseña' }}
+          <button class="btn-primary" (click)="changePassword()" [disabled]="savingPw() || !currentPassword || !newPassword || !confirmPassword">
+            {{ savingPw() ? 'Guardando...' : 'Cambiar contraseña' }}
           </button>
         </div>
       </div>
@@ -101,10 +134,12 @@ import { AuthService } from '../../core/services/auth.service';
     .role-badge.patient { background: #f0fdf4; color: #16a34a; }
 
     .form-fields { display: flex; flex-direction: column; gap: 14px; }
-    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
     label { font-size: 13px; font-weight: 500; color: #374151; }
-    input { padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; }
-    input:focus { border-color: #4f46e5; }
+    .field-hint { font-size: 12px; color: #9ca3af; margin: -2px 0 4px; }
+    input, textarea { padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; resize: vertical; }
+    input:focus, textarea:focus { border-color: #4f46e5; }
+    .input-row { display: flex; gap: 8px; }
     .password-wrap { position: relative; display: flex; align-items: center; }
     .password-wrap input { padding-right: 40px; }
     .btn-eye { position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #9ca3af; display: flex; padding: 0; }
@@ -117,24 +152,32 @@ import { AuthService } from '../../core/services/auth.service';
     .error-banner { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-top: 12px; }
     .success-banner { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-top: 12px; }
 
-    @media (max-width: 480px) {
-      .section-card { padding: 18px; }
-    }
+    @media (max-width: 480px) { .section-card { padding: 18px; } }
   `]
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
   private authService = inject(AuthService);
+  private api = inject(ApiService);
 
   user = this.authService.currentUser;
+
+  // Datos de contacto
+  telefono = '';
+  lugaresText = '';
+  savingContact = signal(false);
+  contactSuccess = signal(false);
+  contactError = signal('');
+
+  // Contraseña
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
   showCurrent = false;
   showNew = false;
   showConfirm = false;
-  saving = signal(false);
-  error = signal('');
-  success = signal(false);
+  savingPw = signal(false);
+  pwError = signal('');
+  pwSuccess = signal(false);
 
   initial(): string {
     return (this.user?.displayName || this.user?.email || '?')[0].toUpperCase();
@@ -144,37 +187,63 @@ export class ProfileComponent {
     return this.user?.role === 'professional' ? 'Profesional' : 'Paciente';
   }
 
+  ngOnInit() {
+    if (this.user?.role === 'professional') {
+      this.api.getProfessionalProfile().subscribe({
+        next: (data) => {
+          this.telefono = data.telefono || '';
+          this.lugaresText = (data.lugares_atencion || []).join('\n');
+        }
+      });
+    } else {
+      // Para paciente cargamos el teléfono del vínculo si existe
+      this.api.getMyLink().subscribe({
+        next: (link) => { this.telefono = link.telefono || ''; },
+        error: () => {}
+      });
+    }
+  }
+
+  saveContact() {
+    this.savingContact.set(true);
+    this.contactError.set('');
+    this.contactSuccess.set(false);
+
+    if (this.user?.role === 'professional') {
+      const lugares = this.lugaresText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      this.api.updateProfessionalProfile({ telefono: this.telefono.trim(), lugares_atencion: lugares }).subscribe({
+        next: () => { this.savingContact.set(false); this.contactSuccess.set(true); setTimeout(() => this.contactSuccess.set(false), 3000); },
+        error: (err) => { this.savingContact.set(false); this.contactError.set(err.error?.detail || 'Error al guardar'); }
+      });
+    } else {
+      this.api.updateMyPhone(this.telefono.trim()).subscribe({
+        next: () => { this.savingContact.set(false); this.contactSuccess.set(true); setTimeout(() => this.contactSuccess.set(false), 3000); },
+        error: (err) => { this.savingContact.set(false); this.contactError.set(err.error?.detail || 'Error al guardar'); }
+      });
+    }
+  }
+
   changePassword() {
-    this.error.set('');
-    this.success.set(false);
-
-    if (this.newPassword.length < 6) {
-      this.error.set('La nueva contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-    if (this.newPassword !== this.confirmPassword) {
-      this.error.set('Las contraseñas nuevas no coinciden');
-      return;
-    }
-
-    this.saving.set(true);
+    this.pwError.set('');
+    this.pwSuccess.set(false);
+    if (this.newPassword.length < 6) { this.pwError.set('La nueva contraseña debe tener al menos 6 caracteres'); return; }
+    if (this.newPassword !== this.confirmPassword) { this.pwError.set('Las contraseñas nuevas no coinciden'); return; }
+    this.savingPw.set(true);
     this.authService.changePassword(this.currentPassword, this.newPassword).subscribe({
       next: () => {
-        this.saving.set(false);
-        this.success.set(true);
-        this.currentPassword = '';
-        this.newPassword = '';
-        this.confirmPassword = '';
+        this.savingPw.set(false);
+        this.pwSuccess.set(true);
+        this.currentPassword = ''; this.newPassword = ''; this.confirmPassword = '';
       },
       error: (err: any) => {
-        this.saving.set(false);
+        this.savingPw.set(false);
         const code = err?.code || '';
         if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
-          this.error.set('La contraseña actual es incorrecta');
+          this.pwError.set('La contraseña actual es incorrecta');
         } else if (code === 'auth/weak-password') {
-          this.error.set('La nueva contraseña es demasiado débil');
+          this.pwError.set('La nueva contraseña es demasiado débil');
         } else {
-          this.error.set('Error al cambiar la contraseña. Intentá de nuevo.');
+          this.pwError.set('Error al cambiar la contraseña. Intentá de nuevo.');
         }
       }
     });

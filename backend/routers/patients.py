@@ -27,6 +27,30 @@ class RoutineRequest(BaseModel):
     patient_info: dict
 
 
+def _registry_key(email: str) -> str:
+    """Normaliza el email para usarlo como clave del registry."""
+    return email.strip().lower()
+
+
+def _register_patient(db, prof_uid: str, patient_doc_id: str, email: str):
+    """Registra/actualiza la entrada del paciente en el registry global."""
+    key = _registry_key(email)
+    reg_ref = db.collection("patient_registry").document(key)
+    reg_doc = reg_ref.get()
+    if reg_doc.exists:
+        professionals = reg_doc.to_dict().get("professionals", [])
+        # Verificar si ya está este profesional
+        if not any(p["prof_uid"] == prof_uid for p in professionals):
+            professionals.append({"prof_uid": prof_uid, "patient_doc_id": patient_doc_id})
+            reg_ref.update({"professionals": professionals})
+    else:
+        reg_ref.set({
+            "email": key,
+            "professionals": [{"prof_uid": prof_uid, "patient_doc_id": patient_doc_id}],
+            "created_at": SERVER_TIMESTAMP
+        })
+
+
 @router.get("/")
 def list_patients(user: dict = Depends(get_current_user)):
     """Lista los pacientes del profesional autenticado."""
@@ -40,14 +64,19 @@ def list_patients(user: dict = Depends(get_current_user)):
 @router.post("/")
 def create_patient(body: PatientCreate, user: dict = Depends(get_current_user)):
     """Crea un nuevo paciente asociado al profesional.
-    Si ya existe un paciente con el mismo email, devuelve el existente sin crear duplicado."""
+    - Si el email ya existe en este profesional → devuelve el doc existente.
+    - Si el email ya existe en el registry global → crea un doc en este profesional
+      usando los datos que el médico ingresó, y registra la asociación.
+    - Si el DNI ya existe en este profesional → error.
+    """
     require_professional(user)
     db = get_firestore()
     ref = db.collection("professionals").document(user["uid"]).collection("patients")
 
-    # Si tiene email, verificar si ya existe → reusar el mismo doc
+    # Si tiene email, verificar si ya existe en ESTE profesional
     if body.email:
-        existing_email = ref.where("email", "==", body.email).limit(1).stream()
+        email_key = _registry_key(body.email)
+        existing_email = ref.where("email", "==", email_key).limit(1).stream()
         existing_doc = next(existing_email, None)
         if existing_doc:
             return {"id": existing_doc.id, "message": "Paciente existente recuperado"}
@@ -58,11 +87,22 @@ def create_patient(body: PatientCreate, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=409, detail="Ya existe un paciente con ese DNI")
 
     data = body.model_dump()
+    if data.get("email"):
+        data["email"] = _registry_key(data["email"])
     data["created_at"] = SERVER_TIMESTAMP
     data["professional_uid"] = user["uid"]
 
     doc = ref.add(data)
-    return {"id": doc[1].id, "message": "Paciente creado correctamente"}
+    patient_doc_id = doc[1].id
+
+    # Registrar en el registry global si tiene email
+    if body.email:
+        try:
+            _register_patient(db, user["uid"], patient_doc_id, body.email)
+        except Exception:
+            pass
+
+    return {"id": patient_doc_id, "message": "Paciente creado correctamente"}
 
 
 @router.get("/{patient_id}")
@@ -81,7 +121,7 @@ def get_patient(patient_id: str, user: dict = Depends(get_current_user)):
 
 @router.patch("/{patient_id}")
 def update_patient(patient_id: str, body: dict, user: dict = Depends(get_current_user)):
-    """Profesional: actualiza el teléfono del paciente."""
+    """Profesional: actualiza el teléfono o email del paciente."""
     require_professional(user)
     db = get_firestore()
     ref = db.collection("professionals").document(user["uid"]) \
@@ -102,8 +142,29 @@ def delete_patient(patient_id: str, user: dict = Depends(get_current_user)):
     db = get_firestore()
     patient_ref = db.collection("professionals").document(user["uid"]) \
         .collection("patients").document(patient_id)
-    if not patient_ref.get().exists:
+    patient_doc = patient_ref.get()
+    if not patient_doc.exists:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
+
+    # Quitar del registry global si tiene email
+    try:
+        email = patient_doc.to_dict().get("email", "")
+        if email:
+            key = _registry_key(email)
+            reg_ref = db.collection("patient_registry").document(key)
+            reg_doc = reg_ref.get()
+            if reg_doc.exists:
+                professionals = [
+                    p for p in reg_doc.to_dict().get("professionals", [])
+                    if not (p["prof_uid"] == user["uid"] and p["patient_doc_id"] == patient_id)
+                ]
+                if professionals:
+                    reg_ref.update({"professionals": professionals})
+                else:
+                    reg_ref.delete()
+    except Exception:
+        pass
+
     # Eliminar subcolecciones
     for subcol in ["routines", "clinical_histories", "evaluations"]:
         for doc in patient_ref.collection(subcol).stream():

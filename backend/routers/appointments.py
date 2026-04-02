@@ -182,10 +182,27 @@ def book_appointment(body: AppointmentBook, user: dict = Depends(get_current_use
         prof_doc = db.collection("professionals").document(body.professional_uid).get()
         prof_name = prof_doc.to_dict().get("display_name", "") if prof_doc.exists else ""
 
+    # Obtener nombre del paciente desde el doc del profesional (tiene precedencia sobre Firebase Auth)
+    patient_name = user.get("name", user.get("email", ""))
+    link_doc = db.collection("patient_links").document(user["uid"]).get()
+    if link_doc.exists:
+        link_data = link_doc.to_dict()
+        if link_data.get("professional_uid") == body.professional_uid:
+            patient_doc_id = link_data.get("patient_doc_id")
+            if patient_doc_id:
+                p_doc = db.collection("professionals").document(body.professional_uid) \
+                    .collection("patients").document(patient_doc_id).get()
+                if p_doc.exists:
+                    p = p_doc.to_dict()
+                    nombre = p.get("nombre", "")
+                    apellido = p.get("apellido", "")
+                    if nombre or apellido:
+                        patient_name = f"{nombre} {apellido}".strip()
+
     # Crear el turno
     appointment_data = {
         "patient_uid": user["uid"],
-        "patient_name": user.get("name", user.get("email", "")),
+        "patient_name": patient_name,
         "professional_uid": body.professional_uid,
         "professional_name": prof_name,
         "appointment_datetime": slot_data["datetime"],
@@ -370,11 +387,8 @@ def cancel_by_professional(appointment_id: str, user: dict = Depends(get_current
     if slot_id:
         slot_ref = db.collection("professionals").document(user["uid"]) \
             .collection("available_slots").document(slot_id)
-        slot_doc = slot_ref.get()
-        if slot_doc.exists and slot_doc.to_dict().get("assigned_by_professional"):
-            slot_ref.delete()
-        else:
-            slot_ref.update({"booked": False, "appointment_id": None})
+        if slot_ref.get().exists:
+            slot_ref.delete()  # siempre eliminar: el médico deja el día sin horario
 
     # Notificación al paciente (email)
     patient_uid = appt_data.get("patient_uid")

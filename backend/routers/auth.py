@@ -32,11 +32,17 @@ def set_role(body: SetRoleRequest):
         if body.role == "patient":
             # Sincronizar con TODOS los médicos que tienen este DNI en el registry global
             try:
+                import re as _re
+                _DNI_RE = _re.compile(r'^\d{7,8}$')
+                dni_raw = (body.dni or "").strip()
+                if dni_raw and not _DNI_RE.match(dni_raw):
+                    raise HTTPException(status_code=400, detail="DNI inválido. Ingresá 7 u 8 dígitos sin puntos ni espacios.")
+
                 db = get_firestore()
                 user_profile = get_user(body.uid)
                 display_name = user_profile.get("display_name", "")
                 email = (user_profile.get("email", "") or "").strip().lower()
-                dni = (body.dni or "").strip()
+                dni = dni_raw
 
                 parts = display_name.split(" ", 1) if display_name else []
                 nombre_real = parts[0] if parts else ""

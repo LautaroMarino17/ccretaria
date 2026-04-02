@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
@@ -5,6 +6,8 @@ from dependencies import get_current_user, require_professional
 from services.firebase_service import get_firestore
 from services.llm_service import generate_routine
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
+
+_DNI_RE = re.compile(r'^\d{7,8}$')
 
 router = APIRouter()
 
@@ -70,6 +73,10 @@ def create_patient(body: PatientCreate, user: dict = Depends(get_current_user)):
     - Si el DNI ya existe en este profesional → error.
     """
     require_professional(user)
+
+    if not _DNI_RE.match(body.dni.strip()):
+        raise HTTPException(status_code=400, detail="DNI inválido. Ingresá 7 u 8 dígitos sin puntos ni espacios.")
+
     db = get_firestore()
     ref = db.collection("professionals").document(user["uid"]).collection("patients")
 

@@ -52,8 +52,11 @@ import { UserRole } from '../../../core/models/user.model';
           @if (form.value.role === 'patient') {
             <div class="field-group">
               <label for="dni">DNI <span class="required">*</span></label>
-              <input id="dni" type="text" formControlName="dni" placeholder="Ej: 44884488" inputmode="numeric" />
-              <span class="field-hint">Sin puntos ni espacios</span>
+              <input id="dni" type="text" formControlName="dni" placeholder="Ej: 44884488" inputmode="numeric" maxlength="8" />
+              <span class="field-hint">7 u 8 dígitos, sin puntos ni espacios</span>
+              @if (form.get('dni')?.dirty && form.get('dni')?.invalid) {
+                <span class="field-error">DNI inválido — ingresá 7 u 8 números</span>
+              }
             </div>
           }
 
@@ -170,6 +173,7 @@ import { UserRole } from '../../../core/models/user.model';
     .auth-footer a { color: #4f46e5; font-weight: 600; text-decoration: none; }
     .required { color: #dc2626; }
     .field-hint { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+    .field-error { font-size: 12px; color: #dc2626; margin-top: 2px; }
   `]
 })
 export class RegisterComponent {
@@ -187,7 +191,7 @@ export class RegisterComponent {
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     role: ['' as UserRole | ''],
-    dni: ['']
+    dni: ['', [Validators.pattern(/^\d{7,8}$/)]]
   });
 
   onSubmit() {

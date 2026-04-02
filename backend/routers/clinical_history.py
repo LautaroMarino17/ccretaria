@@ -66,9 +66,26 @@ def list_all_histories(user: dict = Depends(get_current_user)):
     for patient_doc in patients:
         patient_data = patient_doc.to_dict()
         patient_name = f"{patient_data.get('nombre', '')} {patient_data.get('apellido', '')}".strip()
+        patient_info = {
+            "nombre": patient_data.get("nombre", ""),
+            "apellido": patient_data.get("apellido", ""),
+            "dni": patient_data.get("dni", ""),
+            "fecha_nacimiento": patient_data.get("fecha_nacimiento", ""),
+            "sexo": patient_data.get("sexo", ""),
+            "email": patient_data.get("email", ""),
+            "telefono": patient_data.get("telefono", ""),
+            "obra_social": patient_data.get("obra_social", ""),
+            "nro_afiliado": patient_data.get("nro_afiliado", ""),
+        }
         histories = patient_doc.reference.collection("clinical_histories").stream()
         for h in histories:
-            results.append({"id": h.id, "patient_name": patient_name, "patient_id": patient_doc.id, **h.to_dict()})
+            results.append({
+                "id": h.id,
+                "patient_name": patient_name,
+                "patient_id": patient_doc.id,
+                "patient_info": patient_info,
+                **h.to_dict()
+            })
     results.sort(key=lambda x: str(x.get("fecha") or ""), reverse=True)
     return results
 

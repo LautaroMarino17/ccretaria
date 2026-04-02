@@ -50,13 +50,31 @@ def set_role(body: SetRoleRequest):
                                 "linked_at": SERVER_TIMESTAMP,
                                 "auto_linked": True
                             })
-                            # Actualizar todos los appointments de ese paciente para
-                            # añadir patient_uid y así unificar la identidad
-                            appts = db.collection("professionals").document(prof_uid) \
-                                .collection("appointments") \
-                                .where("patient_doc_id", "==", patient_doc_id).stream()
-                            for appt in appts:
-                                appt.reference.update({"patient_uid": body.uid})
+                            # Actualizar nombre real en el doc del paciente
+                            display_name = user_profile.get("display_name", "")
+                            if display_name:
+                                parts = display_name.split(" ", 1)
+                                nombre_real = parts[0]
+                                apellido_real = parts[1] if len(parts) > 1 else ""
+                                patient_doc.reference.update({
+                                    "nombre": nombre_real,
+                                    "apellido": apellido_real
+                                })
+                                # Actualizar patient_name en todos sus appointments
+                                appts = db.collection("professionals").document(prof_uid) \
+                                    .collection("appointments") \
+                                    .where("patient_doc_id", "==", patient_doc_id).stream()
+                                for appt in appts:
+                                    appt.reference.update({
+                                        "patient_uid": body.uid,
+                                        "patient_name": display_name
+                                    })
+                            else:
+                                appts = db.collection("professionals").document(prof_uid) \
+                                    .collection("appointments") \
+                                    .where("patient_doc_id", "==", patient_doc_id).stream()
+                                for appt in appts:
+                                    appt.reference.update({"patient_uid": body.uid})
             except Exception:
                 pass  # No fallar el registro por esto
 

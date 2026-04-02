@@ -53,6 +53,47 @@ import { ApiService } from '../../../core/services/api.service';
 
               @if (expanded() === h.id) {
                 <div class="history-detail">
+                  <!-- Datos personales del paciente -->
+                  <div class="patient-data-card">
+                    <div class="patient-data-row">
+                      <span class="pd-label">Paciente</span>
+                      <span class="pd-val">{{ h.patient_name }}</span>
+                    </div>
+                    @if (h.patient_info?.dni) {
+                      <div class="patient-data-row">
+                        <span class="pd-label">DNI</span>
+                        <span class="pd-val">{{ h.patient_info.dni }}</span>
+                      </div>
+                    }
+                    @if (h.patient_info?.fecha_nacimiento) {
+                      <div class="patient-data-row">
+                        <span class="pd-label">Fecha de nac.</span>
+                        <span class="pd-val">{{ h.patient_info.fecha_nacimiento }}</span>
+                      </div>
+                    }
+                    @if (h.patient_info?.sexo) {
+                      <div class="patient-data-row">
+                        <span class="pd-label">Sexo</span>
+                        <span class="pd-val">{{ h.patient_info.sexo }}</span>
+                      </div>
+                    }
+                    @if (h.patient_info?.obra_social) {
+                      <div class="patient-data-row">
+                        <span class="pd-label">Obra social</span>
+                        <span class="pd-val">{{ h.patient_info.obra_social }}{{ h.patient_info.nro_afiliado ? ' · Nro: ' + h.patient_info.nro_afiliado : '' }}</span>
+                      </div>
+                    }
+                    @if (h.patient_info?.telefono) {
+                      <div class="patient-data-row">
+                        <span class="pd-label">Teléfono</span>
+                        <span class="pd-val">{{ h.patient_info.telefono }}</span>
+                      </div>
+                    }
+                    <div class="patient-data-row">
+                      <span class="pd-label">Fecha de consulta</span>
+                      <span class="pd-val pd-date">{{ formatDate(h.fecha) }}</span>
+                    </div>
+                  </div>
                   @if (h.enfermedad_actual) { <div class="detail-section"><label>Enfermedad actual</label><p>{{ h.enfermedad_actual }}</p></div> }
                   @if (h.antecedentes_personales) { <div class="detail-section"><label>Antecedentes personales</label><p>{{ h.antecedentes_personales }}</p></div> }
                   @if (h.examen_fisico) { <div class="detail-section"><label>Examen físico</label><p>{{ h.examen_fisico }}</p></div> }
@@ -176,6 +217,11 @@ import { ApiService } from '../../../core/services/api.service';
     .history-card.expanded .chevron { transform: rotate(180deg); }
 
     .history-detail { padding: 16px 18px 18px; border-top: 1px solid #f3f4f6; display: flex; flex-direction: column; gap: 14px; animation: slideDown 0.15s ease; }
+    .patient-data-card { background: #f8faff; border: 1px solid #e0e7ff; border-radius: 10px; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 6px 24px; }
+    .patient-data-row { display: flex; align-items: baseline; gap: 6px; min-width: 160px; }
+    .pd-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+    .pd-val { font-size: 14px; color: #111827; font-weight: 500; }
+    .pd-date { color: #4f46e5; font-weight: 600; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     .detail-section label { display: block; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .detail-section p { font-size: 14px; color: #374151; margin: 0; line-height: 1.6; }

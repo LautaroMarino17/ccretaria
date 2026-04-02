@@ -50,6 +50,13 @@ def set_role(body: SetRoleRequest):
                                 "linked_at": SERVER_TIMESTAMP,
                                 "auto_linked": True
                             })
+                            # Actualizar todos los appointments de ese paciente para
+                            # añadir patient_uid y así unificar la identidad
+                            appts = db.collection("professionals").document(prof_uid) \
+                                .collection("appointments") \
+                                .where("patient_doc_id", "==", patient_doc_id).stream()
+                            for appt in appts:
+                                appt.reference.update({"patient_uid": body.uid})
             except Exception:
                 pass  # No fallar el registro por esto
 

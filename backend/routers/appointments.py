@@ -98,8 +98,21 @@ def list_appointments(user: dict = Depends(get_current_user)):
 
     if role == "professional":
         ref = db.collection("professionals").document(user["uid"]).collection("appointments")
-        docs = ref.order_by("appointment_datetime").stream()
-        return [{"id": d.id, **d.to_dict()} for d in docs]
+        results = []
+        for d in ref.order_by("appointment_datetime").stream():
+            appt = {"id": d.id, **d.to_dict()}
+            # Si el paciente está registrado en la app, usar su nombre real
+            patient_uid = appt.get("patient_uid")
+            if patient_uid:
+                try:
+                    auth_profile = get_user(patient_uid)
+                    auth_name = auth_profile.get("display_name", "")
+                    if auth_name:
+                        appt["patient_name"] = auth_name
+                except Exception:
+                    pass
+            results.append(appt)
+        return results
 
     elif role == "patient":
         docs = db.collection_group("appointments") \
@@ -274,8 +287,19 @@ def list_day_slots(professional_uid: str, date: str, user: dict = Depends(get_cu
                     .collection("appointments").document(data["appointment_id"]).get()
                 if appt_doc.exists:
                     appt_data = appt_doc.to_dict()
-                    slot["patient_name"] = appt_data.get("patient_name", "")
-                    slot["patient_uid"] = appt_data.get("patient_uid", "")
+                    patient_uid = appt_data.get("patient_uid")
+                    # Si el paciente está registrado en la app, usar su nombre real
+                    display_name = appt_data.get("patient_name", "")
+                    if patient_uid:
+                        try:
+                            auth_profile = get_user(patient_uid)
+                            auth_name = auth_profile.get("display_name", "")
+                            if auth_name:
+                                display_name = auth_name
+                        except Exception:
+                            pass
+                    slot["patient_name"] = display_name
+                    slot["patient_uid"] = patient_uid
                     slot["appointment_status"] = appt_data.get("status", "")
         else:
             if d.id in my_slot_ids:

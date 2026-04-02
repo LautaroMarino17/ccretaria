@@ -39,21 +39,28 @@ def list_patients(user: dict = Depends(get_current_user)):
 
 @router.post("/")
 def create_patient(body: PatientCreate, user: dict = Depends(get_current_user)):
-    """Crea un nuevo paciente asociado al profesional."""
+    """Crea un nuevo paciente asociado al profesional.
+    Si ya existe un paciente con el mismo email, devuelve el existente sin crear duplicado."""
     require_professional(user)
     db = get_firestore()
+    ref = db.collection("professionals").document(user["uid"]).collection("patients")
+
+    # Si tiene email, verificar si ya existe → reusar el mismo doc
+    if body.email:
+        existing_email = ref.where("email", "==", body.email).limit(1).stream()
+        existing_doc = next(existing_email, None)
+        if existing_doc:
+            return {"id": existing_doc.id, "message": "Paciente existente recuperado"}
 
     # Verificar DNI único por profesional
-    existing = db.collection("professionals").document(user["uid"]) \
-        .collection("patients").where("dni", "==", body.dni).limit(1).stream()
-    if any(True for _ in existing):
+    existing_dni = ref.where("dni", "==", body.dni).limit(1).stream()
+    if next(existing_dni, None):
         raise HTTPException(status_code=409, detail="Ya existe un paciente con ese DNI")
 
     data = body.model_dump()
     data["created_at"] = SERVER_TIMESTAMP
     data["professional_uid"] = user["uid"]
 
-    ref = db.collection("professionals").document(user["uid"]).collection("patients")
     doc = ref.add(data)
     return {"id": doc[1].id, "message": "Paciente creado correctamente"}
 

@@ -79,11 +79,28 @@ def create_patient(body: PatientCreate, user: dict = Depends(get_current_user)):
         existing_email = ref.where("email", "==", email_key).limit(1).stream()
         existing_doc = next(existing_email, None)
         if existing_doc:
+            existing_data = existing_doc.to_dict()
+            # Si el DNI no coincide, hay un conflicto de identidad
+            if existing_data.get("dni") and existing_data.get("dni") != body.dni:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Ese email ya pertenece a un paciente con DNI {existing_data['dni']}. "
+                           f"Verificá los datos o corregí el email."
+                )
             return {"id": existing_doc.id, "message": "Paciente existente recuperado"}
 
     # Verificar DNI único por profesional
     existing_dni = ref.where("dni", "==", body.dni).limit(1).stream()
-    if next(existing_dni, None):
+    existing_dni_doc = next(existing_dni, None)
+    if existing_dni_doc:
+        existing_data = existing_dni_doc.to_dict()
+        # Si tiene email distinto, también es un conflicto
+        if body.email and existing_data.get("email") and existing_data.get("email") != _registry_key(body.email):
+            raise HTTPException(
+                status_code=409,
+                detail=f"Ese DNI ya pertenece a un paciente con email {existing_data['email']}. "
+                       f"Verificá los datos o corregí el email."
+            )
         raise HTTPException(status_code=409, detail="Ya existe un paciente con ese DNI")
 
     data = body.model_dump()

@@ -6,7 +6,7 @@ import { ApiService } from '../../../core/services/api.service';
 
 interface Exercise {
   nombre: string;
-  descripcion: string;
+  enlace: string;
   reps_seg_mts: string;
   carga: string;
 }
@@ -25,7 +25,7 @@ interface Routine {
   observaciones: string;
 }
 
-const EMPTY_EXERCISE = (): Exercise => ({ nombre: '', descripcion: '', reps_seg_mts: '', carga: '' });
+const EMPTY_EXERCISE = (): Exercise => ({ nombre: '', enlace: '', reps_seg_mts: '', carga: '' });
 const EMPTY_CIRCUIT = (): Circuit => ({ nombre: '', rondas: '', ejercicios: [EMPTY_EXERCISE()] });
 const EMPTY_ROUTINE = (): Routine => ({ titulo: '', descripcion: '', circuitos: [EMPTY_CIRCUIT()], observaciones: '' });
 
@@ -66,10 +66,10 @@ const EMPTY_ROUTINE = (): Routine => ({ titulo: '', descripcion: '', circuitos: 
           </div>
 
           <div class="circuits-section">
-            @for (circ of form().circuitos; track $index) {
+            @for (circ of form().circuitos; track circ; let ci = $index) {
               <div class="circuit-block">
                 <div class="circuit-header">
-                  <div class="circuit-num">Bloque {{ $index + 1 }}</div>
+                  <div class="circuit-num">Bloque {{ ci + 1 }}</div>
                   <div class="circuit-title-row">
                     <div class="field-inline">
                       <label>Nombre del bloque/circuito</label>
@@ -81,7 +81,7 @@ const EMPTY_ROUTINE = (): Routine => ({ titulo: '', descripcion: '', circuitos: 
                     </div>
                   </div>
                   @if (form().circuitos.length > 1) {
-                    <button class="btn-remove-circuit" (click)="removeCircuit($index)" title="Eliminar bloque">
+                    <button class="btn-remove-circuit" (click)="removeCircuit(ci)" title="Eliminar bloque">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                   }
@@ -91,26 +91,26 @@ const EMPTY_ROUTINE = (): Routine => ({ titulo: '', descripcion: '', circuitos: 
                 <div class="exercises-table">
                   <div class="table-head">
                     <span>Ejercicio</span>
-                    <span>Descripción</span>
+                    <span>Enlace (video)</span>
                     <span>Rep / Seg / Mts</span>
                     <span>Carga %</span>
                     <span></span>
                   </div>
-                  @for (ex of circ.ejercicios; track $index) {
+                  @for (ex of circ.ejercicios; track ex; let ei = $index) {
                     <div class="table-row">
                       <input [(ngModel)]="ex.nombre" placeholder="Nombre *" />
-                      <input [(ngModel)]="ex.descripcion" placeholder="Descripción..." />
+                      <input [(ngModel)]="ex.enlace" placeholder="https://..." />
                       <input [(ngModel)]="ex.reps_seg_mts" placeholder="Ej: 3x5&quot; / 30&quot;" />
                       <input [(ngModel)]="ex.carga" placeholder="Ej: 70% / 25KG" />
                       @if (circ.ejercicios.length > 1) {
-                        <button class="btn-remove-row" (click)="removeExercise($index, $index)" title="Eliminar ejercicio">×</button>
+                        <button class="btn-remove-row" (click)="removeExercise(ci, ei)" title="Eliminar ejercicio">×</button>
                       } @else {
                         <span></span>
                       }
                     </div>
                   }
                 </div>
-                <button class="btn-add-exercise" (click)="addExercise($index)">+ Agregar ejercicio</button>
+                <button class="btn-add-exercise" (click)="addExercise(ci)">+ Agregar ejercicio</button>
               </div>
             }
           </div>
@@ -171,12 +171,16 @@ const EMPTY_ROUTINE = (): Routine => ({ titulo: '', descripcion: '', circuitos: 
                   </div>
                   <div class="preview-table">
                     <div class="preview-head">
-                      <span>Ejercicio</span><span>Descripción</span><span>Rep/Seg/Mts</span><span>Carga</span>
+                      <span>Ejercicio</span><span>Enlace</span><span>Rep/Seg/Mts</span><span>Carga</span>
                     </div>
                     @for (ex of circ.ejercicios; track $index) {
                       <div class="preview-row">
                         <span>{{ ex.nombre }}</span>
-                        <span class="text-muted">{{ ex.descripcion }}</span>
+                        <span class="text-muted">
+                          @if (ex.enlace) {
+                            <a [href]="ex.enlace" target="_blank" rel="noopener" class="link-video">Ver video</a>
+                          }
+                        </span>
                         <span>{{ ex.reps_seg_mts }}</span>
                         <span>{{ ex.carga }}</span>
                       </div>
@@ -266,6 +270,8 @@ const EMPTY_ROUTINE = (): Routine => ({ titulo: '', descripcion: '', circuitos: 
     .preview-row { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr; padding: 8px 12px; border-top: 1px solid #f3f4f6; gap: 8px; }
     .preview-row span { font-size: 13px; color: #374151; }
     .text-muted { color: #9ca3af !important; }
+    .link-video { color: #4f46e5; font-size: 12px; font-weight: 600; text-decoration: none; }
+    .link-video:hover { text-decoration: underline; }
 
     .obs-box { background: #fffbeb; border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
     .obs-label { display: block; font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
@@ -335,7 +341,7 @@ export class ManageRoutinesComponent implements OnInit {
         rondas: c.rondas || '',
         ejercicios: c.ejercicios?.length ? c.ejercicios.map((e: any) => ({
           nombre: e.nombre || '',
-          descripcion: e.descripcion || '',
+          enlace: e.enlace || e.descripcion || '',
           reps_seg_mts: e.reps_seg_mts || '',
           carga: e.carga || ''
         })) : [EMPTY_EXERCISE()]

@@ -390,7 +390,6 @@ def cancel_appointment(appointment_id: str, user: dict = Depends(get_current_use
         raise HTTPException(status_code=404, detail="Turno no encontrado")
 
     appt_data = appt_doc.to_dict()
-    appt_ref.update({"status": "cancelled"})
 
     slot_id = appt_data.get("slot_id")
     prof_uid = appt_data.get("professional_uid")
@@ -404,6 +403,12 @@ def cancel_appointment(appointment_id: str, user: dict = Depends(get_current_use
         else:
             # Slot creado para disponibilidad: volver a disponible
             slot_ref.update({"booked": False, "appointment_id": None})
+
+    if role == "patient":
+        # El paciente cancela: eliminar el turno para que vuelva a aparecer como disponible
+        appt_ref.delete()
+    else:
+        appt_ref.update({"status": "cancelled"})
 
     return {"message": "Turno cancelado"}
 

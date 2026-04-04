@@ -11,6 +11,7 @@ router = APIRouter()
 class Exercise(BaseModel):
     nombre: str
     descripcion: Optional[str] = ""
+    enlace: Optional[str] = ""
     reps_seg_mts: Optional[str] = ""
     carga: Optional[str] = ""
 

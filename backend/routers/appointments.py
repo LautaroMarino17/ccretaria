@@ -362,9 +362,24 @@ def cancel_appointment(appointment_id: str, user: dict = Depends(get_current_use
         appt_ref = db.collection("professionals").document(user["uid"]) \
             .collection("appointments").document(appointment_id)
     elif role == "patient":
+        # Buscar por patient_uid (turno reservado por el paciente)
         docs = db.collection_group("appointments") \
             .where("patient_uid", "==", user["uid"]).stream()
         appt_ref = next((d.reference for d in docs if d.id == appointment_id), None)
+
+        # Si no encontró, buscar via patient_links (turno asignado por el profesional)
+        if appt_ref is None:
+            link_doc = db.collection("patient_links").document(user["uid"]).get()
+            if link_doc.exists:
+                link = link_doc.to_dict()
+                prof_uid_link = link.get("professional_uid", "")
+                patient_doc_id_link = link.get("patient_doc_id", "")
+                if prof_uid_link and patient_doc_id_link:
+                    candidate = db.collection("professionals").document(prof_uid_link) \
+                        .collection("appointments").document(appointment_id).get()
+                    if candidate.exists and candidate.to_dict().get("patient_doc_id") == patient_doc_id_link:
+                        appt_ref = candidate.reference
+
         if appt_ref is None:
             raise HTTPException(status_code=404, detail="Turno no encontrado")
     else:

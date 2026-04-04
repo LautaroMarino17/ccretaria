@@ -177,8 +177,8 @@ const EMPTY_ROUTINE = (): Routine => ({ titulo: '', descripcion: '', circuitos: 
                       <div class="preview-row">
                         <span>{{ ex.nombre }}</span>
                         <span class="text-muted">
-                          @if (ex.enlace) {
-                            <a [href]="ex.enlace" target="_blank" rel="noopener" class="link-video">Ver video</a>
+                          @if (ex.enlace || ex.descripcion) {
+                            <a [href]="ex.enlace || ex.descripcion" target="_blank" rel="noopener" class="link-video">Ver video</a>
                           }
                         </span>
                         <span>{{ ex.reps_seg_mts }}</span>

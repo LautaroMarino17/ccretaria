@@ -152,9 +152,47 @@ import { ApiService } from '../../../core/services/api.service';
           </div>
         }
 
+        <!-- Modal nueva historia manual -->
+        @if (showNewHistory()) {
+          <div class="modal-overlay" (click)="showNewHistory.set(false)">
+            <div class="modal modal-lg" (click)="$event.stopPropagation()">
+              <h3>Nueva historia clínica</h3>
+              <div class="edit-fields">
+                <div class="edit-field"><label>Motivo de consulta</label><textarea [(ngModel)]="newHistoryForm.motivo_consulta" rows="2" placeholder="Ej: Dolor lumbar de 3 días de evolución"></textarea></div>
+                <div class="edit-field"><label>Diagnóstico</label><textarea [(ngModel)]="newHistoryForm.diagnostico" rows="2" placeholder="Ej: Lumbalgia mecánica aguda"></textarea></div>
+                <div class="edit-field"><label>Enfermedad actual</label><textarea [(ngModel)]="newHistoryForm.enfermedad_actual" rows="3"></textarea></div>
+                <div class="edit-field"><label>Antecedentes personales</label><textarea [(ngModel)]="newHistoryForm.antecedentes_personales" rows="2"></textarea></div>
+                <div class="edit-field"><label>Antecedentes familiares</label><textarea [(ngModel)]="newHistoryForm.antecedentes_familiares" rows="2"></textarea></div>
+                <div class="edit-field"><label>Examen físico</label><textarea [(ngModel)]="newHistoryForm.examen_fisico" rows="3"></textarea></div>
+                <div class="edit-field"><label>Plan terapéutico</label><textarea [(ngModel)]="newHistoryForm.plan_terapeutico" rows="3"></textarea></div>
+                <div class="edit-field"><label>Estudios complementarios</label><textarea [(ngModel)]="newHistoryForm.estudios_complementarios" rows="2"></textarea></div>
+                <div class="edit-field"><label>Observaciones</label><textarea [(ngModel)]="newHistoryForm.observaciones" rows="2"></textarea></div>
+                <div class="edit-field">
+                  <label>Signos vitales (opcional)</label>
+                  <div class="signos-inputs">
+                    <input [(ngModel)]="newHistoryForm.signos_vitales.tension_arterial" placeholder="TA (ej: 120/80)" />
+                    <input [(ngModel)]="newHistoryForm.signos_vitales.frecuencia_cardiaca" placeholder="FC (ej: 72)" />
+                    <input [(ngModel)]="newHistoryForm.signos_vitales.temperatura" placeholder="Temp (ej: 36.5)" />
+                    <input [(ngModel)]="newHistoryForm.signos_vitales.peso" placeholder="Peso (ej: 70kg)" />
+                    <input [(ngModel)]="newHistoryForm.signos_vitales.saturacion" placeholder="SatO2 (ej: 98%)" />
+                  </div>
+                </div>
+              </div>
+              @if (newHistoryError()) { <div class="error-banner">{{ newHistoryError() }}</div> }
+              <div class="modal-actions">
+                <button class="btn-secondary" (click)="showNewHistory.set(false)">Cancelar</button>
+                <button class="btn-save" (click)="saveNewHistory()" [disabled]="savingNew()">{{ savingNew() ? 'Guardando...' : 'Guardar historia' }}</button>
+              </div>
+            </div>
+          </div>
+        }
+
         <!-- Historias clínicas -->
         <div class="section-card">
-          <h2>Historias clínicas</h2>
+          <div class="section-header">
+            <h2>Historias clínicas</h2>
+            <button class="btn-edit" (click)="openNewHistory()">+ Nueva historia</button>
+          </div>
           @if (histories().length === 0) {
             <div class="empty-small">No hay historias clínicas registradas aún</div>
           } @else {
@@ -331,6 +369,9 @@ import { ApiService } from '../../../core/services/api.service';
     .btn-rm { padding: 4px 8px; background: #fef2f2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; flex-shrink: 0; }
     .btn-add-link { padding: 5px 12px; background: #eef2ff; color: #4f46e5; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 2px; }
     .empty-small { font-size: 14px; color: #9ca3af; padding: 20px 0; text-align: center; }
+    .signos-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+    .signos-inputs input { padding: 7px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; outline: none; }
+    .signos-inputs input:focus { border-color: #4f46e5; }
 
     /* Modals */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
@@ -384,6 +425,43 @@ export class PatientDetailComponent implements OnInit {
   newEmail = '';
 
   editForm: any = {};
+
+  showNewHistory = signal(false);
+  savingNew = signal(false);
+  newHistoryError = signal('');
+  newHistoryForm: any = this.emptyHistoryForm();
+
+  emptyHistoryForm() {
+    return {
+      motivo_consulta: '', diagnostico: '', enfermedad_actual: '',
+      antecedentes_personales: '', antecedentes_familiares: '', examen_fisico: '',
+      plan_terapeutico: '', estudios_complementarios: '', observaciones: '',
+      signos_vitales: { tension_arterial: '', frecuencia_cardiaca: '', temperatura: '', peso: '', saturacion: '' }
+    };
+  }
+
+  openNewHistory() {
+    this.newHistoryForm = this.emptyHistoryForm();
+    this.newHistoryError.set('');
+    this.showNewHistory.set(true);
+  }
+
+  saveNewHistory() {
+    this.savingNew.set(true);
+    this.newHistoryError.set('');
+    const payload = { ...this.newHistoryForm, patient_id: this.patientId };
+    this.api.saveClinicalHistory(payload).subscribe({
+      next: () => {
+        this.showNewHistory.set(false);
+        this.savingNew.set(false);
+        this.api.getClinicalHistories(this.patientId).subscribe({ next: (data: any[]) => this.histories.set(data) });
+      },
+      error: (err: any) => {
+        this.newHistoryError.set(err.error?.detail || 'Error al guardar');
+        this.savingNew.set(false);
+      }
+    });
+  }
 
   ngOnInit() {
     this.api.getPatient(this.patientId).subscribe({

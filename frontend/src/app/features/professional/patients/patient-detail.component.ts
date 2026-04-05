@@ -210,6 +210,9 @@ import { ApiService } from '../../../core/services/api.service';
                       <button class="btn-icon-sm" (click)="printHistory(h)" title="Imprimir">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                       </button>
+                      <button class="btn-icon-sm" (click)="downloadHistory(h)" title="Descargar PDF">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </button>
                       <button class="btn-icon-sm" (click)="openEdit(h)" title="Editar">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
@@ -548,6 +551,45 @@ export class PatientDetailComponent implements OnInit {
       </body></html>`;
     const win = window.open('', '_blank');
     if (win) { win.document.write(html); win.document.close(); win.print(); }
+  }
+
+  downloadHistory(h: any) {
+    const patient = this.patient();
+    const date = this.formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha);
+    const sv = h.signos_vitales;
+    const signosHtml = sv ? `
+      <p><b>Signos vitales:</b>
+        ${sv.tension_arterial ? `TA: ${sv.tension_arterial}` : ''}
+        ${sv.frecuencia_cardiaca ? ` · FC: ${sv.frecuencia_cardiaca}` : ''}
+        ${sv.temperatura ? ` · Temp: ${sv.temperatura}` : ''}
+        ${sv.peso ? ` · Peso: ${sv.peso}` : ''}
+        ${sv.saturacion ? ` · SatO2: ${sv.saturacion}` : ''}
+      </p>` : '';
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Historia clínica - ${patient?.nombre} ${patient?.apellido}</title>
+      <style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#111}h1{font-size:22px;margin-bottom:4px}
+      .sub{color:#666;font-size:14px;margin-bottom:24px}.section{margin-bottom:16px}.section label{font-size:11px;font-weight:700;color:#666;text-transform:uppercase;display:block;margin-bottom:4px}
+      .section p{margin:0;line-height:1.6;font-size:14px}hr{border:none;border-top:1px solid #eee;margin:16px 0}</style></head>
+      <body>
+      <h1>${patient?.apellido}, ${patient?.nombre}</h1>
+      <div class="sub">DNI: ${patient?.dni} · Fecha de consulta: ${date}${h.professional_name ? ` · Prof: ${h.professional_name}` : ''}</div>
+      <hr>
+      ${h.motivo_consulta ? `<div class="section"><label>Motivo de consulta</label><p>${h.motivo_consulta}</p></div>` : ''}
+      ${h.diagnostico ? `<div class="section"><label>Diagnóstico</label><p>${h.diagnostico}</p></div>` : ''}
+      ${h.enfermedad_actual ? `<div class="section"><label>Enfermedad actual</label><p>${h.enfermedad_actual}</p></div>` : ''}
+      ${h.antecedentes_personales ? `<div class="section"><label>Antecedentes personales</label><p>${h.antecedentes_personales}</p></div>` : ''}
+      ${h.examen_fisico ? `<div class="section"><label>Examen físico</label><p>${h.examen_fisico}</p></div>` : ''}
+      ${signosHtml}
+      ${h.plan_terapeutico ? `<div class="section"><label>Plan terapéutico</label><p>${h.plan_terapeutico}</p></div>` : ''}
+      ${h.estudios_complementarios ? `<div class="section"><label>Estudios complementarios</label><p>${h.estudios_complementarios}</p></div>` : ''}
+      ${h.observaciones ? `<div class="section"><label>Observaciones</label><p>${h.observaciones}</p></div>` : ''}
+      </body></html>`;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `HC_${patient?.apellido}_${patient?.nombre}_${date}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   savePhone() {

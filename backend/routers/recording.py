@@ -1,14 +1,17 @@
 import traceback
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Request
 from dependencies import get_current_user, require_professional
 from services.transcription_service import transcribe_audio_file
 from services.llm_service import structure_clinical_history
+from main import limiter
 
 router = APIRouter()
 
 
 @router.post("/transcribe")
+@limiter.limit("10/minute")
 async def transcribe(
+    request: Request,
     audio: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):
@@ -37,7 +40,9 @@ async def transcribe(
 
 
 @router.post("/structure")
+@limiter.limit("10/minute")
 async def structure(
+    request: Request,
     body: dict,
     user: dict = Depends(get_current_user)
 ):
@@ -58,7 +63,9 @@ async def structure(
 
 
 @router.post("/transcribe-and-structure")
+@limiter.limit("10/minute")
 async def transcribe_and_structure(
+    request: Request,
     audio: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):

@@ -451,9 +451,8 @@ def cancel_by_professional(appointment_id: str, user: dict = Depends(get_current
             patient_profile = get_user(patient_uid)
             patient_email = patient_profile.get("email", "")
             if patient_email:
-                # TODO: enviar email real con servicio de mail (SendGrid, etc.)
-                print(f"[EMAIL CANCELACIÓN] Para: {patient_email} | "
-                      f"Tu turno del {formatted_dt} con {prof_name} fue cancelado.")
+                from services.email_service import send_appointment_cancelled
+                send_appointment_cancelled(patient_email, patient_name, prof_name, formatted_dt)
         except Exception:
             pass
 

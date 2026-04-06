@@ -3,7 +3,7 @@ from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Request
 from dependencies import get_current_user, require_professional
 from services.transcription_service import transcribe_audio_file
 from services.llm_service import structure_clinical_history
-from main import limiter
+from limiter import limiter
 
 router = APIRouter()
 

@@ -71,7 +71,10 @@ def set_role(body: SetRoleRequest):
                         })
 
                 # Sincronizar con CADA profesional que tiene este paciente
-                primary_link_set = db.collection("patient_links").document(body.uid).get().exists
+                primary_link_set = bool(next(
+                    db.collection("patient_links").document(body.uid)
+                      .collection("professionals").limit(1).stream(), None
+                ))
                 for entry in professionals_in_registry:
                     prof_uid = entry["prof_uid"]
                     patient_doc_id = entry["patient_doc_id"]
@@ -102,17 +105,19 @@ def set_role(body: SetRoleRequest):
                         except Exception:
                             pass
 
-                    # Crear el patient_link primario con el primer profesional encontrado
+                    # Crear entry en la subcollección por profesional
                     if not primary_link_set:
                         db.collection("patient_links").document(body.uid).set({
-                            "professional_uid": prof_uid,
-                            "patient_doc_id": patient_doc_id,
                             "patient_email": email,
                             "patient_dni": dni,
+                        }, merge=True)
+                        primary_link_set = True
+                    db.collection("patient_links").document(body.uid) \
+                        .collection("professionals").document(prof_uid).set({
+                            "patient_doc_id": patient_doc_id,
                             "linked_at": SERVER_TIMESTAMP,
                             "auto_linked": True
                         })
-                        primary_link_set = True
             except Exception:
                 pass  # No fallar el registro por esto
 
@@ -239,15 +244,17 @@ def link_to_professional(body: LinkProfessionalRequest, user: dict = Depends(get
         doc = ref.add(new_patient)
         patient_doc_id = doc[1].id
 
-    # Guardar el vínculo
+    # Guardar el vínculo en la subcollección por profesional
     patient_email = (user.get("email", "") or "").strip().lower()
     db.collection("patient_links").document(user["uid"]).set({
-        "professional_uid": prof_uid,
-        "patient_doc_id": patient_doc_id,
         "patient_email": patient_email,
         "patient_dni": dni,
-        "linked_at": SERVER_TIMESTAMP
-    })
+    }, merge=True)
+    db.collection("patient_links").document(user["uid"]) \
+        .collection("professionals").document(prof_uid).set({
+            "patient_doc_id": patient_doc_id,
+            "linked_at": SERVER_TIMESTAMP
+        })
 
     # Registrar en el registry global por DNI
     try:
@@ -377,14 +384,16 @@ def action_link_request(body: LinkRequestAction, user: dict = Depends(get_curren
         patient_doc_id = doc[1].id
 
     patient_email = (req_data.get("patient_email", "") or "").strip().lower()
-    # Guardar vínculo en patient_links
+    # Guardar vínculo en subcollección por profesional
     db.collection("patient_links").document(patient_uid).set({
-        "professional_uid": prof_uid,
-        "patient_doc_id": patient_doc_id,
         "patient_email": patient_email,
         "patient_dni": dni,
-        "linked_at": SERVER_TIMESTAMP,
-    })
+    }, merge=True)
+    db.collection("patient_links").document(patient_uid) \
+        .collection("professionals").document(prof_uid).set({
+            "patient_doc_id": patient_doc_id,
+            "linked_at": SERVER_TIMESTAMP,
+        })
 
     # Registrar en el registry global por DNI
     try:
@@ -452,16 +461,14 @@ def update_patient_phone(body: dict, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Solo pacientes")
     telefono = body.get("telefono", "").strip()
     db = get_firestore()
-    # Guardar en patient_links
     db.collection("patient_links").document(user["uid"]).set({"telefono": telefono}, merge=True)
-    # También actualizar en el doc del paciente si está vinculado
-    link_doc = db.collection("patient_links").document(user["uid"]).get()
-    if link_doc.exists:
-        link = link_doc.to_dict()
-        prof_uid = link.get("professional_uid")
-        patient_doc_id = link.get("patient_doc_id")
-        if prof_uid and patient_doc_id:
-            db.collection("professionals").document(prof_uid) \
+    # Actualizar en todos los docs de paciente vinculados
+    prof_links = db.collection("patient_links").document(user["uid"]) \
+        .collection("professionals").stream()
+    for pl in prof_links:
+        patient_doc_id = pl.to_dict().get("patient_doc_id")
+        if patient_doc_id:
+            db.collection("professionals").document(pl.id) \
                 .collection("patients").document(patient_doc_id) \
                 .set({"telefono": telefono}, merge=True)
     return {"message": "Teléfono actualizado"}
@@ -469,27 +476,42 @@ def update_patient_phone(body: dict, user: dict = Depends(get_current_user)):
 
 @router.get("/my-link")
 def get_my_link(user: dict = Depends(get_current_user)):
-    """Paciente: obtiene su vínculo con nombre y código del profesional."""
+    """Paciente: retorna todos sus vínculos con profesionales."""
     if user.get("role") != "patient":
         raise HTTPException(status_code=403, detail="Solo pacientes")
     db = get_firestore()
-    doc = db.collection("patient_links").document(user["uid"]).get()
-    if not doc.exists:
-        raise HTTPException(status_code=404, detail="No vinculado")
-    data = doc.to_dict()
-    prof_uid = data.get("professional_uid", "")
-    # Enriquecer con nombre y código del profesional
-    try:
-        prof_profile = get_user(prof_uid)
-        data["professional_name"] = prof_profile.get("display_name") or prof_profile.get("email", "")
-    except Exception:
-        data["professional_name"] = ""
-    try:
-        prof_doc = db.collection("professionals").document(prof_uid).get()
-        data["link_code"] = prof_doc.to_dict().get("link_code", "") if prof_doc.exists else ""
-    except Exception:
-        data["link_code"] = ""
-    return data
+    parent_doc = db.collection("patient_links").document(user["uid"]).get()
+    parent_data = parent_doc.to_dict() if parent_doc.exists else {}
+    telefono = parent_data.get("telefono", "")
+
+    prof_links = db.collection("patient_links").document(user["uid"]) \
+        .collection("professionals").stream()
+    results = []
+    for pl in prof_links:
+        prof_uid = pl.id
+        data = pl.to_dict()
+        professional_name = ""
+        link_code = ""
+        try:
+            prof_profile = get_user(prof_uid)
+            professional_name = prof_profile.get("display_name") or prof_profile.get("email", "")
+        except Exception:
+            pass
+        try:
+            prof_doc = db.collection("professionals").document(prof_uid).get()
+            if prof_doc.exists:
+                link_code = prof_doc.to_dict().get("link_code", "")
+        except Exception:
+            pass
+        results.append({
+            "professional_uid": prof_uid,
+            "patient_doc_id": data.get("patient_doc_id", ""),
+            "professional_name": professional_name,
+            "link_code": link_code,
+            "linked_at": data.get("linked_at"),
+            "telefono": telefono,
+        })
+    return results
 
 
 @router.get("/resolve-code/{code}")

@@ -17,15 +17,20 @@ import { ApiService } from '../../../core/services/api.service';
       <!-- Estado de vinculación -->
       @if (loadingStatus()) {
         <div class="loading-text">Verificando vinculación...</div>
-      } @else if (linkedProfessional()) {
-        <div class="linked-card">
-          <div class="linked-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          </div>
-          <div>
-            <p class="linked-label">Estás vinculado con</p>
-            <p class="linked-name">{{ linkedProfessional() }}</p>
-          </div>
+      } @else if (linkedProfessionals().length > 0) {
+        <div class="section-card">
+          <h2>Profesionales vinculados</h2>
+          @for (prof of linkedProfessionals(); track prof.uid) {
+            <div class="linked-card">
+              <div class="linked-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div>
+                <p class="linked-name">{{ prof.name }}</p>
+                @if (prof.code) { <p class="linked-code">Código: {{ prof.code }}</p> }
+              </div>
+            </div>
+          }
         </div>
       }
 
@@ -97,8 +102,8 @@ import { ApiService } from '../../../core/services/api.service';
       padding: 18px 20px; margin-bottom: 16px;
     }
     .linked-icon { color: #16a34a; flex-shrink: 0; }
-    .linked-label { font-size: 12px; color: #166534; margin: 0 0 2px; }
-    .linked-name { font-size: 16px; font-weight: 700; color: #14532d; margin: 0; }
+    .linked-code { font-size: 12px; color: #166534; margin: 2px 0 0; font-family: monospace; }
+    .linked-name { font-size: 15px; font-weight: 700; color: #14532d; margin: 0; }
 
     .section-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 16px; }
     .section-card h2 { font-size: 16px; font-weight: 700; color: #111827; margin: 0 0 6px; }
@@ -136,7 +141,7 @@ import { ApiService } from '../../../core/services/api.service';
 export class PatientLinkComponent implements OnInit {
   private api = inject(ApiService);
 
-  linkedProfessional = signal('');
+  linkedProfessionals = signal<{ uid: string; name: string; code: string }[]>([]);
   pendingRequests = signal<any[]>([]);
   loadingStatus = signal(true);
 
@@ -152,8 +157,12 @@ export class PatientLinkComponent implements OnInit {
   ngOnInit() {
     // Cargar estado de vinculación
     this.api.getMyLink().subscribe({
-      next: (link) => {
-        if (link?.professional_name) this.linkedProfessional.set(link.professional_name);
+      next: (links) => {
+        this.linkedProfessionals.set((links || []).map(l => ({
+          uid: l.professional_uid,
+          name: l.professional_name || 'Profesional',
+          code: l.link_code || ''
+        })));
         this.loadingStatus.set(false);
       },
       error: () => this.loadingStatus.set(false)

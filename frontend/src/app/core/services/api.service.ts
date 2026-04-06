@@ -41,7 +41,7 @@ export class ApiService {
   }
 
   getMyLink() {
-    return this.withAuth(h => this.http.get<any>(`${this.base}/auth/my-link`, { headers: h }));
+    return this.withAuth(h => this.http.get<any[]>(`${this.base}/auth/my-link`, { headers: h }));
   }
 
   requestLink(data: { link_code: string; dni: string; nombre: string; apellido: string; mensaje?: string }) {

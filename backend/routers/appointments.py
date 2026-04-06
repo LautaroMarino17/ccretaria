@@ -177,10 +177,11 @@ def book_appointment(body: AppointmentBook, user: dict = Depends(get_current_use
         db.collection("professionals").document(body.professional_uid)
           .collection("appointments").where("patient_uid", "==", user["uid"]).stream()
     )
-    # También verificar por patient_doc_id si el paciente está vinculado
-    link_doc = db.collection("patient_links").document(user["uid"]).get()
-    if link_doc.exists:
-        patient_doc_id = link_doc.to_dict().get("patient_doc_id")
+    # También verificar por patient_doc_id si el paciente está vinculado a este profesional
+    prof_link_doc = db.collection("patient_links").document(user["uid"]) \
+        .collection("professionals").document(body.professional_uid).get()
+    if prof_link_doc.exists:
+        patient_doc_id = prof_link_doc.to_dict().get("patient_doc_id")
         if patient_doc_id:
             _check_active_appointment(
                 db.collection("professionals").document(body.professional_uid)
@@ -197,20 +198,17 @@ def book_appointment(body: AppointmentBook, user: dict = Depends(get_current_use
 
     # Obtener nombre del paciente desde el doc del profesional (tiene precedencia sobre Firebase Auth)
     patient_name = user.get("name", user.get("email", ""))
-    link_doc = db.collection("patient_links").document(user["uid"]).get()
-    if link_doc.exists:
-        link_data = link_doc.to_dict()
-        if link_data.get("professional_uid") == body.professional_uid:
-            patient_doc_id = link_data.get("patient_doc_id")
-            if patient_doc_id:
-                p_doc = db.collection("professionals").document(body.professional_uid) \
-                    .collection("patients").document(patient_doc_id).get()
-                if p_doc.exists:
-                    p = p_doc.to_dict()
-                    nombre = p.get("nombre", "")
-                    apellido = p.get("apellido", "")
-                    if nombre or apellido:
-                        patient_name = f"{nombre} {apellido}".strip()
+    if prof_link_doc.exists:
+        patient_doc_id = prof_link_doc.to_dict().get("patient_doc_id")
+        if patient_doc_id:
+            p_doc = db.collection("professionals").document(body.professional_uid) \
+                .collection("patients").document(patient_doc_id).get()
+            if p_doc.exists:
+                p = p_doc.to_dict()
+                nombre = p.get("nombre", "")
+                apellido = p.get("apellido", "")
+                if nombre or apellido:
+                    patient_name = f"{nombre} {apellido}".strip()
 
     # Crear el turno
     appointment_data = {

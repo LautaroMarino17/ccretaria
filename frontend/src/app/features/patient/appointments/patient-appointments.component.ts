@@ -18,14 +18,14 @@ import { ApiService } from '../../../core/services/api.service';
 
       <!-- Selector de profesional -->
       <div class="prof-selector">
-        @if (linkedProf()) {
-          <div class="prof-card" [class.selected]="selectedProfUid() === linkedProf()!.uid" (click)="selectProf(linkedProf()!)">
-            <div class="prof-avatar">{{ profInitial(linkedProf()!.name) }}</div>
+        @for (prof of linkedProfs(); track prof.uid) {
+          <div class="prof-card" [class.selected]="selectedProfUid() === prof.uid" (click)="selectProf(prof)">
+            <div class="prof-avatar">{{ profInitial(prof.name) }}</div>
             <div class="prof-info">
-              <p class="prof-name">{{ linkedProf()!.name }}</p>
-              <span class="prof-code">{{ linkedProf()!.code }}</span>
+              <p class="prof-name">{{ prof.name }}</p>
+              <span class="prof-code">{{ prof.code }}</span>
             </div>
-            @if (selectedProfUid() === linkedProf()!.uid) {
+            @if (selectedProfUid() === prof.uid) {
               <svg class="check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             }
           </div>
@@ -317,7 +317,7 @@ export class PatientAppointmentsComponent implements OnInit {
 
   appointments = signal<any[]>([]);
   daySlots = signal<any[]>([]);
-  linkedProf = signal<{ uid: string; name: string; code: string } | null>(null);
+  linkedProfs = signal<{ uid: string; name: string; code: string }[]>([]);
   selectedProfUid = signal('');
   loading = signal(true);
   loadingDay = signal(false);
@@ -336,17 +336,16 @@ export class PatientAppointmentsComponent implements OnInit {
 
   ngOnInit() {
     this.loadMyAppointments();
-    // Cargar profesional vinculado
+    // Cargar profesionales vinculados
     this.api.getMyLink().subscribe({
-      next: (link) => {
-        if (link?.professional_uid) {
-          this.linkedProf.set({
-            uid: link.professional_uid,
-            name: link.professional_name || 'Mi profesional',
-            code: link.link_code || ''
-          });
-          this.selectProf(this.linkedProf()!);
-        }
+      next: (links) => {
+        const profs = (links || []).map(l => ({
+          uid: l.professional_uid,
+          name: l.professional_name || 'Mi profesional',
+          code: l.link_code || ''
+        }));
+        this.linkedProfs.set(profs);
+        if (profs.length > 0) this.selectProf(profs[0]);
       },
       error: () => {}
     });

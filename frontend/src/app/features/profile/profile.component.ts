@@ -198,7 +198,7 @@ export class ProfileComponent implements OnInit {
     } else {
       // Para paciente cargamos el teléfono del vínculo si existe
       this.api.getMyLink().subscribe({
-        next: (link) => { this.telefono = link.telefono || ''; },
+        next: (links) => { this.telefono = links?.[0]?.telefono || ''; },
         error: () => {}
       });
     }

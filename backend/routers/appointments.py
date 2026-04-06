@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timedelta
 from dependencies import get_current_user, require_professional
-from services.firebase_service import get_firestore, get_user
+from services.firebase_service import get_firestore, get_user, get_all_patient_links
 from services.notification_service import check_and_notify
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
 
@@ -367,16 +367,16 @@ def cancel_appointment(appointment_id: str, user: dict = Depends(get_current_use
 
         # Si no encontró, buscar via patient_links (turno asignado por el profesional)
         if appt_ref is None:
-            link_doc = db.collection("patient_links").document(user["uid"]).get()
-            if link_doc.exists:
-                link = link_doc.to_dict()
-                prof_uid_link = link.get("professional_uid", "")
-                patient_doc_id_link = link.get("patient_doc_id", "")
-                if prof_uid_link and patient_doc_id_link:
-                    candidate = db.collection("professionals").document(prof_uid_link) \
-                        .collection("appointments").document(appointment_id).get()
-                    if candidate.exists and candidate.to_dict().get("patient_doc_id") == patient_doc_id_link:
-                        appt_ref = candidate.reference
+            for lnk in get_all_patient_links(db, user["uid"]):
+                prof_uid_link = lnk["prof_uid"]
+                patient_doc_id_link = lnk["patient_doc_id"]
+                if not prof_uid_link or not patient_doc_id_link:
+                    continue
+                candidate = db.collection("professionals").document(prof_uid_link) \
+                    .collection("appointments").document(appointment_id).get()
+                if candidate.exists and candidate.to_dict().get("patient_doc_id") == patient_doc_id_link:
+                    appt_ref = candidate.reference
+                    break
 
         if appt_ref is None:
             raise HTTPException(status_code=404, detail="Turno no encontrado")

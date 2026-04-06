@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 from dependencies import get_current_user, require_professional
-from services.firebase_service import get_firestore, get_user
+from services.firebase_service import get_firestore, get_user, get_all_patient_links
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
 
 router = APIRouter()
@@ -51,27 +51,29 @@ def list_routines(patient_id: str, user: dict = Depends(get_current_user)):
         return results
 
     elif role == "patient":
-        link_doc = db.collection("patient_links").document(user["uid"]).get()
-        if not link_doc.exists:
+        links = get_all_patient_links(db, user["uid"])
+        if not links:
             return []
-        link = link_doc.to_dict()
-        prof_uid = link.get("professional_uid")
-        patient_doc_id = link.get("patient_doc_id")
-        if not prof_uid or not patient_doc_id:
-            return []
-        docs = db.collection("professionals").document(prof_uid) \
-            .collection("patients").document(patient_doc_id) \
-            .collection("routines").stream()
-        results = [{"id": d.id, **d.to_dict()} for d in docs]
+        results = []
         prof_names: dict = {}
-        for r in results:
-            uid = r.get("professional_uid", "")
-            if uid and uid not in prof_names:
-                try:
-                    prof_names[uid] = get_user(uid).get("display_name") or ""
-                except Exception:
-                    prof_names[uid] = ""
-            r["professional_name"] = prof_names.get(uid, "")
+        for link in links:
+            prof_uid = link["prof_uid"]
+            patient_doc_id = link["patient_doc_id"]
+            if not prof_uid or not patient_doc_id:
+                continue
+            docs = db.collection("professionals").document(prof_uid) \
+                .collection("patients").document(patient_doc_id) \
+                .collection("routines").stream()
+            for d in docs:
+                r = {"id": d.id, **d.to_dict()}
+                uid = r.get("professional_uid", "") or prof_uid
+                if uid not in prof_names:
+                    try:
+                        prof_names[uid] = get_user(uid).get("display_name") or ""
+                    except Exception:
+                        prof_names[uid] = ""
+                r["professional_name"] = prof_names.get(uid, "")
+                results.append(r)
         results.sort(key=lambda x: str(x.get("created_at") or ""), reverse=True)
         return results
 

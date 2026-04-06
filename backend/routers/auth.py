@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 from dependencies import get_current_user, require_professional
-from services.firebase_service import set_user_role, get_user, get_firestore
+from services.firebase_service import set_user_role, get_user, get_firestore, get_all_patient_links
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
 
 router = APIRouter()
@@ -484,12 +484,12 @@ def get_my_link(user: dict = Depends(get_current_user)):
     parent_data = parent_doc.to_dict() if parent_doc.exists else {}
     telefono = parent_data.get("telefono", "")
 
-    prof_links = db.collection("patient_links").document(user["uid"]) \
-        .collection("professionals").stream()
+    # Usa el helper para soportar formato viejo y nuevo
+    raw_links = get_all_patient_links(db, user["uid"])
     results = []
-    for pl in prof_links:
-        prof_uid = pl.id
-        data = pl.to_dict()
+    for lnk in raw_links:
+        prof_uid = lnk["prof_uid"]
+        data = lnk
         professional_name = ""
         link_code = ""
         try:
@@ -505,10 +505,10 @@ def get_my_link(user: dict = Depends(get_current_user)):
             pass
         results.append({
             "professional_uid": prof_uid,
-            "patient_doc_id": data.get("patient_doc_id", ""),
+            "patient_doc_id": lnk.get("patient_doc_id", ""),
             "professional_name": professional_name,
             "link_code": link_code,
-            "linked_at": data.get("linked_at"),
+            "linked_at": None,
             "telefono": telefono,
         })
     return results

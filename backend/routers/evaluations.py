@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 from dependencies import get_current_user, require_professional
-from services.firebase_service import get_firestore, get_user
+from services.firebase_service import get_firestore, get_user, get_all_patient_links
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
 
 router = APIRouter()
@@ -41,14 +41,21 @@ def list_evaluations(patient_id: str, user: dict = Depends(get_current_user)):
         professional_uid = user["uid"]
         patient_doc_id = patient_id
     elif role == "patient":
-        link_doc = db.collection("patient_links").document(user["uid"]).get()
-        if not link_doc.exists:
+        links = get_all_patient_links(db, user["uid"])
+        if not links:
             return []
-        link = link_doc.to_dict()
-        professional_uid = link.get("professional_uid", "")
-        patient_doc_id = link.get("patient_doc_id", "")
-        if not professional_uid or not patient_doc_id:
-            return []
+        results = []
+        for link in links:
+            professional_uid = link["prof_uid"]
+            patient_doc_id = link["patient_doc_id"]
+            if not professional_uid or not patient_doc_id:
+                continue
+            docs = db.collection("professionals").document(professional_uid) \
+                .collection("patients").document(patient_doc_id) \
+                .collection("evaluations").stream()
+            results.extend([{"id": d.id, **d.to_dict()} for d in docs])
+        results.sort(key=lambda x: str(x.get("created_at") or ""), reverse=True)
+        return results
     else:
         raise HTTPException(status_code=403, detail="Sin permisos")
 

@@ -114,7 +114,7 @@ import { ApiService } from '../../../core/services/api.service';
                     <label>Plantillas</label>
                     <div class="feet-display">
                       <div class="foot-item-sm">
-                        <svg viewBox="0 0 80 140" width="44" height="77">
+                        <svg viewBox="0 8 80 140" width="44" height="77">
                           <g transform="scale(-1,1) translate(-80,0)">
                             <path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 40 128 C 57 131 67 124 67 110 C 67 96 65 82 62 70 C 59 58 56 46 52 39 C 48 34 44 32 40 32 C 36 32 32 34 28 39 C 24 46 21 55 18 68 C 16 75 28 84 34 90 C 36 94 24 102 18 108 C 16 118 24 128 40 128 Z"/>
                             <ellipse [class.foot-yes]="h.plantillas" class="foot-path-sm" cx="22" cy="22" rx="9" ry="10"/>
@@ -132,7 +132,7 @@ import { ApiService } from '../../../core/services/api.service';
                         <span class="foot-lbl">I</span>
                       </div>
                       <div class="foot-item-sm">
-                        <svg viewBox="0 0 80 140" width="44" height="77">
+                        <svg viewBox="0 8 80 140" width="44" height="77">
                           <path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 40 128 C 57 131 67 124 67 110 C 67 96 65 82 62 70 C 59 58 56 46 52 39 C 48 34 44 32 40 32 C 36 32 32 34 28 39 C 24 46 21 55 18 68 C 16 75 28 84 34 90 C 36 94 24 102 18 108 C 16 118 24 128 40 128 Z"/>
                           <ellipse [class.foot-yes]="h.plantillas" class="foot-path-sm" cx="22" cy="22" rx="9" ry="10"/>
                           <ellipse [class.foot-yes]="h.plantillas" class="foot-path-sm" cx="33" cy="15" rx="7" ry="8"/>
@@ -209,8 +209,8 @@ import { ApiService } from '../../../core/services/api.service';
             <div class="edit-field">
               <label>Plantillas</label>
               <div class="plantilla-toggle" (click)="editForm.plantillas = !editForm.plantillas">
-                <svg viewBox="0 0 80 140" width="32" height="56"><g transform="scale(-1,1) translate(-80,0)"><path [class.foot-yes]="editForm.plantillas" class="foot-path-sm" d="M 40 128 C 57 131 67 124 67 110 C 67 96 65 82 62 70 C 59 58 56 46 52 39 C 48 34 44 32 40 32 C 36 32 32 34 28 39 C 24 46 21 55 18 68 C 16 75 28 84 34 90 C 36 94 24 102 18 108 C 16 118 24 128 40 128 Z"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="22" cy="22" rx="9" ry="10"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="33" cy="15" rx="7" ry="8"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="43" cy="13" rx="6" ry="7"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="53" cy="15" rx="5" ry="6"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="61" cy="21" rx="4" ry="5"/></g></svg>
-                <svg viewBox="0 0 80 140" width="32" height="56"><path [class.foot-yes]="editForm.plantillas" class="foot-path-sm" d="M 40 128 C 57 131 67 124 67 110 C 67 96 65 82 62 70 C 59 58 56 46 52 39 C 48 34 44 32 40 32 C 36 32 32 34 28 39 C 24 46 21 55 18 68 C 16 75 28 84 34 90 C 36 94 24 102 18 108 C 16 118 24 128 40 128 Z"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="22" cy="22" rx="9" ry="10"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="33" cy="15" rx="7" ry="8"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="43" cy="13" rx="6" ry="7"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="53" cy="15" rx="5" ry="6"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="61" cy="21" rx="4" ry="5"/></svg>
+                <svg viewBox="0 8 80 140" width="32" height="56"><g transform="scale(-1,1) translate(-80,0)"><path [class.foot-yes]="editForm.plantillas" class="foot-path-sm" d="M 40 128 C 57 131 67 124 67 110 C 67 96 65 82 62 70 C 59 58 56 46 52 39 C 48 34 44 32 40 32 C 36 32 32 34 28 39 C 24 46 21 55 18 68 C 16 75 28 84 34 90 C 36 94 24 102 18 108 C 16 118 24 128 40 128 Z"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="22" cy="22" rx="9" ry="10"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="33" cy="15" rx="7" ry="8"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="43" cy="13" rx="6" ry="7"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="53" cy="15" rx="5" ry="6"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="61" cy="21" rx="4" ry="5"/></g></svg>
+                <svg viewBox="0 8 80 140" width="32" height="56"><path [class.foot-yes]="editForm.plantillas" class="foot-path-sm" d="M 40 128 C 57 131 67 124 67 110 C 67 96 65 82 62 70 C 59 58 56 46 52 39 C 48 34 44 32 40 32 C 36 32 32 34 28 39 C 24 46 21 55 18 68 C 16 75 28 84 34 90 C 36 94 24 102 18 108 C 16 118 24 128 40 128 Z"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="22" cy="22" rx="9" ry="10"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="33" cy="15" rx="7" ry="8"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="43" cy="13" rx="6" ry="7"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="53" cy="15" rx="5" ry="6"/><ellipse [class.foot-yes]="editForm.plantillas" class="foot-path-sm" cx="61" cy="21" rx="4" ry="5"/></svg>
                 <span class="plantilla-tag" [class.yes]="editForm.plantillas">{{ editForm.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</span>
               </div>
             </div>

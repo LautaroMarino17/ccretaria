@@ -119,72 +119,139 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
             Revisá y corregí los campos antes de guardar
           </div>
 
-          <!-- Campos editables -->
-          <div class="fields-grid">
-            <div class="field">
-              <label>Motivo de consulta</label>
-              <textarea [(ngModel)]="history().motivo_consulta" rows="2"></textarea>
+          <!-- Ficha médica impresa -->
+          <div class="medical-form">
+            <!-- Cabecera -->
+            <div class="mf-header">
+              <span class="mf-title">HISTORIA CLÍNICA</span>
+              <span class="mf-date">Fecha: {{ today() }}</span>
             </div>
-            <div class="field">
-              <label>Enfermedad actual</label>
-              <textarea [(ngModel)]="history().enfermedad_actual" rows="3"></textarea>
-            </div>
-            <div class="field">
-              <label>Antecedentes personales</label>
-              <textarea [(ngModel)]="history().antecedentes_personales" rows="2"></textarea>
-            </div>
-            <div class="field">
-              <label>Antecedentes familiares</label>
-              <textarea [(ngModel)]="history().antecedentes_familiares" rows="2"></textarea>
-            </div>
-            <div class="field full">
-              <label>Signos vitales</label>
-              <div class="signos-grid">
-                <label class="signo">
-                  <span>TA</span>
-                  <input [(ngModel)]="history().signos_vitales.tension_arterial" placeholder="120/80" />
-                </label>
-                <label class="signo">
-                  <span>FC</span>
-                  <input [(ngModel)]="history().signos_vitales.frecuencia_cardiaca" placeholder="72 lpm" />
-                </label>
-                <label class="signo">
-                  <span>Temp</span>
-                  <input [(ngModel)]="history().signos_vitales.temperatura" placeholder="36.5°C" />
-                </label>
-                <label class="signo">
-                  <span>Peso</span>
-                  <input [(ngModel)]="history().signos_vitales.peso" placeholder="75 kg" />
-                </label>
-                <label class="signo">
-                  <span>Talla</span>
-                  <input [(ngModel)]="history().signos_vitales.talla" placeholder="1.70 m" />
-                </label>
-                <label class="signo">
-                  <span>SatO2</span>
-                  <input [(ngModel)]="history().signos_vitales.saturacion" placeholder="98%" />
-                </label>
+
+            <!-- Datos del paciente -->
+            <div class="mf-patient-row">
+              <div class="mf-patient-field wide">
+                <span class="mf-plabel">Apellido y Nombre</span>
+                <input class="mf-pinput" [(ngModel)]="history().nombre_paciente" placeholder="—" />
+              </div>
+              <div class="mf-patient-field">
+                <span class="mf-plabel">T.A.</span>
+                <input class="mf-pinput" [(ngModel)]="history().signos_vitales.tension_arterial" placeholder="—" />
+              </div>
+              <div class="mf-patient-field">
+                <span class="mf-plabel">FC</span>
+                <input class="mf-pinput" [(ngModel)]="history().signos_vitales.frecuencia_cardiaca" placeholder="—" />
+              </div>
+              <div class="mf-patient-field">
+                <span class="mf-plabel">Temp.</span>
+                <input class="mf-pinput" [(ngModel)]="history().signos_vitales.temperatura" placeholder="—" />
+              </div>
+              <div class="mf-patient-field">
+                <span class="mf-plabel">Peso</span>
+                <input class="mf-pinput" [(ngModel)]="history().signos_vitales.peso" placeholder="—" />
+              </div>
+              <div class="mf-patient-field">
+                <span class="mf-plabel">Talla</span>
+                <input class="mf-pinput" [(ngModel)]="history().signos_vitales.talla" placeholder="—" />
+              </div>
+              <div class="mf-patient-field">
+                <span class="mf-plabel">SatO2</span>
+                <input class="mf-pinput" [(ngModel)]="history().signos_vitales.saturacion" placeholder="—" />
               </div>
             </div>
-            <div class="field">
-              <label>Examen físico</label>
-              <textarea [(ngModel)]="history().examen_fisico" rows="3"></textarea>
+
+            <!-- Motivo de consulta -->
+            <div class="mf-section">
+              <span class="mf-label">Motivo de consulta</span>
+              <textarea class="mf-textarea" [(ngModel)]="history().motivo_consulta" rows="2" placeholder="—"></textarea>
             </div>
-            <div class="field">
-              <label>Diagnóstico</label>
-              <textarea [(ngModel)]="history().diagnostico" rows="2"></textarea>
+
+            <!-- Antecedentes y síntomas -->
+            <div class="mf-section">
+              <span class="mf-label">Antecedentes y síntomas</span>
+              <textarea class="mf-textarea" [(ngModel)]="history().antecedentes_sintomas" rows="4" placeholder="—"></textarea>
             </div>
-            <div class="field">
-              <label>Plan terapéutico</label>
-              <textarea [(ngModel)]="history().plan_terapeutico" rows="3"></textarea>
+
+            <!-- Exploración física -->
+            <div class="mf-section">
+              <span class="mf-label">Exploración física</span>
+              <textarea class="mf-textarea" [(ngModel)]="history().examen_fisico" rows="3" placeholder="—"></textarea>
             </div>
-            <div class="field">
-              <label>Estudios complementarios</label>
-              <textarea [(ngModel)]="history().estudios_complementarios" rows="2"></textarea>
+
+            <!-- Diagnóstico -->
+            <div class="mf-section">
+              <span class="mf-label">Diagnóstico</span>
+              <textarea class="mf-textarea" [(ngModel)]="history().diagnostico" rows="2" placeholder="—"></textarea>
             </div>
-            <div class="field">
-              <label>Observaciones</label>
-              <textarea [(ngModel)]="history().observaciones" rows="2"></textarea>
+
+            <!-- Plantillas -->
+            <div class="mf-section mf-plantillas-row">
+              <span class="mf-label">Plantillas</span>
+              <div class="mf-plantillas-body">
+                <div class="mf-feet" (click)="togglePlantillas()" title="Clic para indicar / quitar plantillas">
+                  <!-- Pie izquierdo -->
+                  <div class="mf-foot-item">
+                    <svg viewBox="0 0 80 140" width="58" height="102">
+                      <g transform="scale(-1,1) translate(-80,0)">
+                        <path [class.foot-yes]="history().plantillas" class="foot-path"
+                          d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>
+                        @if (history().plantillas) {
+                          <ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone"/>
+                          <ellipse cx="55" cy="34" rx="10" ry="7" class="foot-zone"/>
+                          <ellipse cx="24" cy="37" rx="12" ry="7" class="foot-zone"/>
+                        }
+                      </g>
+                    </svg>
+                    <span class="foot-side">I</span>
+                  </div>
+                  <!-- Pie derecho -->
+                  <div class="mf-foot-item">
+                    <svg viewBox="0 0 80 140" width="58" height="102">
+                      <path [class.foot-yes]="history().plantillas" class="foot-path"
+                        d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>
+                      @if (history().plantillas) {
+                        <ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone"/>
+                        <ellipse cx="24" cy="34" rx="10" ry="7" class="foot-zone"/>
+                        <ellipse cx="55" cy="37" rx="12" ry="7" class="foot-zone"/>
+                      }
+                    </svg>
+                    <span class="foot-side">D</span>
+                  </div>
+                </div>
+                <div class="plantilla-status" [class.active]="history().plantillas">
+                  {{ history().plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}
+                </div>
+                <span class="feet-hint">Clic en los pies para indicar</span>
+              </div>
+            </div>
+
+            <!-- Indicaciones / Plan terapéutico -->
+            <div class="mf-section">
+              <span class="mf-label">Indicaciones / Plan terapéutico</span>
+              <textarea class="mf-textarea" [(ngModel)]="history().plan_terapeutico" rows="3" placeholder="—"></textarea>
+            </div>
+
+            <!-- Estudios complementarios + Laboratorio -->
+            <div class="mf-section mf-row">
+              <div class="mf-col">
+                <span class="mf-label">Estudios complementarios</span>
+                <textarea class="mf-textarea" [(ngModel)]="history().estudios_complementarios" rows="2" placeholder="—"></textarea>
+              </div>
+              <div class="mf-col">
+                <span class="mf-label">Laboratorio</span>
+                <textarea class="mf-textarea" [(ngModel)]="history().laboratorio" rows="2" placeholder="—"></textarea>
+              </div>
+            </div>
+
+            <!-- Medicación -->
+            <div class="mf-section">
+              <span class="mf-label">Medicación</span>
+              <textarea class="mf-textarea" [(ngModel)]="history().medicacion" rows="2" placeholder="—"></textarea>
+            </div>
+
+            <!-- Comentarios -->
+            <div class="mf-section mf-last">
+              <span class="mf-label">Comentarios</span>
+              <textarea class="mf-textarea" [(ngModel)]="history().observaciones" rows="2" placeholder="—"></textarea>
             </div>
           </div>
 
@@ -308,33 +375,100 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
     .step.done .step-icon { background: #22c55e; color: white; }
 
     /* ── Review ── */
-    .review-section { display: flex; flex-direction: column; gap: 20px; }
+    .review-section { display: flex; flex-direction: column; gap: 16px; }
     .review-banner {
       display: flex; align-items: center; gap: 10px;
       background: #fffbeb; color: #92400e; border: 1px solid #fde68a;
       border-radius: 10px; padding: 12px 16px; font-size: 14px;
     }
-    .fields-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-      background: white; border-radius: 16px; padding: 24px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+
+    /* ── Medical form ── */
+    .medical-form {
+      background: white; border: 1.5px solid #c9cdd4;
+      border-radius: 6px; overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      font-family: Georgia, 'Times New Roman', serif;
     }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field.full { grid-column: 1 / -1; }
-    .field label { font-size: 13px; font-weight: 600; color: #374151; }
-    textarea {
-      padding: 10px; border: 1.5px solid #e5e7eb; border-radius: 8px;
-      font-size: 14px; resize: vertical; outline: none; font-family: inherit;
+    .mf-header {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #f8f9fa; border-bottom: 1.5px solid #c9cdd4;
+      padding: 10px 20px;
     }
-    textarea:focus { border-color: #4f46e5; }
-    .signos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
-    .signo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #6b7280; }
-    .signo input {
-      padding: 8px; border: 1.5px solid #e5e7eb; border-radius: 8px;
-      font-size: 14px; outline: none;
+    .mf-title { font-size: 13px; font-weight: 700; color: #374151; letter-spacing: 0.8px; font-family: Arial, sans-serif; }
+    .mf-date { font-size: 12px; color: #6b7280; font-family: Arial, sans-serif; }
+
+    .mf-patient-row {
+      display: flex; flex-wrap: wrap; gap: 0;
+      border-bottom: 1.5px solid #c9cdd4; padding: 0;
     }
-    .signo input:focus { border-color: #4f46e5; }
+    .mf-patient-field {
+      display: flex; flex-direction: column; padding: 8px 14px;
+      border-right: 1px solid #e5e7eb; min-width: 80px;
+    }
+    .mf-patient-field.wide { flex: 1; min-width: 200px; }
+    .mf-patient-field:last-child { border-right: none; }
+    .mf-plabel { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.4px; font-family: Arial, sans-serif; margin-bottom: 3px; }
+    .mf-pinput {
+      border: none; outline: none; font-size: 13px; color: #111827;
+      background: transparent; font-family: Georgia, serif; width: 100%;
+      border-bottom: 1px dotted #9ca3af; padding: 2px 0;
+    }
+    .mf-pinput:focus { border-bottom-color: #4f46e5; }
+
+    .mf-section {
+      padding: 10px 20px; border-bottom: 1px solid #e9eaec;
+    }
+    .mf-section.mf-last { border-bottom: none; }
+    .mf-section.mf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 0; }
+    .mf-col { padding: 10px 20px; }
+    .mf-col:first-child { border-right: 1px solid #e9eaec; }
+    .mf-label {
+      display: block; font-size: 12px; font-weight: 700; color: #374151;
+      font-family: Arial, sans-serif; margin-bottom: 4px;
+    }
+    .mf-textarea {
+      width: 100%; border: none; outline: none; resize: none;
+      background: transparent; font-family: Georgia, 'Times New Roman', serif;
+      font-size: 14px; color: #111827; line-height: 1.9;
+      background-image: repeating-linear-gradient(
+        transparent, transparent calc(1.9em - 1px), #e5e7eb calc(1.9em - 1px), #e5e7eb 1.9em
+      );
+      padding: 0; margin-top: 2px;
+    }
+    .mf-textarea:focus { background-image: repeating-linear-gradient(
+      transparent, transparent calc(1.9em - 1px), #a5b4fc calc(1.9em - 1px), #a5b4fc 1.9em
+    ); }
+
+    /* ── Feet / Plantillas ── */
+    .mf-plantillas-row { display: flex; flex-direction: column; gap: 6px; }
+    .mf-plantillas-body { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+    .mf-feet {
+      display: flex; gap: 20px; align-items: flex-end;
+      cursor: pointer; padding: 8px 10px; border-radius: 10px;
+      transition: background 0.2s; user-select: none;
+    }
+    .mf-feet:hover { background: #f0f4ff; }
+    .mf-foot-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .foot-side { font-size: 10px; font-weight: 700; color: #9ca3af; letter-spacing: 1px; font-family: Arial, sans-serif; }
+    .foot-path {
+      fill: #d1d5db; stroke: #9ca3af; stroke-width: 1.5;
+      transition: fill 0.35s, stroke 0.35s;
+    }
+    .foot-yes { fill: #818cf8; stroke: #4338ca; }
+    .foot-zone { fill: rgba(55, 48, 163, 0.5); }
+    .plantilla-status {
+      font-size: 13px; font-weight: 600; color: #9ca3af;
+      font-family: Arial, sans-serif; transition: color 0.3s;
+    }
+    .plantilla-status.active { color: #4f46e5; }
+    .feet-hint { font-size: 11px; color: #d1d5db; font-family: Arial, sans-serif; }
+
     .review-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+    @media (max-width: 640px) {
+      .mf-section.mf-row { grid-template-columns: 1fr; }
+      .mf-col:first-child { border-right: none; border-bottom: 1px solid #e9eaec; }
+    }
 
     /* ── Done ── */
     .done-card {
@@ -477,15 +611,16 @@ export class RecordHistoryComponent implements OnDestroy {
             patient_id: this.patientId,
             nombre_paciente: ch.nombre_paciente || '',
             motivo_consulta: ch.motivo_consulta || '',
-            enfermedad_actual: ch.enfermedad_actual || '',
-            antecedentes_personales: ch.antecedentes_personales || '',
-            antecedentes_familiares: ch.antecedentes_familiares || '',
+            antecedentes_sintomas: ch.antecedentes_sintomas || '',
             examen_fisico: ch.examen_fisico || '',
             signos_vitales: ch.signos_vitales || { ...EMPTY_SIGNOS_VITALES },
             diagnostico: ch.diagnostico || '',
             plan_terapeutico: ch.plan_terapeutico || '',
             estudios_complementarios: ch.estudios_complementarios || '',
+            laboratorio: ch.laboratorio || '',
+            medicacion: ch.medicacion || '',
             observaciones: ch.observaciones || '',
+            plantillas: ch.plantillas || false,
             transcripcion_original: result.transcription || ch.transcripcion_original || '',
             verificada: false
           });
@@ -520,6 +655,15 @@ export class RecordHistoryComponent implements OnDestroy {
     this.error.set('');
     this.audioChunks = [];
     this.elapsedSeconds.set(0);
+  }
+
+  togglePlantillas() {
+    const h = this.history();
+    this.history.set({ ...h, plantillas: !h.plantillas });
+  }
+
+  today(): string {
+    return new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   formatTime(seconds: number): string {

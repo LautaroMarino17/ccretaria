@@ -26,15 +26,16 @@ class ClinicalHistoryCreate(BaseModel):
     patient_id: str
     nombre_paciente: Optional[str] = ""
     motivo_consulta: Optional[str] = ""
-    enfermedad_actual: Optional[str] = ""
-    antecedentes_personales: Optional[str] = ""
-    antecedentes_familiares: Optional[str] = ""
+    antecedentes_sintomas: Optional[str] = ""
     examen_fisico: Optional[str] = ""
     signos_vitales: Optional[SignosVitales] = None
     diagnostico: Optional[str] = ""
     plan_terapeutico: Optional[str] = ""
     estudios_complementarios: Optional[str] = ""
+    laboratorio: Optional[str] = ""
+    medicacion: Optional[str] = ""
     observaciones: Optional[str] = ""
+    plantillas: Optional[bool] = False
     transcripcion_original: Optional[str] = ""
     verificada: bool = False
     imagenes: Optional[List[ArchivoLink]] = []
@@ -43,15 +44,16 @@ class ClinicalHistoryCreate(BaseModel):
 
 class ClinicalHistoryUpdate(BaseModel):
     motivo_consulta: Optional[str] = None
-    enfermedad_actual: Optional[str] = None
-    antecedentes_personales: Optional[str] = None
-    antecedentes_familiares: Optional[str] = None
+    antecedentes_sintomas: Optional[str] = None
     examen_fisico: Optional[str] = None
     signos_vitales: Optional[SignosVitales] = None
     diagnostico: Optional[str] = None
     plan_terapeutico: Optional[str] = None
     estudios_complementarios: Optional[str] = None
+    laboratorio: Optional[str] = None
+    medicacion: Optional[str] = None
     observaciones: Optional[str] = None
+    plantillas: Optional[bool] = None
     imagenes: Optional[List[ArchivoLink]] = None
     estudios: Optional[List[ArchivoLink]] = None
 

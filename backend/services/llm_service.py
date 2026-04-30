@@ -16,18 +16,16 @@ def _get_client():
     return _client
 
 
-CLINICAL_HISTORY_PROMPT = """Actuás como un asistente especializado en estructurar conversaciones clínicas.
+CLINICAL_HISTORY_PROMPT = """Actuás como un asistente especializado en estructurar conversaciones clínicas en formato de ficha médica.
 
-Vas a recibir la transcripción de una consulta médica. El texto proviene de audio y puede tener errores. Interpretá el contenido y corregí la redacción sin alterar la información.
+Vas a recibir la transcripción de una consulta médica. El texto proviene de audio y puede tener errores. Interpretá el contenido, corregí la redacción sin alterar la información, y completá los campos según el modelo de historia clínica estándar.
 
 Devolvé ÚNICAMENTE un JSON con esta estructura exacta (sin texto adicional, sin markdown):
 
 {
   "nombre_paciente": "",
   "motivo_consulta": "",
-  "enfermedad_actual": "",
-  "antecedentes_personales": "",
-  "antecedentes_familiares": "",
+  "antecedentes_sintomas": "",
   "examen_fisico": "",
   "signos_vitales": {
     "tension_arterial": "",
@@ -40,12 +38,30 @@ Devolvé ÚNICAMENTE un JSON con esta estructura exacta (sin texto adicional, si
   "diagnostico": "",
   "plan_terapeutico": "",
   "estudios_complementarios": "",
-  "observaciones": ""
+  "laboratorio": "",
+  "medicacion": "",
+  "observaciones": "",
+  "plantillas": false
 }
+
+Descripción de cada campo:
+- nombre_paciente: nombre y apellido del paciente si se menciona.
+- motivo_consulta: razón principal de la consulta, en una o dos oraciones.
+- antecedentes_sintomas: descripción del cuadro actual, evolución, síntomas referidos, antecedentes personales y familiares relevantes. Incluir todo en un solo bloque redactado.
+- examen_fisico: hallazgos del examen físico y exploración clínica.
+- signos_vitales: valores numéricos de tensión arterial, frecuencia cardíaca, temperatura, peso, talla y saturación de oxígeno.
+- diagnostico: diagnóstico o diagnósticos presuntivos / definitivos.
+- plan_terapeutico: indicaciones terapéuticas, ejercicios, rehabilitación, recomendaciones de conducta.
+- estudios_complementarios: estudios por imágenes u otros estudios solicitados.
+- laboratorio: análisis de laboratorio solicitados o con resultados mencionados.
+- medicacion: fármacos indicados con dosis y frecuencia si se mencionan.
+- observaciones: comentarios adicionales, seguimiento, próximo turno.
+- plantillas: true si el profesional indica o prescribe el uso de plantillas (ortesis plantares, plantillas ortopédicas), false en caso contrario.
 
 Reglas:
 - NO inventes información.
 - Si un dato no está presente, dejá el campo como "".
+- Cualquier información mencionada que no encaje claramente en ningún otro campo, incluila en "observaciones".
 - Usá lenguaje clínico claro y conciso.
 - Devolvé ÚNICAMENTE el JSON.
 
@@ -106,15 +122,15 @@ def structure_clinical_history(transcription: str) -> dict:
         return _parse_json(raw)
     except json.JSONDecodeError:
         return {
-            "nombre_paciente": "", "motivo_consulta": "", "enfermedad_actual": "",
-            "antecedentes_personales": "", "antecedentes_familiares": "",
+            "nombre_paciente": "", "motivo_consulta": "", "antecedentes_sintomas": "",
             "examen_fisico": "",
             "signos_vitales": {
                 "tension_arterial": "", "frecuencia_cardiaca": "",
                 "temperatura": "", "peso": "", "talla": "", "saturacion": ""
             },
             "diagnostico": "", "plan_terapeutico": "",
-            "estudios_complementarios": "", "observaciones": raw
+            "estudios_complementarios": "", "laboratorio": "",
+            "medicacion": "", "observaciones": raw, "plantillas": False
         }
 
 

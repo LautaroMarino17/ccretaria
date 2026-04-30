@@ -116,10 +116,27 @@ import { ApiService } from '../../../core/services/api.service';
               <div class="edit-fields">
                 <div class="edit-field"><label>Motivo de consulta</label><textarea [(ngModel)]="editForm.motivo_consulta" rows="2"></textarea></div>
                 <div class="edit-field"><label>Diagnóstico</label><textarea [(ngModel)]="editForm.diagnostico" rows="2"></textarea></div>
-                <div class="edit-field"><label>Enfermedad actual</label><textarea [(ngModel)]="editForm.enfermedad_actual" rows="3"></textarea></div>
-                <div class="edit-field"><label>Examen físico</label><textarea [(ngModel)]="editForm.examen_fisico" rows="3"></textarea></div>
-                <div class="edit-field"><label>Plan terapéutico</label><textarea [(ngModel)]="editForm.plan_terapeutico" rows="3"></textarea></div>
-                <div class="edit-field"><label>Observaciones</label><textarea [(ngModel)]="editForm.observaciones" rows="2"></textarea></div>
+                <div class="edit-field"><label>Antecedentes y síntomas</label><textarea [(ngModel)]="editForm.antecedentes_sintomas" rows="4"></textarea></div>
+                <div class="edit-field"><label>Exploración física</label><textarea [(ngModel)]="editForm.examen_fisico" rows="3"></textarea></div>
+                <div class="edit-field"><label>Indicaciones / Plan terapéutico</label><textarea [(ngModel)]="editForm.plan_terapeutico" rows="3"></textarea></div>
+                <div class="edit-field"><label>Estudios complementarios</label><textarea [(ngModel)]="editForm.estudios_complementarios" rows="2"></textarea></div>
+                <div class="edit-field"><label>Laboratorio</label><textarea [(ngModel)]="editForm.laboratorio" rows="2"></textarea></div>
+                <div class="edit-field"><label>Medicación</label><textarea [(ngModel)]="editForm.medicacion" rows="2"></textarea></div>
+                <div class="edit-field"><label>Comentarios</label><textarea [(ngModel)]="editForm.observaciones" rows="2"></textarea></div>
+                <div class="edit-field">
+                  <label>Plantillas</label>
+                  <div class="plantilla-toggle" (click)="editForm.plantillas = !editForm.plantillas">
+                    <div class="foot-item-sm">
+                      <svg viewBox="0 0 80 140" width="32" height="56"><g transform="scale(-1,1) translate(-80,0)"><path [class.foot-yes]="editForm.plantillas" class="foot-path-sm" d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>@if(editForm.plantillas){<ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone-sm"/><ellipse cx="55" cy="34" rx="10" ry="7" class="foot-zone-sm"/><ellipse cx="24" cy="37" rx="12" ry="7" class="foot-zone-sm"/>}</g></svg>
+                      <span class="foot-lbl">I</span>
+                    </div>
+                    <div class="foot-item-sm">
+                      <svg viewBox="0 0 80 140" width="32" height="56"><path [class.foot-yes]="editForm.plantillas" class="foot-path-sm" d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>@if(editForm.plantillas){<ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone-sm"/><ellipse cx="24" cy="34" rx="10" ry="7" class="foot-zone-sm"/><ellipse cx="55" cy="37" rx="12" ry="7" class="foot-zone-sm"/>}</svg>
+                      <span class="foot-lbl">D</span>
+                    </div>
+                    <span class="plantilla-tag" [class.yes]="editForm.plantillas">{{ editForm.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</span>
+                  </div>
+                </div>
                 <div class="edit-field">
                   <label>Imágenes</label>
                   @for (img of editForm.imagenes; track $index) {
@@ -160,13 +177,27 @@ import { ApiService } from '../../../core/services/api.service';
               <div class="edit-fields">
                 <div class="edit-field"><label>Motivo de consulta</label><textarea [(ngModel)]="newHistoryForm.motivo_consulta" rows="2" placeholder="Ej: Dolor lumbar de 3 días de evolución"></textarea></div>
                 <div class="edit-field"><label>Diagnóstico</label><textarea [(ngModel)]="newHistoryForm.diagnostico" rows="2" placeholder="Ej: Lumbalgia mecánica aguda"></textarea></div>
-                <div class="edit-field"><label>Enfermedad actual</label><textarea [(ngModel)]="newHistoryForm.enfermedad_actual" rows="3"></textarea></div>
-                <div class="edit-field"><label>Antecedentes personales</label><textarea [(ngModel)]="newHistoryForm.antecedentes_personales" rows="2"></textarea></div>
-                <div class="edit-field"><label>Antecedentes familiares</label><textarea [(ngModel)]="newHistoryForm.antecedentes_familiares" rows="2"></textarea></div>
-                <div class="edit-field"><label>Examen físico</label><textarea [(ngModel)]="newHistoryForm.examen_fisico" rows="3"></textarea></div>
-                <div class="edit-field"><label>Plan terapéutico</label><textarea [(ngModel)]="newHistoryForm.plan_terapeutico" rows="3"></textarea></div>
+                <div class="edit-field"><label>Antecedentes y síntomas</label><textarea [(ngModel)]="newHistoryForm.antecedentes_sintomas" rows="4"></textarea></div>
+                <div class="edit-field"><label>Exploración física</label><textarea [(ngModel)]="newHistoryForm.examen_fisico" rows="3"></textarea></div>
+                <div class="edit-field"><label>Indicaciones / Plan terapéutico</label><textarea [(ngModel)]="newHistoryForm.plan_terapeutico" rows="3"></textarea></div>
                 <div class="edit-field"><label>Estudios complementarios</label><textarea [(ngModel)]="newHistoryForm.estudios_complementarios" rows="2"></textarea></div>
-                <div class="edit-field"><label>Observaciones</label><textarea [(ngModel)]="newHistoryForm.observaciones" rows="2"></textarea></div>
+                <div class="edit-field"><label>Laboratorio</label><textarea [(ngModel)]="newHistoryForm.laboratorio" rows="2"></textarea></div>
+                <div class="edit-field"><label>Medicación</label><textarea [(ngModel)]="newHistoryForm.medicacion" rows="2"></textarea></div>
+                <div class="edit-field"><label>Comentarios</label><textarea [(ngModel)]="newHistoryForm.observaciones" rows="2"></textarea></div>
+                <div class="edit-field">
+                  <label>Plantillas</label>
+                  <div class="plantilla-toggle" (click)="newHistoryForm.plantillas = !newHistoryForm.plantillas">
+                    <div class="foot-item-sm">
+                      <svg viewBox="0 0 80 140" width="32" height="56"><g transform="scale(-1,1) translate(-80,0)"><path [class.foot-yes]="newHistoryForm.plantillas" class="foot-path-sm" d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>@if(newHistoryForm.plantillas){<ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone-sm"/><ellipse cx="55" cy="34" rx="10" ry="7" class="foot-zone-sm"/><ellipse cx="24" cy="37" rx="12" ry="7" class="foot-zone-sm"/>}</g></svg>
+                      <span class="foot-lbl">I</span>
+                    </div>
+                    <div class="foot-item-sm">
+                      <svg viewBox="0 0 80 140" width="32" height="56"><path [class.foot-yes]="newHistoryForm.plantillas" class="foot-path-sm" d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>@if(newHistoryForm.plantillas){<ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone-sm"/><ellipse cx="24" cy="34" rx="10" ry="7" class="foot-zone-sm"/><ellipse cx="55" cy="37" rx="12" ry="7" class="foot-zone-sm"/>}</svg>
+                      <span class="foot-lbl">D</span>
+                    </div>
+                    <span class="plantilla-tag" [class.yes]="newHistoryForm.plantillas">{{ newHistoryForm.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</span>
+                  </div>
+                </div>
                 <div class="edit-field">
                   <label>Signos vitales (opcional)</label>
                   <div class="signos-inputs">
@@ -225,17 +256,11 @@ import { ApiService } from '../../../core/services/api.service';
 
                   @if (expanded() === h.id) {
                     <div class="history-detail">
-                      @if (h.enfermedad_actual) {
-                        <div class="detail-section"><label>Enfermedad actual</label><p>{{ h.enfermedad_actual }}</p></div>
-                      }
-                      @if (h.antecedentes_personales) {
-                        <div class="detail-section"><label>Antecedentes personales</label><p>{{ h.antecedentes_personales }}</p></div>
-                      }
-                      @if (h.antecedentes_familiares) {
-                        <div class="detail-section"><label>Antecedentes familiares</label><p>{{ h.antecedentes_familiares }}</p></div>
+                      @if (h.antecedentes_sintomas) {
+                        <div class="detail-section"><label>Antecedentes y síntomas</label><p>{{ h.antecedentes_sintomas }}</p></div>
                       }
                       @if (h.examen_fisico) {
-                        <div class="detail-section"><label>Examen físico</label><p>{{ h.examen_fisico }}</p></div>
+                        <div class="detail-section"><label>Exploración física</label><p>{{ h.examen_fisico }}</p></div>
                       }
                       @if (h.signos_vitales) {
                         <div class="detail-section">
@@ -250,14 +275,35 @@ import { ApiService } from '../../../core/services/api.service';
                         </div>
                       }
                       @if (h.plan_terapeutico) {
-                        <div class="detail-section"><label>Plan terapéutico</label><p>{{ h.plan_terapeutico }}</p></div>
+                        <div class="detail-section"><label>Indicaciones / Plan terapéutico</label><p>{{ h.plan_terapeutico }}</p></div>
                       }
                       @if (h.estudios_complementarios) {
                         <div class="detail-section"><label>Estudios complementarios</label><p>{{ h.estudios_complementarios }}</p></div>
                       }
-                      @if (h.observaciones) {
-                        <div class="detail-section"><label>Observaciones</label><p>{{ h.observaciones }}</p></div>
+                      @if (h.laboratorio) {
+                        <div class="detail-section"><label>Laboratorio</label><p>{{ h.laboratorio }}</p></div>
                       }
+                      @if (h.medicacion) {
+                        <div class="detail-section"><label>Medicación</label><p>{{ h.medicacion }}</p></div>
+                      }
+                      @if (h.observaciones) {
+                        <div class="detail-section"><label>Comentarios</label><p>{{ h.observaciones }}</p></div>
+                      }
+                      <!-- Plantillas -->
+                      <div class="detail-section">
+                        <label>Plantillas</label>
+                        <div class="feet-display">
+                          <div class="foot-item-sm">
+                            <svg viewBox="0 0 80 140" width="44" height="77"><g transform="scale(-1,1) translate(-80,0)"><path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>@if(h.plantillas){<ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone-sm"/><ellipse cx="55" cy="34" rx="10" ry="7" class="foot-zone-sm"/><ellipse cx="24" cy="37" rx="12" ry="7" class="foot-zone-sm"/>}</g></svg>
+                            <span class="foot-lbl">I</span>
+                          </div>
+                          <div class="foot-item-sm">
+                            <svg viewBox="0 0 80 140" width="44" height="77"><path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>@if(h.plantillas){<ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone-sm"/><ellipse cx="24" cy="34" rx="10" ry="7" class="foot-zone-sm"/><ellipse cx="55" cy="37" rx="12" ry="7" class="foot-zone-sm"/>}</svg>
+                            <span class="foot-lbl">D</span>
+                          </div>
+                          <span class="plantilla-tag" [class.yes]="h.plantillas">{{ h.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</span>
+                        </div>
+                      </div>
                       @if (h.imagenes?.length > 0) {
                         <div class="detail-section">
                           <label>Imágenes</label>
@@ -393,6 +439,18 @@ import { ApiService } from '../../../core/services/api.service';
     .edit-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .error-banner { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 10px; }
 
+    /* Plantillas / Foot diagram */
+    .feet-display { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .foot-item-sm { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .foot-path-sm { fill: #e5e7eb; stroke: #9ca3af; stroke-width: 1; transition: fill 0.2s, stroke 0.2s; }
+    .foot-path-sm.foot-yes { fill: #a5b4fc; stroke: #4f46e5; }
+    .foot-zone-sm { fill: rgba(79,70,229,0.4); }
+    .foot-lbl { font-size: 10px; color: #9ca3af; font-weight: 600; letter-spacing: 0.5px; }
+    .plantilla-tag { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #f3f4f6; color: #9ca3af; }
+    .plantilla-tag.yes { background: #eef2ff; color: #4f46e5; }
+    .plantilla-toggle { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 8px; border-radius: 8px; border: 1.5px dashed #e5e7eb; transition: background 0.15s; user-select: none; }
+    .plantilla-toggle:hover { background: #f9fafb; border-color: #c7d2fe; }
+
     @media (max-width: 768px) {
       .quick-actions { grid-template-columns: 1fr 1fr; }
       .data-grid { grid-template-columns: 1fr 1fr; }
@@ -436,10 +494,10 @@ export class PatientDetailComponent implements OnInit {
 
   emptyHistoryForm() {
     return {
-      motivo_consulta: '', diagnostico: '', enfermedad_actual: '',
-      antecedentes_personales: '', antecedentes_familiares: '', examen_fisico: '',
-      plan_terapeutico: '', estudios_complementarios: '', observaciones: '',
-      signos_vitales: { tension_arterial: '', frecuencia_cardiaca: '', temperatura: '', peso: '', saturacion: '' }
+      motivo_consulta: '', diagnostico: '', antecedentes_sintomas: '',
+      examen_fisico: '', plan_terapeutico: '', estudios_complementarios: '',
+      laboratorio: '', medicacion: '', observaciones: '', plantillas: false,
+      signos_vitales: { tension_arterial: '', frecuencia_cardiaca: '', temperatura: '', peso: '', talla: '', saturacion: '' }
     };
   }
 
@@ -485,10 +543,14 @@ export class PatientDetailComponent implements OnInit {
     this.editForm = {
       motivo_consulta: h.motivo_consulta || '',
       diagnostico: h.diagnostico || '',
-      enfermedad_actual: h.enfermedad_actual || '',
+      antecedentes_sintomas: h.antecedentes_sintomas || '',
       examen_fisico: h.examen_fisico || '',
       plan_terapeutico: h.plan_terapeutico || '',
+      estudios_complementarios: h.estudios_complementarios || '',
+      laboratorio: h.laboratorio || '',
+      medicacion: h.medicacion || '',
       observaciones: h.observaciones || '',
+      plantillas: h.plantillas || false,
       imagenes: (h.imagenes || []).map((i: any) => ({ url: i.url || '', nombre: i.nombre || '' })),
       estudios: (h.estudios || []).map((e: any) => ({ url: e.url || '', nombre: e.nombre || '' })),
     };
@@ -540,13 +602,15 @@ export class PatientDetailComponent implements OnInit {
       <hr>
       ${h.motivo_consulta ? `<div class="section"><label>Motivo de consulta</label><p>${h.motivo_consulta}</p></div>` : ''}
       ${h.diagnostico ? `<div class="section"><label>Diagnóstico</label><p>${h.diagnostico}</p></div>` : ''}
-      ${h.enfermedad_actual ? `<div class="section"><label>Enfermedad actual</label><p>${h.enfermedad_actual}</p></div>` : ''}
-      ${h.antecedentes_personales ? `<div class="section"><label>Antecedentes personales</label><p>${h.antecedentes_personales}</p></div>` : ''}
-      ${h.examen_fisico ? `<div class="section"><label>Examen físico</label><p>${h.examen_fisico}</p></div>` : ''}
+      ${h.antecedentes_sintomas ? `<div class="section"><label>Antecedentes y síntomas</label><p>${h.antecedentes_sintomas}</p></div>` : ''}
+      ${h.examen_fisico ? `<div class="section"><label>Exploración física</label><p>${h.examen_fisico}</p></div>` : ''}
       ${signosHtml}
-      ${h.plan_terapeutico ? `<div class="section"><label>Plan terapéutico</label><p>${h.plan_terapeutico}</p></div>` : ''}
+      ${h.plan_terapeutico ? `<div class="section"><label>Indicaciones / Plan terapéutico</label><p>${h.plan_terapeutico}</p></div>` : ''}
       ${h.estudios_complementarios ? `<div class="section"><label>Estudios complementarios</label><p>${h.estudios_complementarios}</p></div>` : ''}
-      ${h.observaciones ? `<div class="section"><label>Observaciones</label><p>${h.observaciones}</p></div>` : ''}
+      ${h.laboratorio ? `<div class="section"><label>Laboratorio</label><p>${h.laboratorio}</p></div>` : ''}
+      ${h.medicacion ? `<div class="section"><label>Medicación</label><p>${h.medicacion}</p></div>` : ''}
+      ${h.observaciones ? `<div class="section"><label>Comentarios</label><p>${h.observaciones}</p></div>` : ''}
+      <div class="section"><label>Plantillas</label><p>${h.plantillas ? 'Sí' : 'No'}</p></div>
       ${h.estudio_url ? `<div class="section"><label>Estudio adjunto</label><p><a href="${h.estudio_url}">${h.estudio_nombre || h.estudio_url}</a></p></div>` : ''}
       </body></html>`;
     const win = window.open('', '_blank');
@@ -575,13 +639,15 @@ export class PatientDetailComponent implements OnInit {
       <hr>
       ${h.motivo_consulta ? `<div class="section"><label>Motivo de consulta</label><p>${h.motivo_consulta}</p></div>` : ''}
       ${h.diagnostico ? `<div class="section"><label>Diagnóstico</label><p>${h.diagnostico}</p></div>` : ''}
-      ${h.enfermedad_actual ? `<div class="section"><label>Enfermedad actual</label><p>${h.enfermedad_actual}</p></div>` : ''}
-      ${h.antecedentes_personales ? `<div class="section"><label>Antecedentes personales</label><p>${h.antecedentes_personales}</p></div>` : ''}
-      ${h.examen_fisico ? `<div class="section"><label>Examen físico</label><p>${h.examen_fisico}</p></div>` : ''}
+      ${h.antecedentes_sintomas ? `<div class="section"><label>Antecedentes y síntomas</label><p>${h.antecedentes_sintomas}</p></div>` : ''}
+      ${h.examen_fisico ? `<div class="section"><label>Exploración física</label><p>${h.examen_fisico}</p></div>` : ''}
       ${signosHtml}
-      ${h.plan_terapeutico ? `<div class="section"><label>Plan terapéutico</label><p>${h.plan_terapeutico}</p></div>` : ''}
+      ${h.plan_terapeutico ? `<div class="section"><label>Indicaciones / Plan terapéutico</label><p>${h.plan_terapeutico}</p></div>` : ''}
       ${h.estudios_complementarios ? `<div class="section"><label>Estudios complementarios</label><p>${h.estudios_complementarios}</p></div>` : ''}
-      ${h.observaciones ? `<div class="section"><label>Observaciones</label><p>${h.observaciones}</p></div>` : ''}
+      ${h.laboratorio ? `<div class="section"><label>Laboratorio</label><p>${h.laboratorio}</p></div>` : ''}
+      ${h.medicacion ? `<div class="section"><label>Medicación</label><p>${h.medicacion}</p></div>` : ''}
+      ${h.observaciones ? `<div class="section"><label>Comentarios</label><p>${h.observaciones}</p></div>` : ''}
+      <div class="section"><label>Plantillas</label><p>${h.plantillas ? 'Sí' : 'No'}</p></div>
       </body></html>`;
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);

@@ -46,15 +46,15 @@ import { ApiService } from '../../../core/services/api.service';
 
               @if (expanded() === h.id) {
                 <div class="history-detail">
-                  @if (h.enfermedad_actual) {
+                  @if (h.antecedentes_sintomas) {
                     <div class="detail-section">
-                      <label>Enfermedad actual</label>
-                      <p>{{ h.enfermedad_actual }}</p>
+                      <label>Antecedentes y síntomas</label>
+                      <p>{{ h.antecedentes_sintomas }}</p>
                     </div>
                   }
                   @if (h.examen_fisico) {
                     <div class="detail-section">
-                      <label>Examen físico</label>
+                      <label>Exploración física</label>
                       <p>{{ h.examen_fisico }}</p>
                     </div>
                   }
@@ -82,16 +82,48 @@ import { ApiService } from '../../../core/services/api.service';
                   }
                   @if (h.plan_terapeutico) {
                     <div class="detail-section">
-                      <label>Plan terapéutico</label>
+                      <label>Indicaciones / Plan terapéutico</label>
                       <p>{{ h.plan_terapeutico }}</p>
+                    </div>
+                  }
+                  @if (h.estudios_complementarios) {
+                    <div class="detail-section">
+                      <label>Estudios complementarios</label>
+                      <p>{{ h.estudios_complementarios }}</p>
+                    </div>
+                  }
+                  @if (h.laboratorio) {
+                    <div class="detail-section">
+                      <label>Laboratorio</label>
+                      <p>{{ h.laboratorio }}</p>
+                    </div>
+                  }
+                  @if (h.medicacion) {
+                    <div class="detail-section">
+                      <label>Medicación</label>
+                      <p>{{ h.medicacion }}</p>
                     </div>
                   }
                   @if (h.observaciones) {
                     <div class="detail-section">
-                      <label>Observaciones</label>
+                      <label>Comentarios</label>
                       <p>{{ h.observaciones }}</p>
                     </div>
                   }
+                  <div class="detail-section">
+                    <label>Plantillas</label>
+                    <div class="feet-display">
+                      <div class="foot-item-sm">
+                        <svg viewBox="0 0 80 140" width="44" height="77"><g transform="scale(-1,1) translate(-80,0)"><path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>@if(h.plantillas){<ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone-sm"/><ellipse cx="55" cy="34" rx="10" ry="7" class="foot-zone-sm"/><ellipse cx="24" cy="37" rx="12" ry="7" class="foot-zone-sm"/>}</g></svg>
+                        <span class="foot-lbl">I</span>
+                      </div>
+                      <div class="foot-item-sm">
+                        <svg viewBox="0 0 80 140" width="44" height="77"><path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>@if(h.plantillas){<ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone-sm"/><ellipse cx="24" cy="34" rx="10" ry="7" class="foot-zone-sm"/><ellipse cx="55" cy="37" rx="12" ry="7" class="foot-zone-sm"/>}</svg>
+                        <span class="foot-lbl">D</span>
+                      </div>
+                      <span class="plantilla-tag" [class.yes]="h.plantillas">{{ h.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</span>
+                    </div>
+                  </div>
                 </div>
               }
             </div>
@@ -131,6 +163,14 @@ import { ApiService } from '../../../core/services/api.service';
     .signo-tag { background: #f3f4f6; color: #374151; padding: 4px 10px; border-radius: 6px; font-size: 13px; }
     .loading-text { padding: 32px; text-align: center; color: #9ca3af; }
     .empty-state { text-align: center; padding: 56px; display: flex; flex-direction: column; align-items: center; gap: 12px; color: #9ca3af; }
+    .feet-display { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .foot-item-sm { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .foot-path-sm { fill: #e5e7eb; stroke: #9ca3af; stroke-width: 1; }
+    .foot-path-sm.foot-yes { fill: #a5b4fc; stroke: #4f46e5; }
+    .foot-zone-sm { fill: rgba(79,70,229,0.4); }
+    .foot-lbl { font-size: 10px; color: #9ca3af; font-weight: 600; letter-spacing: 0.5px; }
+    .plantilla-tag { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #f3f4f6; color: #9ca3af; }
+    .plantilla-tag.yes { background: #eef2ff; color: #4f46e5; }
   `]
 })
 export class PatientHistoriesComponent implements OnInit {

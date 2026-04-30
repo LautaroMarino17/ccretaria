@@ -589,9 +589,8 @@ export class RecordHistoryComponent implements OnDestroy {
   private stopRecording() {
     clearInterval(this.timerInterval);
     clearInterval(this.waveInterval);
-    // Cambiar estado inmediatamente para evitar doble click
     this.mediaRecorder!.onstop = () => {
-      this.audioChunks = [...this.audioChunks]; // flush
+      this.audioChunks = [...this.audioChunks];
       this.state.set('stopped');
     };
     this.mediaRecorder?.stop();
@@ -611,7 +610,7 @@ export class RecordHistoryComponent implements OnDestroy {
     }, 3000);
 
     this.api.transcribeAndStructure(audioBlob).subscribe({
-      next: (result) => {
+      next: (result: any) => {
         clearTimeout(stepTimer);
         try {
           const ch = result.clinical_history || result || {};
@@ -639,7 +638,7 @@ export class RecordHistoryComponent implements OnDestroy {
           this.state.set('stopped');
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         clearTimeout(stepTimer);
         this.error.set(err.error?.detail || 'Error al procesar el audio. Intentá de nuevo.');
         this.state.set('stopped');

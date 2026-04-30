@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Preview pies</title>
+  <style>
+    body { font-family: sans-serif; background: #f3f4f6; padding: 40px; display: flex; gap: 60px; flex-wrap: wrap; align-items: flex-start; }
+    .col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    h2 { font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin: 0; text-align: center; }
+    .feet { display: flex; gap: 20px; align-items: flex-end; }
+    .foot { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .lbl { font-size: 11px; color: #9ca3af; font-weight: 700; letter-spacing: 1px; }
+    .fp  { fill: #c7d2fe; stroke: #4f46e5; stroke-width: 2; }
+    .zone { fill: rgba(67,56,202,0.4); }
+    .divider { width: 1px; background: #e5e7eb; margin: 0 10px; align-self: stretch; }
+    .badge { font-size: 11px; color: #4f46e5; background: #eef2ff; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<!-- ACTUAL (viejo) -->
+<div class="col">
+  <h2>Actual</h2>
+  <div class="badge">viewBox 0 0 80 140</div>
+  <div class="feet">
+    <div class="foot">
+      <svg viewBox="0 8 80 140" width="58" height="102">
+        <g transform="scale(-1,1) translate(-80,0)">
+          <path class="fp" d="M 40 128 C 57 131 67 124 67 110 C 67 96 65 82 62 70 C 59 58 56 46 52 39 C 48 34 44 32 40 32 C 36 32 32 34 28 39 C 24 46 21 53 18 59 C 16 70 32 81 32 81 C 32 92 32 92 32 92 C 32 103 16 107.4 18 114 C 16 114 24 128 40 128 Z"/>
+          <ellipse class="fp" cx="22" cy="27" rx="9" ry="10"/>
+          <ellipse class="fp" cx="33" cy="20" rx="7" ry="8"/>
+          <ellipse class="fp" cx="43" cy="18" rx="6" ry="7"/>
+          <ellipse class="fp" cx="53" cy="20" rx="5" ry="6"/>
+          <ellipse class="fp" cx="61" cy="26" rx="4" ry="5"/>
+        </g>
+      </svg>
+      <span class="lbl">I</span>
+    </div>
+    <div class="foot">
+      <svg viewBox="0 8 80 140" width="58" height="102">
+        <path class="fp" d="M 40 128 C 57 131 67 124 67 110 C 67 96 65 82 62 70 C 59 58 56 46 52 39 C 48 34 44 32 40 32 C 36 32 32 34 28 39 C 24 46 21 53 18 59 C 16 70 32 81 32 81 C 32 92 32 92 32 92 C 32 103 16 107.4 18 114 C 16 114 24 128 40 128 Z"/>
+        <ellipse class="fp" cx="22" cy="27" rx="9" ry="10"/>
+        <ellipse class="fp" cx="33" cy="20" rx="7" ry="8"/>
+        <ellipse class="fp" cx="43" cy="18" rx="6" ry="7"/>
+        <ellipse class="fp" cx="53" cy="20" rx="5" ry="6"/>
+        <ellipse class="fp" cx="61" cy="26" rx="4" ry="5"/>
+      </svg>
+      <span class="lbl">D</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- NUEVO (imagen) -->
+<div class="col">
+  <h2>Nuevo (de tu imagen)</h2>
+  <div class="badge">viewBox 0 0 120 200</div>
+  <div class="feet">
+    <!-- Pie izquierdo (espejado) -->
+    <div class="foot">
+      <svg viewBox="0 0 120 200" width="66" height="110">
+        <g transform="scale(-1,1) translate(-120,0)">
+          <path class="fp" d="
+            M 26 50
+            C 40 44 58 44 72 48
+            C 86 52 92 64 88 72
+            C 88 86 87 97 86 100
+            C 85 114 82 124 78 130
+            C 70 150 62 168 50 168
+            C 38 168 30 150 22 130
+            C 18 122 15 112 14 100
+            C 13 88 13 78 16 72
+            C 14 64 18 55 26 50
+            Z"/>
+          <!-- dedos: big toe medial (right side when mirrored) -->
+          <ellipse class="fp" cx="30" cy="22" rx="11" ry="14"/>
+          <ellipse class="fp" cx="48" cy="18" rx="9"  ry="12"/>
+          <ellipse class="fp" cx="64" cy="20" rx="8"  ry="11"/>
+          <ellipse class="fp" cx="78" cy="24" rx="7"  ry="9"/>
+          <ellipse class="fp" cx="90" cy="30" rx="6"  ry="8"/>
+        </g>
+      </svg>
+      <span class="lbl">I</span>
+    </div>
+    <!-- Pie derecho -->
+    <div class="foot">
+      <svg viewBox="0 0 120 200" width="66" height="110">
+        <path class="fp" d="
+          M 26 50
+          C 40 44 58 44 72 48
+          C 86 52 92 64 88 72
+          C 88 86 87 97 86 100
+          C 85 114 82 124 78 130
+          C 70 150 62 168 50 168
+          C 38 168 30 150 22 130
+          C 18 122 15 112 14 100
+          C 13 88 13 78 16 72
+          C 14 64 18 55 26 50
+          Z"/>
+        <ellipse class="fp" cx="30" cy="22" rx="11" ry="14"/>
+        <ellipse class="fp" cx="48" cy="18" rx="9"  ry="12"/>
+        <ellipse class="fp" cx="64" cy="20" rx="8"  ry="11"/>
+        <ellipse class="fp" cx="78" cy="24" rx="7"  ry="9"/>
+        <ellipse class="fp" cx="90" cy="30" rx="6"  ry="8"/>
+      </svg>
+      <span class="lbl">D</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TU PATH — rotaciones -->
+<div class="col">
+  <h2>Tu path — elegí rotación</h2>
+  <div style="display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap">
+
+    <div class="foot">
+      <svg viewBox="25 5 75 100" width="75" height="100">
+        <path class="fp" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/>
+      </svg>
+      <span class="lbl">0°</span>
+    </div>
+
+    <div class="foot">
+      <!-- rotate 90° CW around center (64.5, 53) -->
+      <svg viewBox="25 5 75 100" width="75" height="100">
+        <path class="fp" transform="rotate(90,64.5,53)" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/>
+      </svg>
+      <span class="lbl">+90°</span>
+    </div>
+
+    <div class="foot">
+      <!-- rotate -90° CCW around center -->
+      <svg viewBox="25 5 75 100" width="75" height="100">
+        <path class="fp" transform="rotate(-90,64.5,53)" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/>
+      </svg>
+      <span class="lbl">-90°</span>
+    </div>
+
+    <div class="foot">
+      <svg viewBox="25 5 75 100" width="75" height="100">
+        <path class="fp" transform="rotate(180,64.5,53)" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/>
+      </svg>
+      <span class="lbl">180°</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TU PATH — con espejo + rotador interactivo -->
+<div class="col">
+  <h2>Con espejo (ambos pies)</h2>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;width:100%">
+    <label style="font-size:12px;color:#6b7280;font-weight:600">Rotación: <span id="rot-val">0</span>°</label>
+    <input id="rot-slider" type="range" min="-180" max="180" step="1" value="0"
+      style="width:200px;accent-color:#4f46e5"
+      oninput="updateRot(this.value)">
+    <div style="display:flex;gap:6px;margin-top:2px">
+      <button onclick="setRot(0)"   style="font-size:11px;padding:2px 8px;border:1px solid #c7d2fe;border-radius:6px;cursor:pointer;background:#eef2ff;color:#4f46e5">0°</button>
+      <button onclick="setRot(90)"  style="font-size:11px;padding:2px 8px;border:1px solid #c7d2fe;border-radius:6px;cursor:pointer;background:#eef2ff;color:#4f46e5">+90°</button>
+      <button onclick="setRot(-90)" style="font-size:11px;padding:2px 8px;border:1px solid #c7d2fe;border-radius:6px;cursor:pointer;background:#eef2ff;color:#4f46e5">-90°</button>
+      <button onclick="setRot(180)" style="font-size:11px;padding:2px 8px;border:1px solid #c7d2fe;border-radius:6px;cursor:pointer;background:#eef2ff;color:#4f46e5">180°</button>
+    </div>
+  </div>
+
+  <div class="feet" style="gap:6px;margin-top:8px">
+    <div class="foot">
+      <svg viewBox="25 5 75 100" width="75" height="100">
+        <path class="fp" id="foot-left" transform="scale(-1,1) translate(-129,0)" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/>
+      </svg>
+      <span class="lbl">I</span>
+    </div>
+    <div class="foot">
+      <svg viewBox="25 5 75 100" width="75" height="100">
+        <path class="fp" id="foot-right" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/>
+      </svg>
+      <span class="lbl">D</span>
+    </div>
+  </div>
+  <div id="rot-readout" style="font-size:11px;color:#6b7280;margin-top:4px">transform="rotate(0, 64.5, 53)"</div>
+</div>
+
+<script>
+  const PATH = "M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z";
+  const CX = 64.5, CY = 53;
+
+  function updateRot(deg) {
+    deg = parseFloat(deg);
+    document.getElementById('rot-val').textContent = deg;
+    document.getElementById('rot-slider').value = deg;
+    document.getElementById('rot-readout').textContent = `rotate(${deg}, ${CX}, ${CY})`;
+
+    const right = document.getElementById('foot-right');
+    right.setAttribute('transform', `rotate(${deg},${CX},${CY})`);
+
+    const left = document.getElementById('foot-left');
+    left.setAttribute('transform', `rotate(${deg},${CX},${CY}) scale(-1,1) translate(-129,0)`);
+  }
+
+  function setRot(deg) { updateRot(deg); }
+</script>
+
+<div class="divider"></div>
+
+<!-- NUEVO — con plantillas activas -->
+<div class="col">
+  <h2>Nuevo con plantillas</h2>
+  <div class="badge" style="background:#818cf8;color:white">Plantillas: Sí</div>
+  <div class="feet">
+    <div class="foot">
+      <svg viewBox="0 0 120 200" width="66" height="110">
+        <g transform="scale(-1,1) translate(-120,0)">
+          <path style="fill:#818cf8;stroke:#4338ca;stroke-width:2" d="M 26 50 C 40 44 58 44 72 48 C 86 52 92 64 88 72 C 88 86 87 97 86 100 C 85 114 82 124 78 130 C 70 150 62 168 50 168 C 38 168 30 150 22 130 C 18 122 15 112 14 100 C 13 88 13 78 16 72 C 14 64 18 55 26 50 Z"/>
+          <ellipse style="fill:#818cf8;stroke:#4338ca;stroke-width:2" cx="30" cy="22" rx="11" ry="14"/>
+          <ellipse style="fill:#818cf8;stroke:#4338ca;stroke-width:2" cx="48" cy="18" rx="9"  ry="12"/>
+          <ellipse style="fill:#818cf8;stroke:#4338ca;stroke-width:2" cx="64" cy="20" rx="8"  ry="11"/>
+          <ellipse style="fill:#818cf8;stroke:#4338ca;stroke-width:2" cx="78" cy="24" rx="7"  ry="9"/>
+          <ellipse style="fill:#818cf8;stroke:#4338ca;stroke-width:2" cx="90" cy="30" rx="6"  ry="8"/>
+          <!-- zonas de presión (talón + metatarsianos) -->
+          <ellipse class="zone" cx="50" cy="148" rx="20" ry="13"/>
+          <ellipse class="zone" cx="28" cy="68"  rx="14" ry="9"/>
+          <ellipse class="zone" cx="72" cy="65"  rx="12" ry="8"/>
+        </g>
+      </svg>
+      <span class="lbl">I</span>
+    </div>
+    <div class="foot">
+      <svg viewBox="0 0 120 200" width="66" height="110">
+        <path style="fill:#818cf8;stroke:#4338ca;stroke-width:2" d="M 26 50 C 40 44 58 44 72 48 C 86 52 92 64 88 72 C 88 86 87 97 86 100 C 85 114 82 124 78 130 C 70 150 62 168 50 168 C 38 168 30 150 22 130 C 18 122 15 112 14 100 C 13 88 13 78 16 72 C 14 64 18 55 26 50 Z"/>
+        <ellipse style="fill:#818cf8;stroke:#4338ca;stroke-width:2" cx="30" cy="22" rx="11" ry="14"/>
+        <ellipse style="fill:#818cf8;stroke:#4338ca;stroke-width:2" cx="48" cy="18" rx="9"  ry="12"/>
+        <ellipse style="fill:#818cf8;stroke:#4338ca;stroke-width:2" cx="64" cy="20" rx="8"  ry="11"/>
+        <ellipse style="fill:#818cf8;stroke:#4338ca;stroke-width:2" cx="78" cy="24" rx="7"  ry="9"/>
+        <ellipse style="fill:#818cf8;stroke:#4338ca;stroke-width:2" cx="90" cy="30" rx="6"  ry="8"/>
+        <ellipse class="zone" cx="50" cy="148" rx="20" ry="13"/>
+        <ellipse class="zone" cx="28" cy="68"  rx="14" ry="9"/>
+        <ellipse class="zone" cx="72" cy="65"  rx="12" ry="8"/>
+      </svg>
+      <span class="lbl">D</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

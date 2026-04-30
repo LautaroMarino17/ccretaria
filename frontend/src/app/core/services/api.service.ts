@@ -200,6 +200,7 @@ export class ApiService {
     );
   }
 
+
   // ── Turnos ───────────────────────────────────────────────────────
   getAppointments() {
     return this.withAuth(h =>

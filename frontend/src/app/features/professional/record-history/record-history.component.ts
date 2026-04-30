@@ -600,7 +600,7 @@ export class RecordHistoryComponent implements OnDestroy {
     clearInterval(this.waveInterval);
     this.mediaRecorder!.onstop = () => {
       this.audioChunks = [...this.audioChunks];
-      this.state.set('stopped');
+      this.processAudio();
     };
     this.mediaRecorder?.stop();
   }

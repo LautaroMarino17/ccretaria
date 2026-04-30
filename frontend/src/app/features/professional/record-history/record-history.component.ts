@@ -192,12 +192,16 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
                   <div class="mf-foot-item">
                     <svg viewBox="0 0 80 140" width="58" height="102">
                       <g transform="scale(-1,1) translate(-80,0)">
-                        <path [class.foot-yes]="history().plantillas" class="foot-path"
-                          d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>
+                        <path [class.foot-yes]="history().plantillas" class="foot-path" d="M 40 130 C 56 132 66 123 66 109 C 66 95 64 81 62 69 C 60 59 59 51 57 45 C 53 39 46 37 40 37 C 34 37 27 39 23 45 C 21 51 20 59 18 69 C 16 81 14 95 14 109 C 14 123 24 132 40 130 Z"/>
+                        <ellipse [class.foot-yes]="history().plantillas" class="foot-path" cx="22" cy="22" rx="9" ry="10"/>
+                        <ellipse [class.foot-yes]="history().plantillas" class="foot-path" cx="33" cy="15" rx="7" ry="8"/>
+                        <ellipse [class.foot-yes]="history().plantillas" class="foot-path" cx="43" cy="13" rx="6" ry="7"/>
+                        <ellipse [class.foot-yes]="history().plantillas" class="foot-path" cx="53" cy="15" rx="5" ry="6"/>
+                        <ellipse [class.foot-yes]="history().plantillas" class="foot-path" cx="61" cy="21" rx="4" ry="5"/>
                         @if (history().plantillas) {
-                          <ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone"/>
-                          <ellipse cx="55" cy="34" rx="10" ry="7" class="foot-zone"/>
-                          <ellipse cx="24" cy="37" rx="12" ry="7" class="foot-zone"/>
+                          <ellipse cx="40" cy="112" rx="15" ry="9" class="foot-zone"/>
+                          <ellipse cx="24" cy="57" rx="10" ry="6" class="foot-zone"/>
+                          <ellipse cx="56" cy="55" rx="9" ry="6" class="foot-zone"/>
                         }
                       </g>
                     </svg>
@@ -206,12 +210,16 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
                   <!-- Pie derecho -->
                   <div class="mf-foot-item">
                     <svg viewBox="0 0 80 140" width="58" height="102">
-                      <path [class.foot-yes]="history().plantillas" class="foot-path"
-                        d="M 40 132 C 57 132 66 120 65 108 C 64 96 63 84 63 72 C 63 60 65 50 67 42 C 68 34 66 22 62 16 C 60 12 57 10 55 14 C 53 18 53 22 55 24 C 54 20 52 12 50 10 C 48 8 45 8 43 10 C 41 13 41 17 43 21 C 42 17 40 8 38 6 C 36 4 33 4 31 6 C 29 9 29 13 31 17 C 30 13 27 5 25 4 C 23 3 21 4 19 7 C 17 10 16 16 18 20 C 17 15 13 10 11 14 C 9 18 9 25 11 31 C 12 39 13 49 12 61 C 10 73 8 85 9 97 C 10 109 15 121 22 130 C 28 134 35 135 40 132 Z"/>
+                      <path [class.foot-yes]="history().plantillas" class="foot-path" d="M 40 130 C 56 132 66 123 66 109 C 66 95 64 81 62 69 C 60 59 59 51 57 45 C 53 39 46 37 40 37 C 34 37 27 39 23 45 C 21 51 20 59 18 69 C 16 81 14 95 14 109 C 14 123 24 132 40 130 Z"/>
+                      <ellipse [class.foot-yes]="history().plantillas" class="foot-path" cx="22" cy="22" rx="9" ry="10"/>
+                      <ellipse [class.foot-yes]="history().plantillas" class="foot-path" cx="33" cy="15" rx="7" ry="8"/>
+                      <ellipse [class.foot-yes]="history().plantillas" class="foot-path" cx="43" cy="13" rx="6" ry="7"/>
+                      <ellipse [class.foot-yes]="history().plantillas" class="foot-path" cx="53" cy="15" rx="5" ry="6"/>
+                      <ellipse [class.foot-yes]="history().plantillas" class="foot-path" cx="61" cy="21" rx="4" ry="5"/>
                       @if (history().plantillas) {
-                        <ellipse cx="40" cy="116" rx="16" ry="10" class="foot-zone"/>
-                        <ellipse cx="24" cy="34" rx="10" ry="7" class="foot-zone"/>
-                        <ellipse cx="55" cy="37" rx="12" ry="7" class="foot-zone"/>
+                        <ellipse cx="40" cy="112" rx="15" ry="9" class="foot-zone"/>
+                        <ellipse cx="24" cy="57" rx="10" ry="6" class="foot-zone"/>
+                        <ellipse cx="56" cy="55" rx="9" ry="6" class="foot-zone"/>
                       }
                     </svg>
                     <span class="foot-side">D</span>

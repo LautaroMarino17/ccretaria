@@ -199,9 +199,9 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
                         
                         
                         @if (history().plantillas) {
-                          <ellipse cx="52" cy="88" rx="12" ry="8" class="foot-zone"/>
-                          <ellipse cx="43" cy="52" rx="9"  ry="6" class="foot-zone"/>
-                          <ellipse cx="76" cy="50" rx="9"  ry="6" class="foot-zone"/>
+                          
+                          
+                          
                         }
                       </g>
                     </svg>
@@ -217,9 +217,9 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
                       
                       
                       @if (history().plantillas) {
-                        <ellipse cx="52" cy="88" rx="12" ry="8" class="foot-zone"/>
-                        <ellipse cx="43" cy="52" rx="9"  ry="6" class="foot-zone"/>
-                        <ellipse cx="76" cy="50" rx="9"  ry="6" class="foot-zone"/>
+                        
+                        
+                        
                       }
                     </svg>
                     <span class="foot-side">D</span>

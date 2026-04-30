@@ -294,11 +294,11 @@ import { ApiService } from '../../../core/services/api.service';
                         <label>Plantillas</label>
                         <div class="feet-display">
                           <div class="foot-item-sm">
-                            <svg viewBox="25 5 75 100" width="44" height="59"><g transform="scale(-1,1) translate(-129,0)"><path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/>@if(h.plantillas){<ellipse cx="52" cy="88" rx="12" ry="8" class="foot-zone-sm"/><ellipse cx="43" cy="52" rx="9"  ry="6" class="foot-zone-sm"/><ellipse cx="76" cy="50" rx="9"  ry="6" class="foot-zone-sm"/>}</g></svg>
+                            <svg viewBox="25 5 75 100" width="44" height="59"><g transform="scale(-1,1) translate(-129,0)"><path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></g></svg>
                             <span class="foot-lbl">I</span>
                           </div>
                           <div class="foot-item-sm">
-                            <svg viewBox="25 5 75 100" width="44" height="59"><path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/>@if(h.plantillas){<ellipse cx="52" cy="88" rx="12" ry="8" class="foot-zone-sm"/><ellipse cx="43" cy="52" rx="9"  ry="6" class="foot-zone-sm"/><ellipse cx="76" cy="50" rx="9"  ry="6" class="foot-zone-sm"/>}</svg>
+                            <svg viewBox="25 5 75 100" width="44" height="59"><path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></svg>
                             <span class="foot-lbl">D</span>
                           </div>
                           <span class="plantilla-tag" [class.yes]="h.plantillas">{{ h.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</span>

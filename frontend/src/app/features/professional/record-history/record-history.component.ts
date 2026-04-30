@@ -75,17 +75,25 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
               </svg>
             </div>
             <p class="record-label">Grabación lista — {{ formatTime(elapsedSeconds()) }}</p>
-            <p class="record-hint">Presioná "Generar historia clínica" para transcribir y estructurar la consulta con IA.</p>
-            <div class="stopped-actions">
-              <button class="btn-secondary" (click)="startOver()">Grabar de nuevo</button>
-              <button class="btn-primary" (click)="processAudio()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <circle cx="12" cy="12" r="3" fill="currentColor"/>
-                </svg>
-                Generar historia clínica
-              </button>
-            </div>
+            @if (error()) {
+              <p class="record-hint retry-hint">{{ error() }}</p>
+              <div class="stopped-actions">
+                <button class="btn-secondary" (click)="startOver()">Grabar de nuevo</button>
+                <button class="btn-primary" (click)="processAudio()">Reintentar</button>
+              </div>
+            } @else {
+              <p class="record-hint">Presioná "Generar historia clínica" para transcribir y estructurar la consulta con IA.</p>
+              <div class="stopped-actions">
+                <button class="btn-secondary" (click)="startOver()">Grabar de nuevo</button>
+                <button class="btn-primary" (click)="processAudio()">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                  </svg>
+                  Generar historia clínica
+                </button>
+              </div>
+            }
           }
         </div>
       }
@@ -507,6 +515,7 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
       width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4);
       border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite;
     }
+    .retry-hint { color: #dc2626 !important; }
     .error-banner {
       background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
       border-radius: 10px; padding: 12px 16px; font-size: 14px; margin-top: 16px;
@@ -640,8 +649,17 @@ export class RecordHistoryComponent implements OnDestroy {
       },
       error: (err: any) => {
         clearTimeout(stepTimer);
-        this.error.set(err.error?.detail || 'Error al procesar el audio. Intentá de nuevo.');
-        this.state.set('stopped');
+        const detail: string = err.error?.detail || '';
+        if (detail.includes('rate_limit_exceeded') || detail.includes('Rate limit') || err.status === 429) {
+          this.error.set('');
+          this.state.set('idle');
+          this.audioChunks = [];
+          this.elapsedSeconds.set(0);
+          alert('Límite de transcripciones alcanzado. Esperá unos minutos e intentá de nuevo.');
+        } else {
+          this.error.set(detail || 'Error al procesar el audio. Podés reintentar.');
+          this.state.set('stopped');
+        }
       }
     });
   }

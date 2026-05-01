@@ -4,30 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 
-interface Exercise {
-  nombre: string;
-  enlace: string;
-  reps_seg_mts: string;
-  carga: string;
-}
+interface Exercise { nombre: string; enlace: string; reps_seg_mts: string; carga: string; }
+interface Circuit  { nombre: string; rondas: string; ejercicios: Exercise[]; }
+interface Routine  { id?: string; titulo: string; descripcion: string; circuitos: Circuit[]; observaciones: string; }
 
-interface Circuit {
-  nombre: string;
-  rondas: string;
-  ejercicios: Exercise[];
-}
-
-interface Routine {
-  id?: string;
-  titulo: string;
-  descripcion: string;
-  circuitos: Circuit[];
-  observaciones: string;
-}
-
-const EMPTY_EXERCISE = (): Exercise => ({ nombre: '', enlace: '', reps_seg_mts: '', carga: '' });
-const EMPTY_CIRCUIT = (): Circuit => ({ nombre: '', rondas: '', ejercicios: [EMPTY_EXERCISE()] });
-const EMPTY_ROUTINE = (): Routine => ({ titulo: '', descripcion: '', circuitos: [EMPTY_CIRCUIT()], observaciones: '' });
+const EMPTY_EX  = (): Exercise => ({ nombre: '', enlace: '', reps_seg_mts: '', carga: '' });
+const EMPTY_CIR = (): Circuit  => ({ nombre: '', rondas: '', ejercicios: [EMPTY_EX()] });
+const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EMPTY_CIR()], observaciones: '' });
 
 @Component({
   selector: 'app-manage-routines',
@@ -35,6 +18,7 @@ const EMPTY_ROUTINE = (): Routine => ({ titulo: '', descripcion: '', circuitos: 
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="page">
+      <!-- ── Header ─────────────────────────────────────── -->
       <div class="page-header">
         <div class="header-left">
           <a [routerLink]="['/professional/patients', patientId]" class="btn-back">
@@ -46,274 +30,306 @@ const EMPTY_ROUTINE = (): Routine => ({ titulo: '', descripcion: '', circuitos: 
             <p class="subtitle">Gestioná los planes asignados al paciente</p>
           </div>
         </div>
-        <button class="btn-primary" (click)="openForm()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nueva rutina
-        </button>
-      </div>
-
-      @if (showForm()) {
-        <div class="form-card">
-          <h3>{{ editing() ? 'Editar rutina' : 'Nueva rutina' }}</h3>
-
-          <div class="field">
-            <label>Título *</label>
-            <input [(ngModel)]="form().titulo" placeholder="Ej: Plan de rehabilitación semana 1" />
-          </div>
-          <div class="field">
-            <label>Descripción general</label>
-            <textarea [(ngModel)]="form().descripcion" rows="2" placeholder="Objetivo de la rutina..."></textarea>
-          </div>
-
-          <div class="circuits-section">
-            @for (circ of form().circuitos; track circ; let ci = $index) {
-              <div class="circuit-block">
-                <div class="circuit-header">
-                  <div class="circuit-num">Bloque {{ ci + 1 }}</div>
-                  <div class="circuit-title-row">
-                    <div class="field-inline">
-                      <label>Nombre del bloque/circuito</label>
-                      <input [(ngModel)]="circ.nombre" placeholder="Ej: Foam Roller, Bloque 1, MOV Integrados..." />
-                    </div>
-                    <div class="field-inline short">
-                      <label>Rondas / Series</label>
-                      <input [(ngModel)]="circ.rondas" placeholder="Ej: 3" />
-                    </div>
-                  </div>
-                  @if (form().circuitos.length > 1) {
-                    <button class="btn-remove-circuit" (click)="removeCircuit(ci)" title="Eliminar bloque">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
-                  }
-                </div>
-
-                <!-- Tabla de ejercicios del circuito -->
-                <div class="exercises-table">
-                  <div class="table-head">
-                    <span>Ejercicio</span>
-                    <span>Enlace (video)</span>
-                    <span>Rep / Seg / Mts</span>
-                    <span>Carga %</span>
-                    <span></span>
-                  </div>
-                  @for (ex of circ.ejercicios; track ex; let ei = $index) {
-                    <div class="table-row">
-                      <input [(ngModel)]="ex.nombre" placeholder="Nombre *" />
-                      <input [(ngModel)]="ex.enlace" placeholder="https://..." />
-                      <input [(ngModel)]="ex.reps_seg_mts" placeholder="Ej: 3x5&quot; / 30&quot;" />
-                      <input [(ngModel)]="ex.carga" placeholder="Ej: 70% / 25KG" />
-                      @if (circ.ejercicios.length > 1) {
-                        <button class="btn-remove-row" (click)="removeExercise(ci, ei)" title="Eliminar ejercicio">×</button>
-                      } @else {
-                        <span></span>
-                      }
-                    </div>
-                  }
-                </div>
-                <button class="btn-add-exercise" (click)="addExercise(ci)">+ Agregar ejercicio</button>
-              </div>
-            }
-          </div>
-
-          <button class="btn-add-circuit" (click)="addCircuit()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Agregar bloque/circuito
+        @if (!showForm() || editing()) {
+          <button class="btn-new" (click)="openNew()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nueva rutina
           </button>
-
-          <div class="field" style="margin-top:16px">
-            <label>Observaciones finales</label>
-            <textarea [(ngModel)]="form().observaciones" rows="3" placeholder="Indicaciones adicionales, notas del profesional..."></textarea>
-          </div>
-
-          @if (formError()) { <div class="error-banner">{{ formError() }}</div> }
-
-          <div class="form-actions">
-            <button class="btn-secondary" (click)="closeForm()">Cancelar</button>
-            <button class="btn-primary" (click)="saveRoutine()" [disabled]="saving()">
-              {{ saving() ? 'Guardando...' : (editing() ? 'Guardar cambios' : 'Crear rutina') }}
-            </button>
-          </div>
-        </div>
-      }
+        }
+      </div>
 
       @if (loading()) {
         <div class="loading-text">Cargando rutinas...</div>
-      } @else if (routines().length === 0 && !showForm()) {
-        <div class="empty-state">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          <p>No hay rutinas asignadas</p>
-          <button class="btn-primary" (click)="openForm()">Crear primera rutina</button>
-        </div>
       } @else {
+
+        <!-- ── Formulario nueva rutina ──────────────────── -->
+        @if (showForm() && !editing()) {
+          <div class="routine-card is-editing">
+            <ng-container *ngTemplateOutlet="editCard"></ng-container>
+          </div>
+        }
+
+        <!-- ── Estado vacío ────────────────────────────── -->
+        @if (routines().length === 0 && !showForm()) {
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <p>No hay rutinas asignadas todavía</p>
+            <button class="btn-new" (click)="openNew()">Crear primera rutina</button>
+          </div>
+        }
+
+        <!-- ── Lista de rutinas ─────────────────────────── -->
         <div class="routines-list">
           @for (r of routines(); track r.id) {
-            <div class="routine-card">
-              <div class="routine-header">
-                <div>
-                  <h3>{{ r.titulo }}</h3>
-                  @if (r.descripcion) { <p class="routine-desc">{{ r.descripcion }}</p> }
-                </div>
-                <div class="routine-actions">
-                  <button class="btn-icon" (click)="editRoutine(r)" title="Editar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                  <button class="btn-icon danger" (click)="confirmDelete(r)" title="Eliminar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                  </button>
-                </div>
+
+            @if (editing() === r.id && showForm()) {
+              <!-- Modo edición inline -->
+              <div class="routine-card is-editing">
+                <ng-container *ngTemplateOutlet="editCard"></ng-container>
               </div>
 
-              @for (circ of r.circuitos; track $index) {
-                <div class="circuit-preview">
-                  <div class="circuit-preview-header">
-                    <span class="circuit-label">{{ circ.nombre || 'Bloque ' + ($index + 1) }}</span>
-                    @if (circ.rondas) { <span class="rondas-badge">{{ circ.rondas }} rondas</span> }
-                  </div>
-                  <div class="preview-table">
-                    <div class="preview-head">
-                      <span>Ejercicio</span><span>Enlace</span><span>Rep/Seg/Mts</span><span>Carga</span>
-                    </div>
-                    @for (ex of circ.ejercicios; track $index) {
-                      <div class="preview-row">
-                        <span>{{ ex.nombre }}</span>
-                        <span class="text-muted">
-                          @if (ex.enlace || ex.descripcion) {
-                            <a [href]="ex.enlace || ex.descripcion" target="_blank" rel="noopener" class="link-video">Ver video</a>
-                          }
-                        </span>
-                        <span>{{ ex.reps_seg_mts }}</span>
-                        <span>{{ ex.carga }}</span>
-                      </div>
-                    }
+            } @else {
+              <!-- Modo lectura -->
+              <div class="routine-card">
+                <div class="card-topbar">
+                  <h3 class="card-title">{{ r.titulo }}</h3>
+                  <div class="topbar-actions">
+                    <button class="btn-icon" (click)="openEdit(r)" title="Editar">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="btn-icon danger" (click)="confirmDelete(r)" title="Eliminar">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
                   </div>
                 </div>
-              }
 
-              @if (r.observaciones) {
-                <div class="obs-box">
-                  <span class="obs-label">Observaciones</span>
-                  <p>{{ r.observaciones }}</p>
-                </div>
-              }
-            </div>
+                @if (r.descripcion) { <p class="card-desc">{{ r.descripcion }}</p> }
+
+                @for (circ of r.circuitos; track $index) {
+                  <div class="bloque-read">
+                    <div class="bloque-read-header">
+                      <span class="bloque-label">{{ circ.nombre || ('bloque ' + ($index + 1)) }}</span>
+                      @if (circ.rondas) { <span class="rondas-badge">{{ circ.rondas }} rondas</span> }
+                    </div>
+                    <div class="ex-table">
+                      <div class="ex-head read">
+                        <span>EJERCICIO</span><span>ENLACE</span><span>REP/SEG/MTS</span><span>CARGA</span>
+                      </div>
+                      @for (ex of circ.ejercicios; track $index) {
+                        <div class="ex-row-read">
+                          <span>{{ ex.nombre }}</span>
+                          <span>
+                            @if (ex.enlace || ex.descripcion) {
+                              <a [href]="ex.enlace || ex.descripcion" target="_blank" class="link-ex">Ver video</a>
+                            }
+                          </span>
+                          <span>{{ ex.reps_seg_mts }}</span>
+                          <span>{{ ex.carga }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (r.observaciones) {
+                  <div class="obs-box">
+                    <span class="obs-label">Observaciones</span>
+                    <p>{{ r.observaciones }}</p>
+                  </div>
+                }
+              </div>
+            }
           }
         </div>
       }
 
+      <!-- ── Modal eliminar ──────────────────────────── -->
       @if (deletingRoutine()) {
         <div class="modal-overlay" (click)="deletingRoutine.set(null)">
           <div class="modal" (click)="$event.stopPropagation()">
             <h3>¿Eliminar rutina?</h3>
             <p>Se eliminará <strong>{{ deletingRoutine()!.titulo }}</strong> permanentemente.</p>
             <div class="modal-actions">
-              <button class="btn-secondary" (click)="deletingRoutine.set(null)">Cancelar</button>
+              <button class="btn-cancel-sm" (click)="deletingRoutine.set(null)">Cancelar</button>
               <button class="btn-danger" (click)="deleteRoutine()">Eliminar</button>
             </div>
           </div>
         </div>
       }
     </div>
+
+    <!-- ── Template de edición (reutilizado por nueva y editar) ── -->
+    <ng-template #editCard>
+      <div class="card-topbar">
+        <input class="title-input" [(ngModel)]="form().titulo" placeholder="Nombre del plan..." />
+        <div class="topbar-actions">
+          <button class="btn-cancel-sm" (click)="closeForm()">Cancelar</button>
+          <button class="btn-save" (click)="saveRoutine()" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : (editing() ? 'Guardar cambios' : 'Crear rutina') }}
+          </button>
+        </div>
+      </div>
+
+      @for (circ of form().circuitos; track circ; let ci = $index) {
+        <div class="bloque-edit">
+          <div class="bloque-edit-header">
+            <span class="bloque-label">bloque {{ ci + 1 }}</span>
+            <input class="circ-name-inp" [(ngModel)]="circ.nombre" placeholder="Nombre del bloque (opcional)" />
+            <input class="circ-rondas-inp" [(ngModel)]="circ.rondas" placeholder="Rondas" />
+            @if (form().circuitos.length > 1) {
+              <button class="btn-rm-bloque" (click)="removeCircuit(ci)" title="Eliminar bloque">×</button>
+            }
+          </div>
+
+          <div class="ex-table">
+            <div class="ex-head edit">
+              <span>EJERCICIO</span><span>ENLACE</span><span>REP/SEG/MTS</span><span>CARGA</span><span></span>
+            </div>
+            @for (ex of circ.ejercicios; track ex; let ei = $index) {
+              <div class="ex-row-edit">
+                <input [(ngModel)]="ex.nombre" placeholder="Ejercicio *" />
+                <input [(ngModel)]="ex.enlace" placeholder="https://..." />
+                <input [(ngModel)]="ex.reps_seg_mts" placeholder="Ej: 3x10" />
+                <input [(ngModel)]="ex.carga" placeholder="Ej: 70%" />
+                <button class="btn-minus" [class.invisible]="circ.ejercicios.length === 1" (click)="removeExercise(ci, ei)">−</button>
+              </div>
+            }
+          </div>
+
+          <button class="btn-add-ex" (click)="addExercise(ci)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar ejercicio
+          </button>
+        </div>
+      }
+
+      <button class="btn-add-bloque" (click)="addCircuit()">
+        <span class="plus-circle">+</span>
+        Agregar bloque
+      </button>
+
+      <div class="obs-edit">
+        <label>Observaciones (opcional)</label>
+        <textarea [(ngModel)]="form().observaciones" rows="2" placeholder="Notas adicionales..."></textarea>
+      </div>
+
+      @if (formError()) { <div class="error-banner">{{ formError() }}</div> }
+    </ng-template>
   `,
   styles: [`
     .page { max-width: 960px; }
     .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 12px; }
     .header-left { display: flex; align-items: flex-start; gap: 14px; }
-    .btn-back { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; color: #374151; text-decoration: none; white-space: nowrap; margin-top: 2px; }
+    .btn-back { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; color: #374151; text-decoration: none; white-space: nowrap; }
     h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
     .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
 
-    .form-card { background: white; border-radius: 16px; padding: 28px; margin-bottom: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
-    .form-card h3 { font-size: 17px; font-weight: 700; color: #111827; margin: 0 0 20px; }
-    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-    label { font-size: 13px; font-weight: 500; color: #374151; }
-    input, textarea { padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; resize: vertical; width: 100%; box-sizing: border-box; }
-    input:focus, textarea:focus { border-color: #4f46e5; }
-
-    .circuits-section { display: flex; flex-direction: column; gap: 16px; margin-bottom: 12px; }
-    .circuit-block { border: 1.5px solid #e5e7eb; border-radius: 14px; padding: 18px; background: #fafafa; }
-    .circuit-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
-    .circuit-num { background: #4f46e5; color: white; border-radius: 8px; padding: 4px 12px; font-size: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; margin-top: 20px; }
-    .circuit-title-row { flex: 1; display: flex; gap: 10px; flex-wrap: wrap; }
-    .field-inline { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
-    .field-inline.short { max-width: 140px; flex: 0 0 140px; }
-    .field-inline label { font-size: 12px; font-weight: 500; color: #6b7280; }
-    .btn-remove-circuit { background: none; border: none; cursor: pointer; color: #ef4444; padding: 4px; margin-top: 18px; flex-shrink: 0; }
-
-    .exercises-table { border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb; margin-bottom: 10px; }
-    .table-head { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr 32px; background: #f3f4f6; padding: 8px 10px; gap: 8px; }
-    .table-head span { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.4px; }
-    .table-row { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr 32px; padding: 6px 10px; gap: 8px; border-top: 1px solid #e5e7eb; align-items: center; background: white; }
-    .table-row input { padding: 6px 8px; font-size: 13px; }
-    .btn-remove-row { background: none; border: none; cursor: pointer; color: #ef4444; font-size: 18px; padding: 0; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; }
-    .btn-add-exercise { background: #eef2ff; color: #4f46e5; border: none; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 4px; }
-
-    .btn-add-circuit { display: flex; align-items: center; gap: 8px; background: white; border: 1.5px dashed #c7d2fe; color: #4f46e5; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; justify-content: center; margin-top: 4px; }
-    .btn-add-circuit:hover { background: #eef2ff; }
-
+    /* ── Cards ── */
     .routines-list { display: flex; flex-direction: column; gap: 16px; }
-    .routine-card { background: white; border-radius: 16px; padding: 22px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
-    .routine-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
-    .routine-card h3 { font-size: 16px; font-weight: 700; color: #111827; margin: 0 0 4px; }
-    .routine-desc { font-size: 13px; color: #6b7280; margin: 0; }
-    .routine-actions { display: flex; gap: 8px; }
+    .routine-card { background: white; border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 8px rgba(0,0,0,0.07); }
+    .routine-card.is-editing { border: 2px solid #c7d2fe; }
+
+    /* ── Top bar ── */
+    .card-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+    .card-title { font-size: 16px; font-weight: 700; color: #111827; margin: 0; }
+    .card-desc { font-size: 13px; color: #6b7280; margin: -8px 0 16px; }
+    .title-input {
+      flex: 1; min-width: 160px; font-size: 18px; font-weight: 700; color: #111827;
+      border: none; border-bottom: 2px solid #e5e7eb; outline: none; padding: 4px 0;
+      background: transparent; font-family: inherit;
+    }
+    .title-input:focus { border-bottom-color: #4f46e5; }
+    .title-input::placeholder { color: #c4c9d4; font-weight: 400; font-size: 16px; }
+    .topbar-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
     .btn-icon { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid #e5e7eb; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280; transition: all 0.15s; }
     .btn-icon:hover { border-color: #4f46e5; color: #4f46e5; }
     .btn-icon.danger:hover { border-color: #ef4444; color: #ef4444; }
 
-    .circuit-preview { margin-bottom: 14px; }
-    .circuit-preview-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-    .circuit-label { font-size: 13px; font-weight: 700; color: #374151; }
+    /* ── Bloque labels ── */
+    .bloque-label { font-size: 11px; font-weight: 800; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
     .rondas-badge { background: #eef2ff; color: #4f46e5; border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
-    .preview-table { border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
-    .preview-head { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr; padding: 6px 12px; background: #f9fafb; gap: 8px; }
-    .preview-head span { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
-    .preview-row { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr; padding: 8px 12px; border-top: 1px solid #f3f4f6; gap: 8px; }
-    .preview-row span { font-size: 13px; color: #374151; }
-    .text-muted { color: #9ca3af !important; }
-    .link-video { color: #4f46e5; font-size: 12px; font-weight: 600; text-decoration: none; }
-    .link-video:hover { text-decoration: underline; }
 
+    /* ── Bloque read ── */
+    .bloque-read { margin-bottom: 16px; }
+    .bloque-read-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+
+    /* ── Bloque edit ── */
+    .bloque-edit { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #f3f4f6; }
+    .bloque-edit:last-of-type { border-bottom: none; }
+    .bloque-edit-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .circ-name-inp { flex: 1; min-width: 120px; padding: 6px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
+    .circ-name-inp:focus { border-color: #4f46e5; }
+    .circ-rondas-inp { width: 80px; padding: 6px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
+    .circ-rondas-inp:focus { border-color: #4f46e5; }
+    .btn-rm-bloque { background: none; border: none; cursor: pointer; color: #ef4444; font-size: 22px; padding: 0 4px; line-height: 1; flex-shrink: 0; }
+
+    /* ── Exercise table ── */
+    .ex-table { border: 1px solid #e9eaec; border-radius: 10px; overflow: hidden; margin-bottom: 2px; }
+    .ex-head { display: grid; background: #f8f9fa; padding: 8px 12px; gap: 8px; }
+    .ex-head.read  { grid-template-columns: 2fr 2fr 1.5fr 1.5fr; }
+    .ex-head.edit  { grid-template-columns: 2fr 2fr 1.5fr 1.5fr 36px; }
+    .ex-head span  { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Read rows */
+    .ex-row-read { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr; padding: 9px 12px; gap: 8px; border-top: 1px solid #f0f0f0; background: white; align-items: center; }
+    .ex-row-read span { font-size: 13px; color: #374151; }
+    .link-ex { color: #4f46e5; font-size: 12px; font-weight: 600; text-decoration: none; }
+    .link-ex:hover { text-decoration: underline; }
+
+    /* Edit rows */
+    .ex-row-edit { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr 36px; padding: 6px 8px; gap: 6px; border-top: 1px solid #f0f0f0; background: white; align-items: center; }
+    .ex-row-edit input { width: 100%; padding: 6px 8px; border: 1.5px solid #e5e7eb; border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box; font-family: inherit; }
+    .ex-row-edit input:focus { border-color: #4f46e5; }
+    .btn-minus { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid #fecaca; background: #fef2f2; color: #ef4444; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; line-height: 1; padding: 0; }
+    .btn-minus:hover { background: #ef4444; color: white; border-color: #ef4444; }
+    .btn-minus.invisible { visibility: hidden; }
+
+    /* Add exercise */
+    .btn-add-ex { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: #4f46e5; cursor: pointer; font-size: 13px; font-weight: 600; padding: 8px 10px; margin-top: 2px; border-radius: 6px; }
+    .btn-add-ex:hover { background: #eef2ff; }
+
+    /* Add bloque */
+    .btn-add-bloque { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 20px; margin: 12px 0 18px; border: 2px dashed #c7d2fe; border-radius: 12px; background: #fafbff; color: #4f46e5; cursor: pointer; font-size: 14px; font-weight: 600; justify-content: center; transition: background 0.15s; }
+    .btn-add-bloque:hover { background: #eef2ff; }
+    .plus-circle { width: 34px; height: 34px; border-radius: 50%; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 300; flex-shrink: 0; line-height: 1; }
+
+    /* Observaciones */
+    .obs-edit { margin-top: 4px; }
+    .obs-edit label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 6px; }
+    .obs-edit textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; resize: vertical; box-sizing: border-box; }
+    .obs-edit textarea:focus { border-color: #4f46e5; }
     .obs-box { background: #fffbeb; border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
     .obs-label { display: block; font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
     .obs-box p { font-size: 13px; color: #78350f; margin: 0; line-height: 1.6; }
 
+    /* Buttons */
+    .btn-new { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #4f46e5; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-new:hover { background: #4338ca; }
+    .btn-save { padding: 8px 18px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-save:hover:not(:disabled) { background: #4338ca; }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-cancel-sm { padding: 8px 14px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .btn-cancel-sm:hover { background: #e5e7eb; }
+    .btn-danger { padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .error-banner { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-top: 12px; }
+
+    /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 200; }
     .modal { background: white; border-radius: 16px; padding: 28px; max-width: 400px; width: 90%; }
     .modal h3 { font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 10px; }
     .modal p { font-size: 14px; color: #6b7280; margin: 0 0 20px; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-    .btn-danger { padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
 
-    .btn-primary { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #4f46e5; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-secondary { padding: 10px 18px; background: #f3f4f6; color: #374151; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; }
-    .error-banner { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-bottom: 14px; }
-    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
     .loading-text { padding: 32px; text-align: center; color: #9ca3af; }
     .empty-state { text-align: center; padding: 56px; display: flex; flex-direction: column; align-items: center; gap: 12px; color: #9ca3af; }
     .empty-state p { font-size: 15px; margin: 0; }
 
     @media (max-width: 640px) {
-      .table-head, .table-row { grid-template-columns: 1fr 1fr; }
-      .table-head span:nth-child(n+3), .table-row input:nth-child(n+3) { display: none; }
-      .preview-head, .preview-row { grid-template-columns: 1fr 1fr; }
+      .ex-head.edit  { grid-template-columns: 1.5fr 36px; }
+      .ex-head.edit span:not(:first-child):not(:last-child) { display: none; }
+      .ex-row-edit   { grid-template-columns: 1.5fr 36px; }
+      .ex-row-edit input:not(:first-child) { display: none; }
+      .ex-head.read  { grid-template-columns: 1.5fr 1.5fr; }
+      .ex-head.read span:nth-child(n+3) { display: none; }
+      .ex-row-read   { grid-template-columns: 1.5fr 1.5fr; }
+      .ex-row-read span:nth-child(n+3) { display: none; }
       .header-left { flex-direction: column; gap: 10px; }
     }
   `]
 })
 export class ManageRoutinesComponent implements OnInit {
-  private api = inject(ApiService);
+  private api   = inject(ApiService);
   private route = inject(ActivatedRoute);
 
-  patientId = this.route.snapshot.params['patientId'];
-  routines = signal<any[]>([]);
-  loading = signal(true);
-  showForm = signal(false);
-  saving = signal(false);
-  editing = signal<string | null>(null);
+  patientId      = this.route.snapshot.params['patientId'];
+  routines       = signal<any[]>([]);
+  loading        = signal(true);
+  showForm       = signal(false);
+  saving         = signal(false);
+  editing        = signal<string | null>(null);
   deletingRoutine = signal<any>(null);
-  formError = signal('');
-  form = signal<Routine>(EMPTY_ROUTINE());
+  formError      = signal('');
+  form           = signal<Routine>(EMPTY_ROU());
 
   ngOnInit() { this.load(); }
 
@@ -325,61 +341,58 @@ export class ManageRoutinesComponent implements OnInit {
     });
   }
 
-  openForm() {
-    this.form.set(EMPTY_ROUTINE());
+  openNew() {
+    this.form.set(EMPTY_ROU());
     this.editing.set(null);
-    this.formError.set('');
-    this.showForm.set(true);
-  }
-
-  editRoutine(r: any) {
-    this.form.set({
-      titulo: r.titulo || '',
-      descripcion: r.descripcion || '',
-      circuitos: r.circuitos?.length ? r.circuitos.map((c: any) => ({
-        nombre: c.nombre || '',
-        rondas: c.rondas || '',
-        ejercicios: c.ejercicios?.length ? c.ejercicios.map((e: any) => ({
-          nombre: e.nombre || '',
-          enlace: e.enlace || e.descripcion || '',
-          reps_seg_mts: e.reps_seg_mts || '',
-          carga: e.carga || ''
-        })) : [EMPTY_EXERCISE()]
-      })) : [EMPTY_CIRCUIT()],
-      observaciones: r.observaciones || ''
-    });
-    this.editing.set(r.id);
     this.formError.set('');
     this.showForm.set(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  openEdit(r: any) {
+    this.form.set({
+      titulo: r.titulo || '',
+      descripcion: r.descripcion || '',
+      circuitos: r.circuitos?.length
+        ? r.circuitos.map((c: any) => ({
+            nombre: c.nombre || '',
+            rondas: c.rondas || '',
+            ejercicios: c.ejercicios?.length
+              ? c.ejercicios.map((e: any) => ({
+                  nombre: e.nombre || '',
+                  enlace: e.enlace || e.descripcion || '',
+                  reps_seg_mts: e.reps_seg_mts || '',
+                  carga: e.carga || ''
+                }))
+              : [EMPTY_EX()]
+          }))
+        : [EMPTY_CIR()],
+      observaciones: r.observaciones || ''
+    });
+    this.editing.set(r.id);
+    this.formError.set('');
+    this.showForm.set(true);
+  }
+
   closeForm() { this.showForm.set(false); this.editing.set(null); this.formError.set(''); }
 
-  addCircuit() {
-    this.form.update(f => ({ ...f, circuitos: [...f.circuitos, EMPTY_CIRCUIT()] }));
+  addCircuit()            { this.form.update(f => ({ ...f, circuitos: [...f.circuitos, EMPTY_CIR()] })); }
+  removeCircuit(i: number){ this.form.update(f => ({ ...f, circuitos: f.circuitos.filter((_, j) => j !== i) })); }
+
+  addExercise(ci: number) {
+    this.form.update(f => ({
+      ...f,
+      circuitos: f.circuitos.map((c, i) => i === ci ? { ...c, ejercicios: [...c.ejercicios, EMPTY_EX()] } : c)
+    }));
   }
 
-  removeCircuit(index: number) {
-    this.form.update(f => ({ ...f, circuitos: f.circuitos.filter((_, i) => i !== index) }));
-  }
-
-  addExercise(circuitIndex: number) {
-    this.form.update(f => {
-      const circuitos = f.circuitos.map((c, i) =>
-        i === circuitIndex ? { ...c, ejercicios: [...c.ejercicios, EMPTY_EXERCISE()] } : c
-      );
-      return { ...f, circuitos };
-    });
-  }
-
-  removeExercise(circuitIndex: number, exIndex: number) {
-    this.form.update(f => {
-      const circuitos = f.circuitos.map((c, i) =>
-        i === circuitIndex ? { ...c, ejercicios: c.ejercicios.filter((_: any, j: number) => j !== exIndex) } : c
-      );
-      return { ...f, circuitos };
-    });
+  removeExercise(ci: number, ei: number) {
+    this.form.update(f => ({
+      ...f,
+      circuitos: f.circuitos.map((c, i) =>
+        i === ci ? { ...c, ejercicios: c.ejercicios.filter((_: any, j: number) => j !== ei) } : c
+      )
+    }));
   }
 
   saveRoutine() {
@@ -393,10 +406,10 @@ export class ManageRoutinesComponent implements OnInit {
     this.saving.set(true);
     this.formError.set('');
     const editId = this.editing();
-    const obs$ = editId
+    const req$ = editId
       ? this.api.updateRoutine(editId, this.patientId, f)
       : this.api.createRoutine({ ...f, patient_id: this.patientId });
-    obs$.subscribe({
+    req$.subscribe({
       next: () => { this.saving.set(false); this.closeForm(); this.load(); },
       error: (err) => { this.formError.set(err.error?.detail || 'Error al guardar'); this.saving.set(false); }
     });

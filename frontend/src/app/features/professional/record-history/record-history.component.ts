@@ -69,27 +69,36 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
           } @else {
             <!-- Audio grabado, listo para procesar -->
             <div class="stopped-visual">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                <line x1="12" y1="19" x2="12" y2="22"/>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
               </svg>
             </div>
-            <p class="record-label">Grabación lista — {{ formatTime(elapsedSeconds()) }}</p>
+            <p class="record-label">Grabación lista</p>
+            <p class="record-duration">Duración: {{ formatTime(elapsedSeconds()) }}</p>
+
             @if (error()) {
               <p class="record-hint retry-hint">{{ error() }}</p>
               <div class="stopped-actions">
                 <button class="btn-secondary" (click)="startOver()">Grabar de nuevo</button>
-                <button class="btn-primary" (click)="processAudio()">Reintentar</button>
+                <button class="btn-generate" (click)="processAudio()">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
+                  </svg>
+                  Reintentar
+                </button>
               </div>
             } @else {
-              <p class="record-hint">Presioná "Generar historia clínica" para transcribir y estructurar la consulta con IA.</p>
+              <p class="record-hint">El audio quedó guardado. Presioná el botón para transcribirlo y generar la historia clínica.</p>
               <div class="stopped-actions">
-                <button class="btn-secondary" (click)="startOver()">Grabar de nuevo</button>
-                <button class="btn-primary" (click)="processAudio()">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                <button class="btn-secondary" (click)="startOver()">Descartar y grabar de nuevo</button>
+                <button class="btn-generate" (click)="processAudio()">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
                   </svg>
                   Generar historia clínica
                 </button>
@@ -359,9 +368,18 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
 
     .stopped-visual {
       width: 80px; height: 80px; background: #f0fdf4; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
     }
-    .stopped-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
+    .record-duration { font-size: 14px; color: #6b7280; margin: 0 0 8px; }
+    .stopped-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+    .btn-generate {
+      padding: 14px 28px; background: #4f46e5; color: white;
+      border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 4px 14px rgba(79,70,229,0.35); transition: background 0.2s, transform 0.1s;
+    }
+    .btn-generate:hover { background: #4338ca; transform: translateY(-1px); }
+    .btn-generate:active { transform: translateY(0); }
 
     /* ── Processing ── */
     .processing-card {
@@ -612,10 +630,9 @@ export class RecordHistoryComponent implements OnDestroy {
     this.mediaRecorder!.onstop = () => {
       this.mediaStream?.getTracks().forEach(t => t.stop());
       this.mediaStream = null;
-      // setTimeout is patched by zone.js, garantiza que processAudio corra dentro de NgZone
-      setTimeout(() => this.processAudio(), 0);
     };
     this.mediaRecorder?.stop();
+    this.state.set('stopped');
   }
 
   async processAudio() {

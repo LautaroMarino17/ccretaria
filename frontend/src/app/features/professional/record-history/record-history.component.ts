@@ -1,9 +1,10 @@
-﻿import { Component, inject, signal, OnDestroy, NgZone } from '@angular/core';
+﻿import { Component, inject, signal, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
-import { ClinicalHistory, EMPTY_CLINICAL_HISTORY, EMPTY_SIGNOS_VITALES } from '../../../core/models/clinical-history.model';
+import { ClinicalHistory, EMPTY_SIGNOS_VITALES } from '../../../core/models/clinical-history.model';
 
 type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewing' | 'saving' | 'done';
 
@@ -531,7 +532,7 @@ export class RecordHistoryComponent implements OnDestroy {
   private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private zone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
 
   patientId = this.route.snapshot.params['patientId'] || '';
 
@@ -544,8 +545,20 @@ export class RecordHistoryComponent implements OnDestroy {
 
   history = signal<ClinicalHistory>({
     patient_id: this.patientId,
-    ...EMPTY_CLINICAL_HISTORY,
-    signos_vitales: { ...EMPTY_SIGNOS_VITALES }
+    nombre_paciente: '',
+    motivo_consulta: '',
+    antecedentes_sintomas: '',
+    examen_fisico: '',
+    signos_vitales: { ...EMPTY_SIGNOS_VITALES },
+    diagnostico: '',
+    plan_terapeutico: '',
+    estudios_complementarios: '',
+    laboratorio: '',
+    medicacion: '',
+    observaciones: '',
+    plantillas: false,
+    transcripcion_original: '',
+    verificada: false
   });
 
   private mediaRecorder: MediaRecorder | null = null;
@@ -605,67 +618,64 @@ export class RecordHistoryComponent implements OnDestroy {
     this.mediaRecorder?.stop();
   }
 
-  processAudio() {
+  async processAudio() {
     if (!this.audioChunks.length) return;
     this.state.set('processing');
     this.processingStep.set(0);
     this.processingMessage.set('Transcribiendo audio con Whisper...');
+    this.cdr.detectChanges();
 
     const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
 
     const stepTimer = setTimeout(() => {
       this.processingStep.set(1);
       this.processingMessage.set('Estructurando historia clínica con IA...');
+      this.cdr.detectChanges();
     }, 3000);
 
-    this.api.transcribeAndStructure(audioBlob).subscribe({
-      next: (result: any) => {
-        clearTimeout(stepTimer);
-        this.zone.run(() => {
-          try {
-            const ch = result.clinical_history || result || {};
-            this.history.set({
-              patient_id: this.patientId,
-              nombre_paciente: ch.nombre_paciente || '',
-              motivo_consulta: ch.motivo_consulta || '',
-              antecedentes_sintomas: ch.antecedentes_sintomas || '',
-              examen_fisico: ch.examen_fisico || '',
-              signos_vitales: ch.signos_vitales || { ...EMPTY_SIGNOS_VITALES },
-              diagnostico: ch.diagnostico || '',
-              plan_terapeutico: ch.plan_terapeutico || '',
-              estudios_complementarios: ch.estudios_complementarios || '',
-              laboratorio: ch.laboratorio || '',
-              medicacion: ch.medicacion || '',
-              observaciones: ch.observaciones || '',
-              plantillas: ch.plantillas || false,
-              transcripcion_original: result.transcription || ch.transcripcion_original || '',
-              verificada: false
-            });
-            this.processingStep.set(2);
-            this.state.set('reviewing');
-          } catch (e) {
-            this.error.set('Error al procesar la respuesta del servidor. Intentá de nuevo.');
-            this.state.set('stopped');
-          }
-        });
-      },
-      error: (err: any) => {
-        clearTimeout(stepTimer);
-        this.zone.run(() => {
-          const detail: string = err.error?.detail || '';
-          if (detail.includes('rate_limit_exceeded') || detail.includes('Rate limit') || err.status === 429) {
-            this.error.set('');
-            this.state.set('idle');
-            this.audioChunks = [];
-            this.elapsedSeconds.set(0);
-            alert('Límite de transcripciones alcanzado. Esperá unos minutos e intentá de nuevo.');
-          } else {
-            this.error.set(detail || 'Error al procesar el audio. Podés reintentar.');
-            this.state.set('stopped');
-          }
-        });
+    try {
+      const result = await firstValueFrom(this.api.transcribeAndStructure(audioBlob));
+      clearTimeout(stepTimer);
+
+      const ch = result.clinical_history || {};
+      this.history.set({
+        patient_id: this.patientId,
+        nombre_paciente: ch.nombre_paciente || '',
+        motivo_consulta: ch.motivo_consulta || '',
+        antecedentes_sintomas: ch.antecedentes_sintomas || '',
+        examen_fisico: ch.examen_fisico || '',
+        signos_vitales: ch.signos_vitales || { ...EMPTY_SIGNOS_VITALES },
+        diagnostico: ch.diagnostico || '',
+        plan_terapeutico: ch.plan_terapeutico || '',
+        estudios_complementarios: ch.estudios_complementarios || '',
+        laboratorio: ch.laboratorio || '',
+        medicacion: ch.medicacion || '',
+        observaciones: ch.observaciones || '',
+        plantillas: ch.plantillas || false,
+        transcripcion_original: result.transcription || '',
+        verificada: false
+      });
+      this.processingStep.set(2);
+      this.state.set('reviewing');
+      this.cdr.detectChanges();
+
+    } catch (err: unknown) {
+      clearTimeout(stepTimer);
+      const httpErr = err as any;
+      const detail: string = httpErr?.error?.detail || '';
+      if (detail.includes('rate_limit_exceeded') || detail.includes('Rate limit') || httpErr?.status === 429) {
+        this.error.set('');
+        this.state.set('idle');
+        this.audioChunks = [];
+        this.elapsedSeconds.set(0);
+        this.cdr.detectChanges();
+        alert('Límite de transcripciones alcanzado. Esperá unos minutos e intentá de nuevo.');
+      } else {
+        this.error.set(detail || 'Error al procesar el audio. Podés reintentar.');
+        this.state.set('stopped');
+        this.cdr.detectChanges();
       }
-    });
+    }
   }
 
   saveHistory() {

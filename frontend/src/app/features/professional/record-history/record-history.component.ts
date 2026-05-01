@@ -549,6 +549,7 @@ export class RecordHistoryComponent implements OnDestroy {
   });
 
   private mediaRecorder: MediaRecorder | null = null;
+  private mediaStream: MediaStream | null = null;
   private audioChunks: Blob[] = [];
   private timerInterval: any = null;
   private waveInterval: any = null;
@@ -565,16 +566,12 @@ export class RecordHistoryComponent implements OnDestroy {
     this.error.set('');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.mediaStream = stream;
       this.audioChunks = [];
       this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
 
       this.mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) this.audioChunks.push(e.data);
-      };
-
-      this.mediaRecorder.onstop = () => {
-        stream.getTracks().forEach(t => t.stop());
-        this.zone.run(() => this.processAudio());
       };
 
       this.mediaRecorder.start(1000);
@@ -600,8 +597,10 @@ export class RecordHistoryComponent implements OnDestroy {
     clearInterval(this.timerInterval);
     clearInterval(this.waveInterval);
     this.mediaRecorder!.onstop = () => {
-      this.audioChunks = [...this.audioChunks];
-      this.zone.run(() => this.processAudio());
+      this.mediaStream?.getTracks().forEach(t => t.stop());
+      this.mediaStream = null;
+      // setTimeout is patched by zone.js, garantiza que processAudio corra dentro de NgZone
+      setTimeout(() => this.processAudio(), 0);
     };
     this.mediaRecorder?.stop();
   }
@@ -712,5 +711,6 @@ export class RecordHistoryComponent implements OnDestroy {
     if (this.mediaRecorder?.state === 'recording') {
       this.mediaRecorder.stop();
     }
+    this.mediaStream?.getTracks().forEach(t => t.stop());
   }
 }

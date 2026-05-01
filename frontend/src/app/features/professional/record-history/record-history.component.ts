@@ -622,45 +622,49 @@ export class RecordHistoryComponent implements OnDestroy {
     this.api.transcribeAndStructure(audioBlob).subscribe({
       next: (result: any) => {
         clearTimeout(stepTimer);
-        try {
-          const ch = result.clinical_history || result || {};
-          this.history.set({
-            patient_id: this.patientId,
-            nombre_paciente: ch.nombre_paciente || '',
-            motivo_consulta: ch.motivo_consulta || '',
-            antecedentes_sintomas: ch.antecedentes_sintomas || '',
-            examen_fisico: ch.examen_fisico || '',
-            signos_vitales: ch.signos_vitales || { ...EMPTY_SIGNOS_VITALES },
-            diagnostico: ch.diagnostico || '',
-            plan_terapeutico: ch.plan_terapeutico || '',
-            estudios_complementarios: ch.estudios_complementarios || '',
-            laboratorio: ch.laboratorio || '',
-            medicacion: ch.medicacion || '',
-            observaciones: ch.observaciones || '',
-            plantillas: ch.plantillas || false,
-            transcripcion_original: result.transcription || ch.transcripcion_original || '',
-            verificada: false
-          });
-          this.processingStep.set(2);
-          this.state.set('reviewing');
-        } catch (e) {
-          this.error.set('Error al procesar la respuesta del servidor. Intentá de nuevo.');
-          this.state.set('stopped');
-        }
+        this.zone.run(() => {
+          try {
+            const ch = result.clinical_history || result || {};
+            this.history.set({
+              patient_id: this.patientId,
+              nombre_paciente: ch.nombre_paciente || '',
+              motivo_consulta: ch.motivo_consulta || '',
+              antecedentes_sintomas: ch.antecedentes_sintomas || '',
+              examen_fisico: ch.examen_fisico || '',
+              signos_vitales: ch.signos_vitales || { ...EMPTY_SIGNOS_VITALES },
+              diagnostico: ch.diagnostico || '',
+              plan_terapeutico: ch.plan_terapeutico || '',
+              estudios_complementarios: ch.estudios_complementarios || '',
+              laboratorio: ch.laboratorio || '',
+              medicacion: ch.medicacion || '',
+              observaciones: ch.observaciones || '',
+              plantillas: ch.plantillas || false,
+              transcripcion_original: result.transcription || ch.transcripcion_original || '',
+              verificada: false
+            });
+            this.processingStep.set(2);
+            this.state.set('reviewing');
+          } catch (e) {
+            this.error.set('Error al procesar la respuesta del servidor. Intentá de nuevo.');
+            this.state.set('stopped');
+          }
+        });
       },
       error: (err: any) => {
         clearTimeout(stepTimer);
-        const detail: string = err.error?.detail || '';
-        if (detail.includes('rate_limit_exceeded') || detail.includes('Rate limit') || err.status === 429) {
-          this.error.set('');
-          this.state.set('idle');
-          this.audioChunks = [];
-          this.elapsedSeconds.set(0);
-          alert('Límite de transcripciones alcanzado. Esperá unos minutos e intentá de nuevo.');
-        } else {
-          this.error.set(detail || 'Error al procesar el audio. Podés reintentar.');
-          this.state.set('stopped');
-        }
+        this.zone.run(() => {
+          const detail: string = err.error?.detail || '';
+          if (detail.includes('rate_limit_exceeded') || detail.includes('Rate limit') || err.status === 429) {
+            this.error.set('');
+            this.state.set('idle');
+            this.audioChunks = [];
+            this.elapsedSeconds.set(0);
+            alert('Límite de transcripciones alcanzado. Esperá unos minutos e intentá de nuevo.');
+          } else {
+            this.error.set(detail || 'Error al procesar el audio. Podés reintentar.');
+            this.state.set('stopped');
+          }
+        });
       }
     });
   }

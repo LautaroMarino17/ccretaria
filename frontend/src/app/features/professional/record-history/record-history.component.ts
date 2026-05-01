@@ -1,4 +1,4 @@
-﻿import { Component, inject, signal, OnDestroy } from '@angular/core';
+﻿import { Component, inject, signal, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -531,6 +531,7 @@ export class RecordHistoryComponent implements OnDestroy {
   private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private zone = inject(NgZone);
 
   patientId = this.route.snapshot.params['patientId'] || '';
 
@@ -573,7 +574,7 @@ export class RecordHistoryComponent implements OnDestroy {
 
       this.mediaRecorder.onstop = () => {
         stream.getTracks().forEach(t => t.stop());
-        this.processAudio();
+        this.zone.run(() => this.processAudio());
       };
 
       this.mediaRecorder.start(1000);
@@ -600,7 +601,7 @@ export class RecordHistoryComponent implements OnDestroy {
     clearInterval(this.waveInterval);
     this.mediaRecorder!.onstop = () => {
       this.audioChunks = [...this.audioChunks];
-      this.processAudio();
+      this.zone.run(() => this.processAudio());
     };
     this.mediaRecorder?.stop();
   }

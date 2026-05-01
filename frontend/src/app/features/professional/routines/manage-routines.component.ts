@@ -152,13 +152,16 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
 
       @for (circ of form().circuitos; track circ; let ci = $index) {
         <div class="bloque-edit">
+          <!-- Nombre del bloque estilo título + controles de bloque -->
           <div class="bloque-edit-header">
-            <span class="bloque-label">bloque {{ ci + 1 }}</span>
-            <input class="circ-name-inp" [(ngModel)]="circ.nombre" placeholder="Nombre del bloque (opcional)" />
+            <input class="bloque-title-inp" [(ngModel)]="circ.nombre" placeholder="Nombre del bloque..." />
             <input class="circ-rondas-inp" [(ngModel)]="circ.rondas" placeholder="Rondas" />
-            @if (form().circuitos.length > 1) {
-              <button class="btn-rm-bloque" (click)="removeCircuit(ci)" title="Eliminar bloque">×</button>
-            }
+            <button class="btn-blk-ctrl add" (click)="addCircuitAfter(ci)" title="Agregar bloque">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            </button>
+            <button class="btn-blk-ctrl del" [class.invisible]="form().circuitos.length === 1" (click)="removeCircuit(ci)" title="Eliminar bloque">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
           </div>
 
           <div class="ex-table">
@@ -171,22 +174,19 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
                 <input [(ngModel)]="ex.enlace" placeholder="https://..." />
                 <input [(ngModel)]="ex.reps_seg_mts" placeholder="Ej: 3x10" />
                 <input [(ngModel)]="ex.carga" placeholder="Ej: 70%" />
-                <button class="btn-minus" [class.invisible]="circ.ejercicios.length === 1" (click)="removeExercise(ci, ei)">−</button>
+                <button class="btn-del-ex" [class.invisible]="circ.ejercicios.length === 1" (click)="removeExercise(ci, ei)" title="Eliminar fila">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                </button>
               </div>
             }
+            <!-- Fila de agregar ejercicio -->
+            <div class="ex-add-row" (click)="addExercise(ci)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <span>Agregar ejercicio</span>
+            </div>
           </div>
-
-          <button class="btn-add-ex" (click)="addExercise(ci)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Agregar ejercicio
-          </button>
         </div>
       }
-
-      <button class="btn-add-bloque" (click)="addCircuit()">
-        <span class="plus-circle">+</span>
-        Agregar bloque
-      </button>
 
       <div class="obs-edit">
         <label>Observaciones (opcional)</label>
@@ -234,14 +234,24 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .bloque-read-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 
     /* ── Bloque edit ── */
-    .bloque-edit { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #f3f4f6; }
-    .bloque-edit:last-of-type { border-bottom: none; }
+    .bloque-edit { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #f3f4f6; }
+    .bloque-edit:last-of-type { border-bottom: none; margin-bottom: 8px; }
     .bloque-edit-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-    .circ-name-inp { flex: 1; min-width: 120px; padding: 6px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
-    .circ-name-inp:focus { border-color: #4f46e5; }
-    .circ-rondas-inp { width: 80px; padding: 6px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
+    .bloque-title-inp {
+      flex: 1; min-width: 120px; font-size: 15px; font-weight: 700; color: #111827;
+      border: none; border-bottom: 2px solid #e5e7eb; outline: none;
+      padding: 4px 2px; background: transparent; font-family: inherit;
+    }
+    .bloque-title-inp:focus { border-bottom-color: #4f46e5; }
+    .bloque-title-inp::placeholder { color: #c4c9d4; font-weight: 400; }
+    .circ-rondas-inp { width: 80px; padding: 5px 8px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
     .circ-rondas-inp:focus { border-color: #4f46e5; }
-    .btn-rm-bloque { background: none; border: none; cursor: pointer; color: #ef4444; font-size: 22px; padding: 0 4px; line-height: 1; flex-shrink: 0; }
+    .btn-blk-ctrl { width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .btn-blk-ctrl.add { background: #eef2ff; color: #4f46e5; }
+    .btn-blk-ctrl.add:hover { background: #4f46e5; color: white; }
+    .btn-blk-ctrl.del { background: #fef2f2; color: #ef4444; }
+    .btn-blk-ctrl.del:hover { background: #ef4444; color: white; }
+    .btn-blk-ctrl.invisible { visibility: hidden; }
 
     /* ── Exercise table ── */
     .ex-table { border: 1px solid #e9eaec; border-radius: 10px; overflow: hidden; margin-bottom: 2px; }
@@ -260,18 +270,20 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .ex-row-edit { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr 36px; padding: 6px 8px; gap: 6px; border-top: 1px solid #f0f0f0; background: white; align-items: center; }
     .ex-row-edit input { width: 100%; padding: 6px 8px; border: 1.5px solid #e5e7eb; border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box; font-family: inherit; }
     .ex-row-edit input:focus { border-color: #4f46e5; }
-    .btn-minus { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid #fecaca; background: #fef2f2; color: #ef4444; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; line-height: 1; padding: 0; }
-    .btn-minus:hover { background: #ef4444; color: white; border-color: #ef4444; }
-    .btn-minus.invisible { visibility: hidden; }
+    /* Botón tacho por fila de ejercicio */
+    .btn-del-ex { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: #d1d5db; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; padding: 0; }
+    .btn-del-ex:hover { background: #fef2f2; color: #ef4444; }
+    .btn-del-ex.invisible { visibility: hidden; }
 
-    /* Add exercise */
-    .btn-add-ex { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: #4f46e5; cursor: pointer; font-size: 13px; font-weight: 600; padding: 8px 10px; margin-top: 2px; border-radius: 6px; }
-    .btn-add-ex:hover { background: #eef2ff; }
-
-    /* Add bloque */
-    .btn-add-bloque { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 20px; margin: 12px 0 18px; border: 2px dashed #c7d2fe; border-radius: 12px; background: #fafbff; color: #4f46e5; cursor: pointer; font-size: 14px; font-weight: 600; justify-content: center; transition: background 0.15s; }
-    .btn-add-bloque:hover { background: #eef2ff; }
-    .plus-circle { width: 34px; height: 34px; border-radius: 50%; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 300; flex-shrink: 0; line-height: 1; }
+    /* Fila de agregar ejercicio (dentro de la tabla) */
+    .ex-add-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-top: 1px solid #f0f0f0;
+      cursor: pointer; color: #6b7280; font-size: 13px;
+      background: #fafafa; transition: background 0.15s;
+    }
+    .ex-add-row:hover { background: #eef2ff; color: #4f46e5; }
+    .ex-add-row:hover svg { stroke: #4f46e5; }
 
     /* Observaciones */
     .obs-edit { margin-top: 4px; }
@@ -377,6 +389,13 @@ export class ManageRoutinesComponent implements OnInit {
   closeForm() { this.showForm.set(false); this.editing.set(null); this.formError.set(''); }
 
   addCircuit()            { this.form.update(f => ({ ...f, circuitos: [...f.circuitos, EMPTY_CIR()] })); }
+  addCircuitAfter(ci: number) {
+    this.form.update(f => {
+      const circuitos = [...f.circuitos];
+      circuitos.splice(ci + 1, 0, EMPTY_CIR());
+      return { ...f, circuitos };
+    });
+  }
   removeCircuit(i: number){ this.form.update(f => ({ ...f, circuitos: f.circuitos.filter((_, j) => j !== i) })); }
 
   addExercise(ci: number) {

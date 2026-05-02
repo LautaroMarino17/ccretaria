@@ -422,24 +422,14 @@ export class ProfileComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.user?.role === 'professional') {
-      this.api.getProfessionalProfile().subscribe({
-        next: (data) => {
-          this.telefono = data.telefono || '';
-          this.lugaresText = (data.lugares_atencion || []).join('\n');
-          this._telefonoOrig = this.telefono;
-          this._lugaresOrig = this.lugaresText;
-        }
-      });
-    } else {
-      this.api.getMyLink().subscribe({
-        next: (links: any[]) => {
-          this.telefono = links?.[0]?.telefono || '';
-          this._telefonoOrig = this.telefono;
-        },
-        error: () => {}
-      });
-    }
+    this.api.getProfessionalProfile().subscribe({
+      next: (data) => {
+        this.telefono = data.telefono || '';
+        this.lugaresText = (data.lugares_atencion || []).join('\n');
+        this._telefonoOrig = this.telefono;
+        this._lugaresOrig = this.lugaresText;
+      }
+    });
   }
 
   startEditContact() {

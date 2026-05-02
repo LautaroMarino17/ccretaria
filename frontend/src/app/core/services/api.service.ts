@@ -24,46 +24,6 @@ export class ApiService {
     return this.withAuth(h => this.http.get<any>(`${this.base}/auth/me`, { headers: h }));
   }
 
-  getLinkCode() {
-    return this.withAuth(h => this.http.get<any>(`${this.base}/auth/link-code`, { headers: h }));
-  }
-
-  resolveCode(code: string) {
-    return this.withAuth(h =>
-      this.http.get<any>(`${this.base}/auth/resolve-code/${code}`, { headers: h })
-    );
-  }
-
-  linkToProfessional(linkCode: string, dni: string) {
-    return this.withAuth(h =>
-      this.http.post<any>(`${this.base}/auth/link-professional`, { link_code: linkCode, dni }, { headers: h })
-    );
-  }
-
-  getMyLink() {
-    return this.withAuth(h => this.http.get<any[]>(`${this.base}/auth/my-link`, { headers: h }));
-  }
-
-  requestLink(data: { link_code: string; dni: string; nombre: string; apellido: string; mensaje?: string }) {
-    return this.withAuth(h =>
-      this.http.post<any>(`${this.base}/auth/request-link`, data, { headers: h })
-    );
-  }
-
-  getLinkRequests() {
-    return this.withAuth(h => this.http.get<any[]>(`${this.base}/auth/link-requests`, { headers: h }));
-  }
-
-  actionLinkRequest(requestId: string, action: 'accept' | 'reject') {
-    return this.withAuth(h =>
-      this.http.post<any>(`${this.base}/auth/link-requests/action`, { request_id: requestId, action }, { headers: h })
-    );
-  }
-
-  getMyLinkStatus() {
-    return this.withAuth(h => this.http.get<any[]>(`${this.base}/auth/my-link-status`, { headers: h }));
-  }
-
   getProfessionalProfile() {
     return this.withAuth(h => this.http.get<any>(`${this.base}/auth/professional-profile`, { headers: h }));
   }

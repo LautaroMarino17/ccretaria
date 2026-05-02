@@ -521,6 +521,75 @@ def trigger_notifications(user: dict = Depends(get_current_user)):
     return {"notifications_sent": len(notifications), "details": notifications}
 
 
+@router.post("/notify-push")
+def send_daily_push(user: dict = Depends(get_current_user)):
+    """Envía la agenda del día como push notification al profesional."""
+    require_professional(user)
+    db = get_firestore()
+
+    today = datetime.now()
+    day_start = datetime(today.year, today.month, today.day)
+    day_end   = day_start + timedelta(days=1)
+
+    ref  = db.collection("professionals").document(user["uid"]).collection("appointments")
+    docs = list(ref.where("appointment_datetime", ">=", day_start)
+                   .where("appointment_datetime", "<",  day_end).stream())
+
+    appts = []
+    for d in docs:
+        data = d.to_dict()
+        if data.get("status") == "cancelled":
+            continue
+        dt = data.get("appointment_datetime")
+        appts.append({
+            "time": dt.strftime("%H:%M") if isinstance(dt, datetime) else "--:--",
+            "name": data.get("patient_name", "Paciente")
+        })
+    appts.sort(key=lambda x: x["time"])
+
+    count = len(appts)
+    if count == 0:
+        title = "Sin turnos hoy"
+        body  = "No tenés turnos programados para hoy."
+    else:
+        title = f"Agenda de hoy — {count} turno{'s' if count != 1 else ''}"
+        lines = [f"{a['time']} — {a['name']}" for a in appts[:5]]
+        if count > 5:
+            lines.append(f"+{count - 5} más...")
+        body = "\n".join(lines)
+
+    prof_doc = db.collection("professionals").document(user["uid"]).get()
+    tokens   = (prof_doc.to_dict() or {}).get("fcm_tokens", []) if prof_doc.exists else []
+
+    import firebase_admin
+    import firebase_admin.messaging as fcm_msg
+    from google.cloud.firestore_v1 import ArrayRemove
+
+    sent   = 0
+    failed = []
+    for token in tokens:
+        try:
+            fcm_msg_obj = fcm_msg.Message(
+                notification=fcm_msg.Notification(title=title, body=body),
+                android=fcm_msg.AndroidConfig(priority="high"),
+                apns=fcm_msg.APNSConfig(
+                    payload=fcm_msg.APNSPayload(aps=fcm_msg.Aps(sound="default"))
+                ),
+                token=token
+            )
+            firebase_admin.messaging.send(fcm_msg_obj)
+            sent += 1
+        except Exception:
+            failed.append(token)
+
+    if failed:
+        db.collection("professionals").document(user["uid"]).update(
+            {"fcm_tokens": ArrayRemove(failed)}
+        )
+
+    return {"sent": sent, "appointments": count}
+
+
 class AssignAppointmentBody(BaseModel):
     patient_id: str
     patient_name: str

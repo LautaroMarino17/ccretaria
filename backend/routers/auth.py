@@ -53,6 +53,23 @@ def get_me(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class FcmTokenRequest(BaseModel):
+    token: str
+
+
+@router.post("/fcm-token")
+def save_fcm_token(body: FcmTokenRequest, user: dict = Depends(get_current_user)):
+    """Guarda el FCM token del dispositivo para push notifications."""
+    require_professional(user)
+    db = get_firestore()
+    from google.cloud.firestore_v1 import ArrayUnion
+    db.collection("professionals").document(user["uid"]).set(
+        {"fcm_tokens": ArrayUnion([body.token])},
+        merge=True
+    )
+    return {"message": "Token registrado"}
+
+
 class ProfessionalProfileUpdate(BaseModel):
     telefono: Optional[str] = None
     lugares_atencion: Optional[List[str]] = None

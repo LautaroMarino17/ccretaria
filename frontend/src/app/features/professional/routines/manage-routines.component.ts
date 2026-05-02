@@ -151,41 +151,47 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
       </div>
 
       @for (circ of form().circuitos; track circ; let ci = $index) {
-        <div class="bloque-wrapper">
-          <div class="bloque-edit">
-            <div class="bloque-edit-header">
-              <input class="bloque-title-inp" [(ngModel)]="circ.nombre" placeholder="Nombre del bloque..." />
-              <input class="circ-rondas-inp" [(ngModel)]="circ.rondas" placeholder="Rondas" />
+        <div class="bloque-read">
+          <div class="bloque-read-header">
+            <input class="bloque-name-inp" [(ngModel)]="circ.nombre" placeholder="NOMBRE BLOQUE" />
+            @if (circ.rondas) {
+              <span class="rondas-badge">
+                <input class="rondas-inp" [(ngModel)]="circ.rondas" placeholder="Rondas" />
+              </span>
+            } @else {
+              <input class="rondas-inp-plain" [(ngModel)]="circ.rondas" placeholder="Rondas" />
+            }
+            <div class="blk-ctrl-inline">
+              <button class="btn-blk-ctrl add" (click)="addCircuitAfter(ci)" title="Agregar bloque">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              <button class="btn-blk-ctrl del" [class.invisible]="form().circuitos.length === 1" (click)="removeCircuit(ci)" title="Eliminar bloque">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+              </button>
             </div>
-            <div class="ex-table">
-              <div class="ex-head edit">
-                <span>EJERCICIO</span><span>ENLACE</span><span>REP/SEG/MTS</span><span>CARGA</span><span></span>
-              </div>
-              @for (ex of circ.ejercicios; track ex; let ei = $index) {
-                <div class="ex-row-edit">
-                  <input [(ngModel)]="ex.nombre" placeholder="Ejercicio *" />
-                  <input [(ngModel)]="ex.enlace" placeholder="https://..." />
-                  <input [(ngModel)]="ex.reps_seg_mts" placeholder="Ej: 3x10" />
-                  <input [(ngModel)]="ex.carga" placeholder="Ej: 70%" />
+          </div>
+          <div class="ex-table">
+            <div class="ex-head edit">
+              <span>EJERCICIO</span><span>ENLACE</span><span>REP/SEG/MTS</span><span>CARGA</span><span></span>
+            </div>
+            @for (ex of circ.ejercicios; track ex; let ei = $index, isLast = $last) {
+              <div class="ex-row-edit">
+                <input [(ngModel)]="ex.nombre" placeholder="Ejercicio..." />
+                <input [(ngModel)]="ex.enlace" placeholder="https://..." />
+                <input [(ngModel)]="ex.reps_seg_mts" placeholder="Ej: 3x10" />
+                <input [(ngModel)]="ex.carga" placeholder="Ej: 70%" />
+                <div class="ex-row-actions">
+                  @if (isLast) {
+                    <button class="btn-add-ex-inline" (click)="addExercise(ci)" title="Agregar ejercicio">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                  }
                   <button class="btn-del-ex" [class.invisible]="circ.ejercicios.length === 1" (click)="removeExercise(ci, ei)" title="Eliminar fila">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
                   </button>
                 </div>
-              }
-              <div class="ex-add-row" (click)="addExercise(ci)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                <span>Agregar ejercicio</span>
               </div>
-            </div>
-          </div>
-          <!-- Controles laterales: fuera del recuadro del bloque -->
-          <div class="bloque-side-ctrl">
-            <button class="btn-blk-ctrl add" (click)="addCircuitAfter(ci)" title="Agregar bloque">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-            <button class="btn-blk-ctrl del" [class.invisible]="form().circuitos.length === 1" (click)="removeCircuit(ci)" title="Eliminar bloque">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-            </button>
+            }
           </div>
         </div>
       }
@@ -235,20 +241,24 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .bloque-read { margin-bottom: 16px; }
     .bloque-read-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 
-    /* ── Bloque edit ── */
-    .bloque-wrapper { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
-    .bloque-edit { flex: 1; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; background: white; }
-    .bloque-edit-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .bloque-side-ctrl { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; flex-shrink: 0; }
-    .bloque-title-inp {
-      flex: 1; min-width: 120px; font-size: 15px; font-weight: 700; color: #111827;
-      border: none; border-bottom: 2px solid #e5e7eb; outline: none;
-      padding: 4px 2px; background: transparent; font-family: inherit;
+    /* ── Bloque edit — misma estructura que read, con inputs ── */
+    /* El bloque-read ya está definido arriba y se reutiliza en edición */
+    .bloque-name-inp {
+      font-size: 11px; font-weight: 800; color: #4f46e5; text-transform: uppercase;
+      letter-spacing: 0.8px; border: none; border-bottom: 1.5px solid #c7d2fe;
+      outline: none; background: transparent; font-family: inherit;
+      padding: 1px 0; min-width: 80px; flex: 1;
     }
-    .bloque-title-inp:focus { border-bottom-color: #4f46e5; }
-    .bloque-title-inp::placeholder { color: #c4c9d4; font-weight: 400; }
-    .circ-rondas-inp { width: 80px; padding: 5px 8px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
-    .circ-rondas-inp:focus { border-color: #4f46e5; }
+    .bloque-name-inp::placeholder { color: #a5b4fc; font-weight: 700; }
+    .bloque-name-inp:focus { border-bottom-color: #4f46e5; }
+    .rondas-inp { background: transparent; border: none; outline: none;
+      font-size: 11px; font-weight: 600; color: #4f46e5; font-family: inherit;
+      width: 100px; text-align: center; padding: 0; }
+    .rondas-inp-plain { background: #eef2ff; color: #4f46e5; border-radius: 20px;
+      padding: 2px 10px; font-size: 11px; font-weight: 600; border: none; outline: none;
+      width: 110px; font-family: inherit; text-align: center; }
+    .rondas-inp-plain::placeholder { color: #a5b4fc; }
+    .blk-ctrl-inline { display: flex; gap: 6px; margin-left: auto; align-items: center; }
     .btn-blk-ctrl { width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
     .btn-blk-ctrl.add { background: #eef2ff; color: #4f46e5; }
     .btn-blk-ctrl.add:hover { background: #4f46e5; color: white; }
@@ -260,7 +270,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .ex-table { border: 1px solid #e9eaec; border-radius: 10px; overflow: hidden; margin-bottom: 2px; }
     .ex-head { display: grid; background: #f8f9fa; padding: 8px 12px; gap: 8px; }
     .ex-head.read  { grid-template-columns: 2fr 2fr 1.5fr 1.5fr; }
-    .ex-head.edit  { grid-template-columns: 2fr 2fr 1.5fr 1.5fr 36px; }
+    .ex-head.edit  { grid-template-columns: 2fr 2fr 1.5fr 1.5fr auto; }
     .ex-head span  { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* Read rows */
@@ -269,10 +279,14 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .link-ex { color: #4f46e5; font-size: 12px; font-weight: 600; text-decoration: none; }
     .link-ex:hover { text-decoration: underline; }
 
-    /* Edit rows */
-    .ex-row-edit { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr 36px; padding: 6px 8px; gap: 6px; border-top: 1px solid #f0f0f0; background: white; align-items: center; }
-    .ex-row-edit input { width: 100%; padding: 6px 8px; border: 1.5px solid #e5e7eb; border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box; font-family: inherit; }
-    .ex-row-edit input:focus { border-color: #4f46e5; }
+    /* Edit rows — idéntico al read, pero con inputs transparentes */
+    .ex-row-edit { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr auto; padding: 7px 12px; gap: 8px; border-top: 1px solid #f0f0f0; background: white; align-items: center; }
+    .ex-row-edit input { width: 100%; border: none; border-bottom: 1.5px solid transparent; outline: none; background: transparent; font-size: 13px; color: #374151; font-family: inherit; padding: 2px 0; transition: border-color 0.15s; box-sizing: border-box; }
+    .ex-row-edit input:focus { border-bottom-color: #c7d2fe; }
+    .ex-row-edit input::placeholder { color: #d1d5db; }
+    .ex-row-actions { display: flex; align-items: center; gap: 2px; justify-content: flex-end; }
+    .btn-add-ex-inline { width: 26px; height: 26px; border-radius: 50%; border: none; background: #eef2ff; color: #4f46e5; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; transition: all 0.15s; }
+    .btn-add-ex-inline:hover { background: #4f46e5; color: white; }
     /* Botón tacho por fila de ejercicio */
     .btn-del-ex { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: #d1d5db; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; padding: 0; }
     .btn-del-ex:hover { background: #fef2f2; color: #ef4444; }

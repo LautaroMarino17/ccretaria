@@ -74,7 +74,7 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
                 <polyline points="22 4 12 14.01 9 11.01"/>
               </svg>
             </div>
-            <p class="record-label">Grabación lista</p>
+            <p class="record-label">Consulta finalizada.</p>
             <p class="record-duration">Duración: {{ formatTime(elapsedSeconds()) }}</p>
 
             @if (error()) {

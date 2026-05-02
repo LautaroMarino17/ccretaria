@@ -231,9 +231,35 @@ export class ProfessionalAppointmentsComponent implements OnInit {
   loadDay() {
     this.loadingDay.set(true);
     this.openDropdownHour.set(null);
+    // Intentar endpoint optimizado; si falla (backend viejo) usar getAppointments y filtrar
     this.api.getDayAppointments(this.toDateStr(this.currentDate)).subscribe({
       next: data => { this.rawAppts.set(data); this.loadingDay.set(false); },
-      error: ()   => this.loadingDay.set(false)
+      error: ()   => this.loadDayFallback()
+    });
+  }
+
+  private loadDayFallback() {
+    this.api.getAppointments().subscribe({
+      next: (all: any[]) => {
+        const dateStr = this.toDateStr(this.currentDate);
+        const filtered = all
+          .filter((a: any) => {
+            if (a.status === 'cancelled') return false;
+            const dt = a.appointment_datetime;
+            if (!dt) return false;
+            const iso = typeof dt === 'string' ? dt : (dt.seconds ? new Date(dt.seconds * 1000).toISOString() : String(dt));
+            return iso.startsWith(dateStr);
+          })
+          .map((a: any) => ({
+            ...a,
+            appointment_datetime: typeof a.appointment_datetime === 'string'
+              ? a.appointment_datetime
+              : new Date(a.appointment_datetime.seconds * 1000).toISOString()
+          }));
+        this.rawAppts.set(filtered);
+        this.loadingDay.set(false);
+      },
+      error: () => this.loadingDay.set(false)
     });
   }
 
@@ -265,7 +291,13 @@ export class ProfessionalAppointmentsComponent implements OnInit {
   }
 
   removeAppt(id: string) {
-    this.api.deleteAppointment(id).subscribe({ next: () => this.loadDay() });
+    this.api.deleteAppointment(id).subscribe({
+      next: () => this.loadDay(),
+      error: () => {
+        // Fallback: backend viejo no tiene DELETE, usar cancel
+        this.api.cancelByProfessional(id).subscribe({ next: () => this.loadDay() });
+      }
+    });
   }
 
   isPast(hour: number): boolean {

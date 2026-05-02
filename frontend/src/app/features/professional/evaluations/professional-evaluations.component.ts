@@ -67,7 +67,9 @@ const EMPTY_FORM = (): EvalForm => ({
           <div class="measures-section">
             <div class="measures-header">
               <h4>Medidas / Valores</h4>
-              <button class="btn-add" (click)="addMedida()">+ Agregar medida</button>
+              <button class="btn-add-circle" (click)="addMedida()" title="Agregar medida">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
             </div>
             @for (m of form().medidas; track $index) {
               <div class="measure-row">
@@ -75,8 +77,8 @@ const EMPTY_FORM = (): EvalForm => ({
                 <input [(ngModel)]="m.valor" placeholder="Valor (ej: 1.2)" class="measure-input short" />
                 <input [(ngModel)]="m.unidad" placeholder="Unidad (ej: m/s)" class="measure-input short" />
                 @if (form().medidas.length > 1) {
-                  <button class="btn-remove-m" (click)="removeMedida($index)">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <button class="btn-remove-m" (click)="removeMedida($index)" title="Eliminar medida">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                   </button>
                 }
               </div>
@@ -184,9 +186,12 @@ const EMPTY_FORM = (): EvalForm => ({
     .measures-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .measures-header h4 { font-size: 14px; font-weight: 700; color: #374151; margin: 0; }
     .btn-add { background: #eef2ff; color: #4f46e5; border: none; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-add-circle { width: 32px; height: 32px; border-radius: 50%; background: #eef2ff; color: #4f46e5; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .btn-add-circle:hover { background: #4f46e5; color: white; }
     .measure-row { display: grid; grid-template-columns: 1fr 120px 100px auto; gap: 8px; align-items: center; margin-bottom: 8px; }
     .measure-input { margin: 0; }
-    .btn-remove-m { background: none; border: none; cursor: pointer; color: #ef4444; padding: 4px; display: flex; }
+    .btn-remove-m { background: transparent; border: none; cursor: pointer; color: #d1d5db; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.15s; }
+    .btn-remove-m:hover { background: #fef2f2; color: #ef4444; }
 
     .evals-list { display: flex; flex-direction: column; gap: 16px; }
     .eval-card { background: white; border-radius: 16px; padding: 22px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }

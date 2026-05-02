@@ -48,14 +48,10 @@ interface HourRow {
 
           @for (row of visibleRows(); track row.hour) {
             <div class="cal-row" [class.row-past]="isPast(row.hour)" [class.row-occupied]="row.appointments.length > 0">
-              <!-- Hora -->
               <div class="col-hour">
                 <span class="hour-label">{{ padHour(row.hour) }}:00</span>
               </div>
-
-              <!-- Pacientes + controles -->
               <div class="col-patients">
-                <!-- Chips de pacientes ya asignados -->
                 @for (appt of row.appointments; track appt.id) {
                   <span class="patient-chip">
                     {{ appt.patient_name }}
@@ -64,27 +60,8 @@ interface HourRow {
                     </button>
                   </span>
                 }
-
-                <!-- Dropdown inline para agregar paciente -->
-                @if (openDropdownHour() === row.hour) {
-                  <div class="inline-assign" (click)="$event.stopPropagation()">
-                    <select [(ngModel)]="selectedPatientId" class="patient-select" (ngModelChange)="onPatientChange($event)">
-                      <option value="">— Seleccionar paciente —</option>
-                      @for (p of patients(); track p.id) {
-                        <option [value]="p.id">{{ p.apellido }}, {{ p.nombre }}</option>
-                      }
-                    </select>
-                    <button class="btn-assign-confirm"
-                      (click)="doAssign(row.hour)"
-                      [disabled]="!selectedPatientId || savingHour() === row.hour">
-                      {{ savingHour() === row.hour ? '...' : 'Asignar' }}
-                    </button>
-                    <button class="btn-assign-cancel" (click)="openDropdownHour.set(null)">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
-                  </div>
-                } @else if (!isPast(row.hour)) {
-                  <button class="btn-add-patient" (click)="openAdd(row.hour)" title="Agregar paciente">
+                @if (!isPast(row.hour)) {
+                  <button class="btn-add-patient" (click)="openModal(row.hour)" title="Agregar paciente">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   </button>
                 }
@@ -104,6 +81,50 @@ interface HourRow {
         </button>
       }
     </div>
+
+    <!-- Modal overlay para seleccionar paciente -->
+    @if (openDropdownHour() !== null) {
+      <div class="modal-overlay" (click)="closeModal()">
+        <div class="assign-modal" (click)="$event.stopPropagation()">
+          <div class="assign-modal-header">
+            <div>
+              <h3>Asignar paciente</h3>
+              <p class="assign-modal-time">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                {{ padHour(openDropdownHour()!) }}:00 — {{ formatNavDateShort() }}
+              </p>
+            </div>
+            <button class="btn-modal-close" (click)="closeModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          @if (patients().length === 0) {
+            <p class="modal-empty">No hay pacientes registrados.</p>
+          } @else {
+            <div class="patient-list">
+              @for (p of patients(); track p.id) {
+                @if (isAssignedToday(p.id)) {
+                  <div class="patient-option disabled">
+                    <span class="patient-option-name">{{ p.apellido }}, {{ p.nombre }}</span>
+                    <span class="already-badge">Ya tiene turno hoy</span>
+                  </div>
+                } @else {
+                  <button class="patient-option"
+                    [disabled]="savingHour() !== null"
+                    (click)="doAssign(openDropdownHour()!, p)">
+                    <span class="patient-option-name">{{ p.apellido }}, {{ p.nombre }}</span>
+                    @if (savingHour() !== null) {
+                      <span class="saving-dot"></span>
+                    }
+                  </button>
+                }
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .page { max-width: 760px; }
@@ -124,8 +145,8 @@ interface HourRow {
     /* Calendar */
     .cal-table { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
     .cal-head { display: grid; grid-template-columns: 80px 1fr; padding: 10px 16px; background: #f3f4f6; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
-    .cal-row { display: grid; grid-template-columns: 80px 1fr; border-top: 1px solid #f0f0f0; align-items: stretch; min-height: 50px; transition: background 0.1s; background: white; }
-    .cal-row.row-past { background: #fafafa; opacity: 0.45; pointer-events: none; }
+    .cal-row { display: grid; grid-template-columns: 80px 1fr; border-top: 1px solid #f0f0f0; align-items: stretch; min-height: 50px; background: white; }
+    .cal-row.row-past { background: #fafafa; opacity: 0.4; pointer-events: none; }
     .cal-row.row-occupied { background: #f5f7ff; }
 
     .col-hour { display: flex; align-items: center; padding: 0 16px; border-right: 1px solid #f0f0f0; flex-shrink: 0; }
@@ -141,47 +162,58 @@ interface HourRow {
     .btn-add-patient { width: 28px; height: 28px; border-radius: 50%; background: #eef2ff; color: #4f46e5; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
     .btn-add-patient:hover { background: #4f46e5; color: white; }
 
-    /* Inline assign dropdown */
-    .inline-assign { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .patient-select { padding: 6px 10px; border: 1.5px solid #c7d2fe; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; background: white; color: #111827; cursor: pointer; }
-    .patient-select:focus { border-color: #4f46e5; }
-    .btn-assign-confirm { padding: 6px 14px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-    .btn-assign-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-assign-confirm:not(:disabled):hover { background: #4338ca; }
-    .btn-assign-cancel { width: 28px; height: 28px; border-radius: 50%; background: #f3f4f6; color: #6b7280; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .btn-assign-cancel:hover { background: #e5e7eb; }
-
+    /* Expand */
     .btn-expand { display: flex; align-items: center; gap: 6px; margin: 10px auto 0; padding: 8px 18px; background: #f3f4f6; color: #6b7280; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-expand:hover { background: #e5e7eb; color: #374151; }
     .loading-text { padding: 32px; text-align: center; color: #9ca3af; }
 
+    /* Modal overlay */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 300; padding: 20px; backdrop-filter: blur(2px); }
+    .assign-modal { background: white; border-radius: 18px; width: 100%; max-width: 420px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 24px 64px rgba(0,0,0,0.25); overflow: hidden; }
+    .assign-modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 20px 14px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
+    .assign-modal-header h3 { font-size: 17px; font-weight: 700; color: #111827; margin: 0 0 4px; }
+    .assign-modal-time { font-size: 13px; color: #6b7280; margin: 0; display: flex; align-items: center; gap: 5px; text-transform: capitalize; }
+    .btn-modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: #f3f4f6; color: #6b7280; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .btn-modal-close:hover { background: #e5e7eb; color: #111827; }
+
+    /* Patient list */
+    .patient-list { overflow-y: auto; flex: 1; padding: 8px; }
+    .patient-option { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 14px; border: none; border-radius: 10px; background: transparent; cursor: pointer; text-align: left; transition: background 0.12s; gap: 10px; }
+    .patient-option:not(.disabled):hover { background: #eef2ff; }
+    .patient-option:not(.disabled):hover .patient-option-name { color: #4f46e5; }
+    .patient-option.disabled { cursor: default; opacity: 0.55; }
+    .patient-option-name { font-size: 14px; font-weight: 600; color: #111827; }
+    .already-badge { font-size: 11px; font-weight: 600; color: #9ca3af; background: #f3f4f6; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .modal-empty { padding: 24px 20px; color: #9ca3af; font-size: 14px; text-align: center; margin: 0; }
+    .saving-dot { width: 8px; height: 8px; border-radius: 50%; background: #4f46e5; animation: pulse 1s infinite; flex-shrink: 0; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
     @media (max-width: 600px) {
       .cal-head, .cal-row { grid-template-columns: 65px 1fr; }
       .hour-label { font-size: 12px; }
-      .patient-select { font-size: 12px; }
+      .assign-modal { max-width: 100%; margin: 0; border-radius: 18px 18px 0 0; align-self: flex-end; max-height: 85vh; }
+      .modal-overlay { align-items: flex-end; padding: 0; }
     }
   `]
 })
 export class ProfessionalAppointmentsComponent implements OnInit {
-  private api  = inject(ApiService);
+  private api = inject(ApiService);
 
-  patients        = signal<any[]>([]);
-  rawAppts        = signal<any[]>([]);
-  loadingDay      = signal(false);
+  patients         = signal<any[]>([]);
+  rawAppts         = signal<any[]>([]);
+  loadingDay       = signal(false);
   openDropdownHour = signal<number | null>(null);
-  savingHour      = signal<number | null>(null);
-  showFullDay     = signal(false);
-  selectedPatientId = '';
-  currentDate     = new Date();
+  savingHour       = signal<number | null>(null);
+  showFullDay      = signal(false);
+  currentDate      = new Date();
+
+  assignedTodayIds = computed(() => new Set(this.rawAppts().map(a => a.patient_doc_id)));
 
   hourRows = computed<HourRow[]>(() => {
     const appts = this.rawAppts();
     return Array.from({ length: 24 }, (_, h) => ({
       hour: h,
-      appointments: appts.filter(a => {
-        const dt = new Date(a.appointment_datetime);
-        return dt.getHours() === h;
-      })
+      appointments: appts.filter(a => new Date(a.appointment_datetime).getHours() === h)
     }));
   });
 
@@ -205,16 +237,15 @@ export class ProfessionalAppointmentsComponent implements OnInit {
     });
   }
 
-  openAdd(hour: number) {
-    this.selectedPatientId = '';
-    this.openDropdownHour.set(hour);
+  openModal(hour: number)  { this.openDropdownHour.set(hour); }
+  closeModal()             { this.openDropdownHour.set(null); }
+
+  isAssignedToday(patientDocId: string): boolean {
+    return this.assignedTodayIds().has(patientDocId);
   }
 
-  onPatientChange(id: string) { this.selectedPatientId = id; }
-
-  doAssign(hour: number) {
-    const patient = this.patients().find(p => p.id === this.selectedPatientId);
-    if (!patient) return;
+  doAssign(hour: number, patient: any) {
+    if (this.savingHour() !== null) return;
     this.savingHour.set(hour);
     const d = new Date(this.currentDate);
     d.setHours(hour, 0, 0, 0);
@@ -226,8 +257,7 @@ export class ProfessionalAppointmentsComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.savingHour.set(null);
-        this.openDropdownHour.set(null);
-        this.selectedPatientId = '';
+        this.closeModal();
         this.loadDay();
       },
       error: () => this.savingHour.set(null)
@@ -271,6 +301,10 @@ export class ProfessionalAppointmentsComponent implements OnInit {
 
   formatNavDate(): string {
     return this.currentDate.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  formatNavDateShort(): string {
+    return this.currentDate.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
   }
 
   toDateStr(d: Date): string {

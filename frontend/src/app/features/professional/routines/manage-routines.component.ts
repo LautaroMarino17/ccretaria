@@ -77,6 +77,13 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
                     <button class="btn-icon" (click)="openEdit(r)" title="Editar">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
+                    <button class="btn-icon share" (click)="shareByEmail(r)" [title]="sharingId() === r.id ? 'Enviando...' : 'Enviar por email'">
+                      @if (sharingId() === r.id) {
+                        <span class="share-spinner"></span>
+                      } @else {
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                      }
+                    </button>
                     <button class="btn-icon danger" (click)="confirmDelete(r)" title="Eliminar">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button>
@@ -120,6 +127,13 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
               </div>
             }
           }
+        </div>
+      }
+
+      <!-- ── Toast compartir ───────────────────────── -->
+      @if (shareToast()) {
+        <div class="share-toast" [class.toast-error]="!shareToast()!.ok">
+          {{ shareToast()!.msg }}
         </div>
       }
 
@@ -226,16 +240,22 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
       border: none; border-bottom: 2px solid #e5e7eb; outline: none; padding: 4px 0;
       background: transparent; font-family: inherit;
     }
-    .title-input:focus { border-bottom-color: #4f46e5; }
+    .title-input:focus { border-bottom-color: #16a34a; }
     .title-input::placeholder { color: #c4c9d4; font-weight: 400; font-size: 16px; }
     .topbar-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
     .btn-icon { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid #e5e7eb; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280; transition: all 0.15s; }
-    .btn-icon:hover { border-color: #4f46e5; color: #4f46e5; }
+    .btn-icon:hover { border-color: #16a34a; color: #16a34a; }
+    .btn-icon.share:hover { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+    .share-spinner { width: 13px; height: 13px; border-radius: 50%; border: 2px solid #d1fae5; border-top-color: #16a34a; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .share-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #166534; color: white; padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.2); white-space: nowrap; }
+    .share-toast.toast-error { background: #dc2626; }
+    .btn-icon:hover { border-color: #16a34a; color: #16a34a; }
     .btn-icon.danger:hover { border-color: #ef4444; color: #ef4444; }
 
     /* ── Bloque labels ── */
-    .bloque-label { font-size: 11px; font-weight: 800; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
-    .rondas-badge { background: #eef2ff; color: #4f46e5; border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+    .bloque-label { font-size: 11px; font-weight: 800; color: #16a34a; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
+    .rondas-badge { background: #f0fdf4; color: #16a34a; border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
 
     /* ── Bloque read ── */
     .bloque-read { margin-bottom: 16px; }
@@ -244,24 +264,24 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     /* ── Bloque edit — misma estructura que read, con inputs ── */
     /* El bloque-read ya está definido arriba y se reutiliza en edición */
     .bloque-name-inp {
-      font-size: 11px; font-weight: 800; color: #4f46e5; text-transform: uppercase;
+      font-size: 11px; font-weight: 800; color: #16a34a; text-transform: uppercase;
       letter-spacing: 0.8px; border: none; border-bottom: 1.5px solid #c7d2fe;
       outline: none; background: transparent; font-family: inherit;
       padding: 1px 0; min-width: 80px; flex: 1;
     }
     .bloque-name-inp::placeholder { color: #a5b4fc; font-weight: 700; }
-    .bloque-name-inp:focus { border-bottom-color: #4f46e5; }
+    .bloque-name-inp:focus { border-bottom-color: #16a34a; }
     .rondas-inp { background: transparent; border: none; outline: none;
-      font-size: 11px; font-weight: 600; color: #4f46e5; font-family: inherit;
+      font-size: 11px; font-weight: 600; color: #16a34a; font-family: inherit;
       width: 100px; text-align: center; padding: 0; }
-    .rondas-inp-plain { background: #eef2ff; color: #4f46e5; border-radius: 20px;
+    .rondas-inp-plain { background: #f0fdf4; color: #16a34a; border-radius: 20px;
       padding: 2px 10px; font-size: 11px; font-weight: 600; border: none; outline: none;
       width: 110px; font-family: inherit; text-align: center; }
     .rondas-inp-plain::placeholder { color: #a5b4fc; }
     .blk-ctrl-inline { display: flex; gap: 6px; margin-left: auto; align-items: center; }
     .btn-blk-ctrl { width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
-    .btn-blk-ctrl.add { background: #eef2ff; color: #4f46e5; }
-    .btn-blk-ctrl.add:hover { background: #4f46e5; color: white; }
+    .btn-blk-ctrl.add { background: #f0fdf4; color: #16a34a; }
+    .btn-blk-ctrl.add:hover { background: #16a34a; color: white; }
     .btn-blk-ctrl.del { background: #fef2f2; color: #ef4444; }
     .btn-blk-ctrl.del:hover { background: #ef4444; color: white; }
     .btn-blk-ctrl.invisible { visibility: hidden; }
@@ -276,7 +296,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     /* Read rows */
     .ex-row-read { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr; padding: 9px 12px; gap: 8px; border-top: 1px solid #f0f0f0; background: white; align-items: center; }
     .ex-row-read span { font-size: 13px; color: #374151; }
-    .link-ex { color: #4f46e5; font-size: 12px; font-weight: 600; text-decoration: none; }
+    .link-ex { color: #16a34a; font-size: 12px; font-weight: 600; text-decoration: none; }
     .link-ex:hover { text-decoration: underline; }
 
     /* Edit rows — idéntico al read, pero con inputs transparentes */
@@ -285,8 +305,8 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .ex-row-edit input:focus { border-bottom-color: #c7d2fe; }
     .ex-row-edit input::placeholder { color: #d1d5db; }
     .ex-row-actions { display: flex; align-items: center; gap: 2px; justify-content: flex-end; }
-    .btn-add-ex-inline { width: 26px; height: 26px; border-radius: 50%; border: none; background: #eef2ff; color: #4f46e5; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; transition: all 0.15s; }
-    .btn-add-ex-inline:hover { background: #4f46e5; color: white; }
+    .btn-add-ex-inline { width: 26px; height: 26px; border-radius: 50%; border: none; background: #f0fdf4; color: #16a34a; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; transition: all 0.15s; }
+    .btn-add-ex-inline:hover { background: #16a34a; color: white; }
     /* Botón tacho por fila de ejercicio */
     .btn-del-ex { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: #d1d5db; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; padding: 0; }
     .btn-del-ex:hover { background: #fef2f2; color: #ef4444; }
@@ -299,24 +319,24 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
       cursor: pointer; color: #6b7280; font-size: 13px;
       background: #fafafa; transition: background 0.15s;
     }
-    .ex-add-row:hover { background: #eef2ff; color: #4f46e5; }
+    .ex-add-row:hover { background: #f0fdf4; color: #16a34a; }
     .ex-add-row svg { stroke: #9ca3af; transition: stroke 0.15s; }
-    .ex-add-row:hover svg { stroke: #4f46e5; }
+    .ex-add-row:hover svg { stroke: #16a34a; }
 
     /* Observaciones */
     .obs-edit { margin-top: 4px; }
     .obs-edit label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 6px; }
     .obs-edit textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; resize: vertical; box-sizing: border-box; }
-    .obs-edit textarea:focus { border-color: #4f46e5; }
+    .obs-edit textarea:focus { border-color: #16a34a; }
     .obs-box { background: #fffbeb; border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
     .obs-label { display: block; font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
     .obs-box p { font-size: 13px; color: #78350f; margin: 0; line-height: 1.6; }
 
     /* Buttons */
-    .btn-new { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #4f46e5; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-    .btn-new:hover { background: #4338ca; }
-    .btn-save { padding: 8px 18px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-    .btn-save:hover:not(:disabled) { background: #4338ca; }
+    .btn-new { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #16a34a; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-new:hover { background: #15803d; }
+    .btn-save { padding: 8px 18px; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-save:hover:not(:disabled) { background: #15803d; }
     .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-cancel-sm { padding: 8px 14px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
     .btn-cancel-sm:hover { background: #e5e7eb; }
@@ -360,6 +380,8 @@ export class ManageRoutinesComponent implements OnInit {
   deletingRoutine = signal<any>(null);
   formError      = signal('');
   form           = signal<Routine>(EMPTY_ROU());
+  sharingId      = signal<string | null>(null);
+  shareToast     = signal<{ ok: boolean; msg: string } | null>(null);
 
   ngOnInit() { this.load(); }
 
@@ -449,6 +471,25 @@ export class ManageRoutinesComponent implements OnInit {
     req$.subscribe({
       next: () => { this.saving.set(false); this.closeForm(); this.load(); },
       error: (err) => { this.formError.set(err.error?.detail || 'Error al guardar'); this.saving.set(false); }
+    });
+  }
+
+  shareByEmail(r: any) {
+    if (this.sharingId()) return;
+    this.sharingId.set(r.id);
+    this.shareToast.set(null);
+    this.api.shareRoutineByEmail(r.id, this.patientId).subscribe({
+      next: () => {
+        this.sharingId.set(null);
+        this.shareToast.set({ ok: true, msg: 'Rutina enviada por email' });
+        setTimeout(() => this.shareToast.set(null), 3000);
+      },
+      error: (err: any) => {
+        this.sharingId.set(null);
+        const msg = err.error?.detail || 'Error al enviar el email';
+        this.shareToast.set({ ok: false, msg });
+        setTimeout(() => this.shareToast.set(null), 4000);
+      }
     });
   }
 

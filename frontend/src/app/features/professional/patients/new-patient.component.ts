@@ -118,13 +118,13 @@ import { ApiService } from '../../../core/services/api.service';
       padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px;
       font-size: 14px; outline: none; font-family: inherit;
     }
-    input:focus, select:focus, textarea:focus { border-color: #4f46e5; }
+    input:focus, select:focus, textarea:focus { border-color: #16a34a; }
     textarea { resize: vertical; }
     .error-banner { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-bottom: 16px; }
     .form-actions { display: flex; gap: 12px; justify-content: flex-end; }
     .btn-primary {
       display: flex; align-items: center; gap: 8px; padding: 11px 22px;
-      background: #4f46e5; color: white; border: none; border-radius: 10px;
+      background: #16a34a; color: white; border: none; border-radius: 10px;
       font-size: 14px; font-weight: 600; cursor: pointer;
     }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }

@@ -122,7 +122,7 @@ import { AuthService } from '../../../core/services/auth.service';
     .brand-icon {
       width: 56px;
       height: 56px;
-      background: #4f46e5;
+      background: #16a34a;
       border-radius: 16px;
       display: flex;
       align-items: center;
@@ -174,7 +174,7 @@ import { AuthService } from '../../../core/services/auth.service';
     }
 
     input:focus {
-      border-color: #4f46e5;
+      border-color: #16a34a;
     }
 
     .password-wrap {
@@ -191,7 +191,7 @@ import { AuthService } from '../../../core/services/auth.service';
       color: #9ca3af; display: flex; padding: 0;
     }
 
-    .btn-eye:hover { color: #4f46e5; }
+    .btn-eye:hover { color: #16a34a; }
 
     .error-banner {
       background: #fef2f2;
@@ -204,7 +204,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
     .btn-primary {
       padding: 13px;
-      background: #4f46e5;
+      background: #16a34a;
       color: white;
       border: none;
       border-radius: 10px;
@@ -218,7 +218,7 @@ import { AuthService } from '../../../core/services/auth.service';
       min-height: 46px;
     }
 
-    .btn-primary:hover:not(:disabled) { background: #4338ca; }
+    .btn-primary:hover:not(:disabled) { background: #15803d; }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .spinner {
@@ -240,20 +240,20 @@ import { AuthService } from '../../../core/services/auth.service';
     }
 
     .auth-footer a {
-      color: #4f46e5;
+      color: #16a34a;
       font-weight: 600;
       text-decoration: none;
     }
 
     .forgot-link-row { text-align: right; margin-top: -6px; }
-    .btn-link { background: none; border: none; color: #4f46e5; font-size: 13px; cursor: pointer; padding: 0; text-decoration: underline; }
+    .btn-link { background: none; border: none; color: #16a34a; font-size: 13px; cursor: pointer; padding: 0; text-decoration: underline; }
 
     .forgot-box { background: #f0f4ff; border-radius: 10px; padding: 14px; font-size: 13px; color: #374151; }
     .forgot-box p { margin: 0 0 10px; }
     .forgot-row { display: flex; gap: 8px; }
     .forgot-row input { flex: 1; padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; }
-    .forgot-row input:focus { border-color: #4f46e5; }
-    .btn-forgot-send { padding: 9px 16px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .forgot-row input:focus { border-color: #16a34a; }
+    .btn-forgot-send { padding: 9px 16px; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-forgot-send:disabled { opacity: 0.5; cursor: not-allowed; }
     .success-small { margin-top: 8px; color: #166534; font-size: 13px; }
     .error-small { margin-top: 8px; color: #dc2626; font-size: 13px; }

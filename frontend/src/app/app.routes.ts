@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, professionalGuard, patientGuard } from './core/guards/auth.guard';
+import { authGuard, professionalGuard } from './core/guards/auth.guard';
 
 
 export const routes: Routes = [
@@ -70,37 +70,7 @@ export const routes: Routes = [
     ]
   },
 
-  // ── Paciente ─────────────────────────────────────────────────────
-  {
-    path: 'patient',
-    canActivate: [patientGuard],
-    loadComponent: () => import('./shared/layout/shell/shell.component').then(m => m.ShellComponent),
-    children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      {
-        path: 'dashboard',
-        loadComponent: () => import('./features/patient/patient-dashboard/patient-dashboard.component')
-          .then(m => m.PatientDashboardComponent)
-      },
-      {
-        path: 'histories',
-        loadComponent: () => import('./features/patient/clinical-histories/patient-histories.component')
-          .then(m => m.PatientHistoriesComponent)
-      },
-      {
-        path: 'routine',
-        loadComponent: () => import('./features/patient/routine/patient-routine.component')
-          .then(m => m.PatientRoutineComponent)
-      },
-      {
-        path: 'evaluations',
-        loadComponent: () => import('./features/patient/evaluations/patient-evaluations.component')
-          .then(m => m.PatientEvaluationsComponent)
-      }
-    ]
-  },
-
-  // ── Perfil (ambos roles) ─────────────────────────────────────────
+  // ── Perfil ───────────────────────────────────────────────────────
   {
     path: 'profile',
     canActivate: [authGuard],

@@ -237,34 +237,34 @@ import { ApiService } from '../../../core/services/api.service';
 
     .history-list { display: flex; flex-direction: column; gap: 8px; }
     .history-card { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1.5px solid #e5e7eb; transition: border-color 0.15s; }
-    .history-card.expanded { border-color: #4f46e5; }
+    .history-card.expanded { border-color: #16a34a; }
     .history-summary { display: flex; align-items: flex-start; justify-content: space-between; padding: 16px 18px; cursor: pointer; gap: 10px; }
     .history-summary:hover { background: #fafafa; }
     .history-left { flex: 1; }
     .history-date { font-size: 12px; color: #9ca3af; font-weight: 500; display: block; margin-bottom: 2px; }
-    .patient-link { display: inline-block; font-size: 12px; font-weight: 700; color: #4f46e5; text-decoration: none; margin-bottom: 4px; }
+    .patient-link { display: inline-block; font-size: 12px; font-weight: 700; color: #16a34a; text-decoration: none; margin-bottom: 4px; }
     .patient-link:hover { text-decoration: underline; }
     .history-summary h3 { font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 4px; }
     .history-dx { font-size: 13px; color: #6b7280; margin: 0; }
     .history-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
     .btn-icon-sm { width: 28px; height: 28px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280; transition: all 0.15s; }
-    .btn-icon-sm:hover { border-color: #4f46e5; color: #4f46e5; background: #eef2ff; }
+    .btn-icon-sm:hover { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
     .chevron { color: #9ca3af; transition: transform 0.2s; margin-left: 4px; flex-shrink: 0; }
     .history-card.expanded .chevron { transform: rotate(180deg); }
 
     .history-detail { padding: 16px 18px 18px; border-top: 1px solid #f3f4f6; display: flex; flex-direction: column; gap: 14px; animation: slideDown 0.15s ease; }
-    .patient-data-card { background: #f8faff; border: 1px solid #e0e7ff; border-radius: 10px; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 6px 24px; }
+    .patient-data-card { background: #f8faff; border: 1px solid #dcfce7; border-radius: 10px; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 6px 24px; }
     .patient-data-row { display: flex; align-items: baseline; gap: 6px; min-width: 160px; }
     .pd-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
     .pd-val { font-size: 14px; color: #111827; font-weight: 500; }
-    .pd-date { color: #4f46e5; font-weight: 600; }
+    .pd-date { color: #16a34a; font-weight: 600; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     .detail-section label { display: block; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .detail-section p { font-size: 14px; color: #374151; margin: 0; line-height: 1.6; }
     .signos-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .signo-tag { background: #f3f4f6; color: #374151; padding: 4px 10px; border-radius: 6px; font-size: 13px; }
     .history-img { max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 4px; }
-    .estudio-link { display: inline-flex; align-items: center; gap: 6px; color: #4f46e5; font-size: 13px; text-decoration: none; font-weight: 500; }
+    .estudio-link { display: inline-flex; align-items: center; gap: 6px; color: #16a34a; font-size: 13px; text-decoration: none; font-weight: 500; }
     .estudio-link:hover { text-decoration: underline; }
 
     .loading-text { padding: 32px; text-align: center; color: #9ca3af; }
@@ -277,23 +277,23 @@ import { ApiService } from '../../../core/services/api.service';
     .modal h3 { font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 16px; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
     .btn-secondary { padding: 8px 16px; background: #f3f4f6; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; color: #374151; }
-    .btn-save { padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-save { padding: 8px 16px; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
     .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
     .edit-fields { display: flex; flex-direction: column; gap: 12px; }
     .edit-field { display: flex; flex-direction: column; gap: 4px; }
     .edit-field label { font-size: 12px; font-weight: 600; color: #6b7280; }
     .edit-field input, .edit-field textarea { padding: 8px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; resize: vertical; }
-    .edit-field input:focus, .edit-field textarea:focus { border-color: #4f46e5; }
+    .edit-field input:focus, .edit-field textarea:focus { border-color: #16a34a; }
     .edit-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     /* Feet display */
     .feet-display { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
     .foot-item-sm { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .foot-lbl { font-size: 9px; font-weight: 700; color: #9ca3af; letter-spacing: 1px; }
     .foot-path-sm { fill: #d1d5db; stroke: #9ca3af; stroke-width: 1.5; }
-    .foot-yes { fill: #818cf8; stroke: #4338ca; }
+    .foot-yes { fill: #818cf8; stroke: #15803d; }
     .foot-zone-sm { fill: rgba(55,48,163,0.5); }
     .plantilla-tag { font-size: 12px; font-weight: 600; color: #9ca3af; align-self: center; }
-    .plantilla-tag.yes { color: #4f46e5; }
+    .plantilla-tag.yes { color: #16a34a; }
     .plantilla-toggle { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 8px; border-radius: 8px; transition: background 0.2s; }
     .plantilla-toggle:hover { background: #f0f4ff; }
 
@@ -302,7 +302,7 @@ import { ApiService } from '../../../core/services/api.service';
     .link-name { flex: 1; min-width: 0; }
     .link-url { flex: 2; min-width: 0; }
     .btn-rm { padding: 4px 8px; background: #fef2f2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; flex-shrink: 0; }
-    .btn-add-link { padding: 5px 12px; background: #eef2ff; color: #4f46e5; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 2px; }
+    .btn-add-link { padding: 5px 12px; background: #f0fdf4; color: #16a34a; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 2px; }
     .error-banner { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 10px; }
 
     @media (max-width: 640px) {

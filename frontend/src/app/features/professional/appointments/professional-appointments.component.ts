@@ -135,12 +135,12 @@ interface HourRow {
     /* Date nav */
     .date-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
     .nav-btn { width: 36px; height: 36px; background: white; border: 1.5px solid #e5e7eb; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #374151; flex-shrink: 0; }
-    .nav-btn:hover:not(:disabled) { border-color: #4f46e5; color: #4f46e5; }
+    .nav-btn:hover:not(:disabled) { border-color: #16a34a; color: #16a34a; }
     .date-display-wrap { flex: 1; display: flex; justify-content: center; position: relative; }
     .date-display { font-size: 16px; font-weight: 700; color: #111827; text-transform: capitalize; cursor: pointer; padding: 4px 10px; border-radius: 8px; transition: background 0.15s; }
-    .date-display:hover { background: #eef2ff; color: #4f46e5; }
+    .date-display:hover { background: #f0fdf4; color: #16a34a; }
     .date-picker-hidden { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
-    .btn-today { padding: 7px 14px; background: #eef2ff; color: #4f46e5; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+    .btn-today { padding: 7px 14px; background: #f0fdf4; color: #16a34a; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
 
     /* Calendar */
     .cal-table { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
@@ -154,13 +154,13 @@ interface HourRow {
     .col-patients { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 8px 14px; min-height: 50px; }
 
     /* Patient chips */
-    .patient-chip { display: inline-flex; align-items: center; gap: 5px; background: #e0e7ff; color: #3730a3; border-radius: 20px; padding: 4px 10px 4px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; }
-    .btn-chip-remove { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; border: none; background: rgba(55,48,163,0.15); color: #3730a3; cursor: pointer; padding: 0; flex-shrink: 0; transition: all 0.15s; }
+    .patient-chip { display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #166534; border-radius: 20px; padding: 4px 10px 4px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .btn-chip-remove { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; border: none; background: rgba(55,48,163,0.15); color: #166534; cursor: pointer; padding: 0; flex-shrink: 0; transition: all 0.15s; }
     .btn-chip-remove:hover { background: #dc2626; color: white; }
 
     /* Add patient button */
-    .btn-add-patient { width: 28px; height: 28px; border-radius: 50%; background: #eef2ff; color: #4f46e5; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
-    .btn-add-patient:hover { background: #4f46e5; color: white; }
+    .btn-add-patient { width: 28px; height: 28px; border-radius: 50%; background: #f0fdf4; color: #16a34a; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .btn-add-patient:hover { background: #16a34a; color: white; }
 
     /* Expand */
     .btn-expand { display: flex; align-items: center; gap: 6px; margin: 10px auto 0; padding: 8px 18px; background: #f3f4f6; color: #6b7280; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
@@ -179,13 +179,13 @@ interface HourRow {
     /* Patient list */
     .patient-list { overflow-y: auto; flex: 1; padding: 8px; }
     .patient-option { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 14px; border: none; border-radius: 10px; background: transparent; cursor: pointer; text-align: left; transition: background 0.12s; gap: 10px; }
-    .patient-option:not(.disabled):hover { background: #eef2ff; }
-    .patient-option:not(.disabled):hover .patient-option-name { color: #4f46e5; }
+    .patient-option:not(.disabled):hover { background: #f0fdf4; }
+    .patient-option:not(.disabled):hover .patient-option-name { color: #16a34a; }
     .patient-option.disabled { cursor: default; opacity: 0.55; }
     .patient-option-name { font-size: 14px; font-weight: 600; color: #111827; }
     .already-badge { font-size: 11px; font-weight: 600; color: #9ca3af; background: #f3f4f6; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
     .modal-empty { padding: 24px 20px; color: #9ca3af; font-size: 14px; text-align: center; margin: 0; }
-    .saving-dot { width: 8px; height: 8px; border-radius: 50%; background: #4f46e5; animation: pulse 1s infinite; flex-shrink: 0; }
+    .saving-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; animation: pulse 1s infinite; flex-shrink: 0; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
     @media (max-width: 600px) {

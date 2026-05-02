@@ -130,6 +130,12 @@ export class ApiService {
     );
   }
 
+  shareRoutineByEmail(routineId: string, patientId: string) {
+    return this.withAuth(h =>
+      this.http.post<any>(`${this.base}/routines/${routineId}/patient/${patientId}/share-email`, {}, { headers: h })
+    );
+  }
+
   // ── Historia Clínica ─────────────────────────────────────────────
   getAllClinicalHistories() {
     return this.withAuth(h => this.http.get<any[]>(`${this.base}/clinical-history/`, { headers: h }));

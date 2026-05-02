@@ -347,7 +347,7 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
     }
     .record-btn {
       width: 80px; height: 80px; border-radius: 50%; border: none;
-      background: #4f46e5; color: white; cursor: pointer;
+      background: #16a34a; color: white; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.2s, transform 0.1s; z-index: 1;
     }
@@ -359,7 +359,7 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
       gap: 3px; height: 40px; margin-bottom: 24px;
     }
     .wave-bar {
-      width: 4px; background: #4f46e5; border-radius: 2px;
+      width: 4px; background: #16a34a; border-radius: 2px;
       animation: wave 0.5s ease-in-out infinite alternate;
       animation-delay: calc(var(--i) * 0.05s);
     }
@@ -373,12 +373,12 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
     .record-duration { font-size: 14px; color: #6b7280; margin: 0 0 8px; }
     .stopped-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
     .btn-generate {
-      padding: 14px 28px; background: #4f46e5; color: white;
+      padding: 14px 28px; background: #16a34a; color: white;
       border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
       cursor: pointer; display: flex; align-items: center; gap: 10px;
-      box-shadow: 0 4px 14px rgba(79,70,229,0.35); transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 4px 14px rgba(22,163,74,0.35); transition: background 0.2s, transform 0.1s;
     }
-    .btn-generate:hover { background: #4338ca; transform: translateY(-1px); }
+    .btn-generate:hover { background: #15803d; transform: translateY(-1px); }
     .btn-generate:active { transform: translateY(0); }
 
     /* ── Processing ── */
@@ -388,7 +388,7 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
     }
     .processing-spinner {
       width: 56px; height: 56px; border: 4px solid #e5e7eb;
-      border-top-color: #4f46e5; border-radius: 50%;
+      border-top-color: #16a34a; border-radius: 50%;
       animation: spin 0.8s linear infinite; margin: 0 auto 20px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -400,13 +400,13 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
       padding: 10px 14px; border-radius: 10px; font-size: 14px; color: #9ca3af;
       background: #f9fafb;
     }
-    .step.active { background: #eef2ff; color: #4f46e5; font-weight: 600; }
+    .step.active { background: #f0fdf4; color: #16a34a; font-weight: 600; }
     .step.done { background: #f0fdf4; color: #166534; }
     .step-icon {
       width: 24px; height: 24px; border-radius: 50%; background: #e5e7eb;
       display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
     }
-    .step.active .step-icon { background: #4f46e5; color: white; }
+    .step.active .step-icon { background: #16a34a; color: white; }
     .step.done .step-icon { background: #22c55e; color: white; }
 
     /* ── Review ── */
@@ -448,7 +448,7 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
       background: transparent; font-family: Georgia, serif; width: 100%;
       border-bottom: 1px dotted #9ca3af; padding: 2px 0;
     }
-    .mf-pinput:focus { border-bottom-color: #4f46e5; }
+    .mf-pinput:focus { border-bottom-color: #16a34a; }
 
     .mf-section {
       padding: 10px 20px; border-bottom: 1px solid #e9eaec;
@@ -489,13 +489,13 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
       fill: #d1d5db; stroke: #9ca3af; stroke-width: 1.5;
       transition: fill 0.35s, stroke 0.35s;
     }
-    .foot-yes { fill: #818cf8; stroke: #4338ca; }
+    .foot-yes { fill: #818cf8; stroke: #15803d; }
     .foot-zone { fill: rgba(55, 48, 163, 0.5); }
     .plantilla-status {
       font-size: 13px; font-weight: 600; color: #9ca3af;
       font-family: Arial, sans-serif; transition: color 0.3s;
     }
-    .plantilla-status.active { color: #4f46e5; }
+    .plantilla-status.active { color: #16a34a; }
     .feet-hint { font-size: 11px; color: #d1d5db; font-family: Arial, sans-serif; }
 
     .review-actions { display: flex; gap: 12px; justify-content: flex-end; }
@@ -520,11 +520,11 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
 
     /* ── Shared ── */
     .btn-primary {
-      padding: 12px 24px; background: #4f46e5; color: white;
+      padding: 12px 24px; background: #16a34a; color: white;
       border: none; border-radius: 10px; font-size: 14px; font-weight: 600;
       cursor: pointer; display: flex; align-items: center; gap: 8px;
     }
-    .btn-primary:hover:not(:disabled) { background: #4338ca; }
+    .btn-primary:hover:not(:disabled) { background: #15803d; }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-secondary {
       padding: 12px 24px; background: #f3f4f6; color: #374151;

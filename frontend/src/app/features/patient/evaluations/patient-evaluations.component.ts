@@ -83,13 +83,13 @@ import { ApiService } from '../../../core/services/api.service';
     .eval-card h2 { font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 6px; }
     .eval-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .eval-date { font-size: 13px; color: #9ca3af; }
-    .prof-badge { padding: 3px 10px; background: #eef2ff; color: #4f46e5; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .prof-badge { padding: 3px 10px; background: #f0fdf4; color: #16a34a; border-radius: 20px; font-size: 12px; font-weight: 600; }
 
     .measures-table { background: #f9fafb; border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
     .measure-head { display: grid; grid-template-columns: 1fr 120px 100px; padding: 8px 14px; background: #f3f4f6; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
     .measure-row { display: grid; grid-template-columns: 1fr 120px 100px; padding: 10px 14px; border-top: 1px solid #e5e7eb; }
     .m-name { font-size: 14px; color: #374151; font-weight: 500; }
-    .m-val { font-size: 16px; color: #4f46e5; font-weight: 700; }
+    .m-val { font-size: 16px; color: #16a34a; font-weight: 700; }
     .m-unit { font-size: 13px; color: #9ca3af; }
 
     .obs-box { background: #fffbeb; border-radius: 10px; padding: 14px; margin-top: 10px; }

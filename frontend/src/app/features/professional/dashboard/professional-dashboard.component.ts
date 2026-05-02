@@ -26,7 +26,7 @@ import { AuthService } from '../../../core/services/auth.service';
       <!-- Código de vinculación -->
       <div class="link-code-card">
         <div class="link-code-info">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
           </svg>
@@ -171,7 +171,7 @@ import { AuthService } from '../../../core/services/auth.service';
     .page { max-width: 900px; }
     .welcome-banner {
       display: flex; align-items: center; justify-content: space-between;
-      background: linear-gradient(135deg, #1e1b4b, #4f46e5);
+      background: linear-gradient(135deg, #111111, #16a34a);
       color: white; border-radius: 20px; padding: 32px 28px; margin-bottom: 24px;
     }
     .welcome-banner h1 { font-size: 24px; font-weight: 700; margin: 0 0 6px; }
@@ -183,7 +183,7 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex; flex-direction: column; gap: 4px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.05);
     }
-    .stat-value { font-size: 32px; font-weight: 700; color: #4f46e5; }
+    .stat-value { font-size: 32px; font-weight: 700; color: #16a34a; }
     .stat-label { font-size: 13px; color: #6b7280; }
     .quick-actions { margin-bottom: 24px; }
     .quick-actions h2 { font-size: 16px; font-weight: 700; color: #111827; margin: 0 0 14px; }
@@ -201,7 +201,7 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex; align-items: center; justify-content: center;
     }
     .action-icon.blue { background: #eff6ff; color: #2563eb; }
-    .action-icon.purple { background: #faf5ff; color: #7c3aed; }
+    .action-icon.purple { background: #faf5ff; color: #059669; }
     .action-icon.green { background: #f0fdf4; color: #16a34a; }
     .section-card {
       background: white; border-radius: 16px; padding: 24px;
@@ -213,7 +213,7 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex; align-items: center; gap: 14px;
       padding: 12px 14px; background: #f9fafb; border-radius: 10px;
     }
-    .appt-time { font-size: 14px; font-weight: 600; color: #4f46e5; min-width: 60px; }
+    .appt-time { font-size: 14px; font-weight: 600; color: #16a34a; min-width: 60px; }
     .appt-info { flex: 1; }
     .appt-name { font-size: 14px; font-weight: 500; color: #111827; display: block; }
     .appt-notes { font-size: 12px; color: #9ca3af; }
@@ -223,21 +223,21 @@ import { AuthService } from '../../../core/services/auth.service';
     /* Link code */
     .link-code-card {
       display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
-      background: #eef2ff; border: 1.5px solid #c7d2fe; border-radius: 14px;
+      background: #f0fdf4; border: 1.5px solid #c7d2fe; border-radius: 14px;
       padding: 16px 20px; margin-bottom: 24px;
     }
     .link-code-info { display: flex; align-items: center; gap: 12px; }
-    .link-code-label { display: block; font-size: 14px; font-weight: 600; color: #3730a3; }
+    .link-code-label { display: block; font-size: 14px; font-weight: 600; color: #166534; }
     .link-code-hint { display: block; font-size: 12px; color: #6366f1; }
     .link-code-value { display: flex; align-items: center; gap: 10px; }
-    .code { font-size: 22px; font-weight: 800; color: #4f46e5; letter-spacing: 2px; font-family: monospace; }
+    .code { font-size: 22px; font-weight: 800; color: #16a34a; letter-spacing: 2px; font-family: monospace; }
     .code-loading { font-size: 14px; color: #9ca3af; }
     .btn-copy {
       display: flex; align-items: center; gap: 6px; padding: 8px 14px;
       background: white; border: 1.5px solid #c7d2fe; border-radius: 8px;
-      cursor: pointer; font-size: 13px; font-weight: 600; color: #4f46e5; transition: all 0.15s;
+      cursor: pointer; font-size: 13px; font-weight: 600; color: #16a34a; transition: all 0.15s;
     }
-    .btn-copy:hover { background: #4f46e5; color: white; border-color: #4f46e5; }
+    .btn-copy:hover { background: #16a34a; color: white; border-color: #16a34a; }
     .btn-copy.copied { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
 
     /* Solicitudes */

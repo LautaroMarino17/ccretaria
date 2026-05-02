@@ -128,6 +128,71 @@ def update_routine(
     return {"message": "Rutina actualizada correctamente"}
 
 
+@router.post("/{routine_id}/patient/{patient_id}/share-email")
+def share_routine_by_email(
+    routine_id: str,
+    patient_id: str,
+    user: dict = Depends(get_current_user)
+):
+    """Profesional: envía la rutina por email al paciente."""
+    require_professional(user)
+    db = get_firestore()
+
+    patient_ref = db.collection("professionals").document(user["uid"]) \
+        .collection("patients").document(patient_id).get()
+    if not patient_ref.exists:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    patient_data = patient_ref.to_dict()
+    patient_email = patient_data.get("email", "")
+    if not patient_email:
+        raise HTTPException(status_code=422, detail="El paciente no tiene email registrado")
+
+    routine_ref = db.collection("professionals").document(user["uid"]) \
+        .collection("patients").document(patient_id) \
+        .collection("routines").document(routine_id).get()
+    if not routine_ref.exists:
+        raise HTTPException(status_code=404, detail="Rutina no encontrada")
+    routine = routine_ref.to_dict()
+
+    try:
+        prof_profile = get_user(user["uid"])
+        prof_name = prof_profile.get("display_name") or prof_profile.get("email", "el profesional")
+    except Exception:
+        prof_name = "el profesional"
+
+    patient_name = f"{patient_data.get('nombre', '')} {patient_data.get('apellido', '')}".strip()
+
+    # Construir HTML de la rutina
+    circuits_html = ""
+    for circ in routine.get("circuitos", []):
+        rondas = circ.get("rondas", "")
+        rondas_text = f" · {rondas} rondas" if rondas else ""
+        exercises_html = "".join(
+            f"<li><strong>{ex.get('nombre', '')}</strong>"
+            + (f" — {ex.get('reps_seg_mts', '')}" if ex.get('reps_seg_mts') else "")
+            + (f" · {ex.get('carga', '')}" if ex.get('carga') else "")
+            + (f"<br><small style='color:#6b7280'>{ex.get('descripcion', '')}</small>" if ex.get('descripcion') else "")
+            + "</li>"
+            for ex in circ.get("ejercicios", [])
+        )
+        circuits_html += f"""
+        <div style="margin-bottom:16px">
+          <p style="margin:0 0 6px;font-weight:700;color:#16a34a">{circ.get('nombre', 'Bloque')}{rondas_text}</p>
+          <ul style="margin:0;padding-left:18px;color:#374151">{exercises_html}</ul>
+        </div>"""
+
+    obs = routine.get("observaciones", "")
+    obs_html = f"<p><em>Observaciones: {obs}</em></p>" if obs else ""
+    routine_html = f"<h3 style='margin:0 0 12px'>{routine.get('titulo', 'Rutina')}</h3>{circuits_html}{obs_html}"
+
+    from services.email_service import send_routine_by_email
+    ok = send_routine_by_email(patient_email, patient_name, prof_name, routine.get("titulo", "Rutina"), routine_html)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Error al enviar el email")
+
+    return {"message": "Rutina enviada por email"}
+
+
 @router.delete("/{routine_id}/patient/{patient_id}")
 def delete_routine(
     routine_id: str,

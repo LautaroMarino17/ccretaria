@@ -31,21 +31,14 @@ export const professionalGuard: CanActivateFn = () => {
   return waitForAuth(auth).pipe(
     map(user => {
       if (user?.role === 'professional') return true;
-      router.navigate([user ? '/patient/dashboard' : '/login']);
+      router.navigate(['/login']);
       return false;
     })
   );
 };
 
 export const patientGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
   const router = inject(Router);
-
-  return waitForAuth(auth).pipe(
-    map(user => {
-      if (user?.role === 'patient') return true;
-      router.navigate([user ? '/professional/dashboard' : '/login']);
-      return false;
-    })
-  );
+  router.navigate(['/login']);
+  return false;
 };

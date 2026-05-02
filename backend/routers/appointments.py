@@ -593,4 +593,19 @@ def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_cur
     appt_ref = db.collection("professionals").document(user["uid"]).collection("appointments")
     doc = appt_ref.add(appointment_data)
 
+    # Notificar al paciente por email si tiene correo registrado
+    try:
+        patient_doc = db.collection("professionals").document(user["uid"]) \
+            .collection("patients").document(body.patient_id).get()
+        if patient_doc.exists:
+            patient_email = patient_doc.to_dict().get("email", "")
+            if patient_email:
+                local_dt = dt_naive - timedelta(hours=3)
+                formatted_dt = local_dt.strftime("%d/%m/%Y a las %H:%M")
+                lugar = body.lugar or ""
+                from services.email_service import send_appointment_assigned
+                send_appointment_assigned(patient_email, body.patient_name, prof_name, formatted_dt, lugar)
+    except Exception:
+        pass
+
     return {"id": doc[1].id, "message": "Turno asignado correctamente"}

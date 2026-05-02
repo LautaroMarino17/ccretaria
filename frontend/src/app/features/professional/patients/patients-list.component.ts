@@ -76,7 +76,7 @@ import { Patient } from '../../../core/models/patient.model';
     .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
     .btn-primary {
       display: flex; align-items: center; gap: 8px;
-      padding: 10px 18px; background: #4f46e5; color: white;
+      padding: 10px 18px; background: #16a34a; color: white;
       border: none; border-radius: 10px; font-size: 14px; font-weight: 600;
       cursor: pointer; text-decoration: none; white-space: nowrap;
     }
@@ -95,7 +95,7 @@ import { Patient } from '../../../core/models/patient.model';
     }
     .patient-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
     .patient-avatar {
-      width: 44px; height: 44px; background: #eef2ff; color: #4f46e5;
+      width: 44px; height: 44px; background: #f0fdf4; color: #16a34a;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 16px; flex-shrink: 0;
     }

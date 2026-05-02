@@ -180,14 +180,14 @@ const EMPTY_FORM = (): EvalForm => ({
     .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
     label { font-size: 13px; font-weight: 500; color: #374151; }
     input, textarea, select { padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; resize: vertical; }
-    input:focus, textarea:focus { border-color: #4f46e5; }
+    input:focus, textarea:focus { border-color: #16a34a; }
 
     .measures-section { margin-bottom: 14px; }
     .measures-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .measures-header h4 { font-size: 14px; font-weight: 700; color: #374151; margin: 0; }
-    .btn-add { background: #eef2ff; color: #4f46e5; border: none; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
-    .btn-add-circle { width: 32px; height: 32px; border-radius: 50%; background: #eef2ff; color: #4f46e5; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
-    .btn-add-circle:hover { background: #4f46e5; color: white; }
+    .btn-add { background: #f0fdf4; color: #16a34a; border: none; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-add-circle { width: 32px; height: 32px; border-radius: 50%; background: #f0fdf4; color: #16a34a; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .btn-add-circle:hover { background: #16a34a; color: white; }
     .measure-row { display: grid; grid-template-columns: 1fr 120px 100px auto; gap: 8px; align-items: center; margin-bottom: 8px; }
     .measure-input { margin: 0; }
     .btn-remove-m { background: transparent; border: none; cursor: pointer; color: #d1d5db; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.15s; }
@@ -198,17 +198,17 @@ const EMPTY_FORM = (): EvalForm => ({
     .eval-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
     .eval-card h3 { font-size: 16px; font-weight: 700; color: #111827; margin: 0 0 4px; }
     .eval-date { font-size: 12px; color: #9ca3af; margin-right: 8px; }
-    .prof-badge { padding: 2px 8px; background: #eef2ff; color: #4f46e5; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .prof-badge { padding: 2px 8px; background: #f0fdf4; color: #16a34a; border-radius: 20px; font-size: 11px; font-weight: 600; }
     .eval-actions { display: flex; gap: 8px; flex-shrink: 0; }
     .btn-icon { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid #e5e7eb; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280; transition: all 0.15s; }
-    .btn-icon:hover { border-color: #4f46e5; color: #4f46e5; }
+    .btn-icon:hover { border-color: #16a34a; color: #16a34a; }
     .btn-icon.danger:hover { border-color: #ef4444; color: #ef4444; }
 
     .measures-table { background: #f9fafb; border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
     .measure-head { display: grid; grid-template-columns: 1fr 120px 100px; padding: 8px 12px; background: #f3f4f6; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
     .measure-row-view { display: grid; grid-template-columns: 1fr 120px 100px; padding: 8px 12px; border-top: 1px solid #e5e7eb; }
     .m-name { font-size: 14px; color: #374151; font-weight: 500; }
-    .m-val { font-size: 14px; color: #4f46e5; font-weight: 700; }
+    .m-val { font-size: 14px; color: #16a34a; font-weight: 700; }
     .m-unit { font-size: 13px; color: #9ca3af; }
 
     .obs-box { background: #fffbeb; border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
@@ -218,7 +218,7 @@ const EMPTY_FORM = (): EvalForm => ({
     .images-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
     .eval-img { height: 120px; width: auto; border-radius: 8px; border: 1px solid #e5e7eb; object-fit: cover; }
 
-    .btn-primary { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #4f46e5; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-primary { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #16a34a; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-secondary { padding: 10px 18px; background: #f3f4f6; color: #374151; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; }
     .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }

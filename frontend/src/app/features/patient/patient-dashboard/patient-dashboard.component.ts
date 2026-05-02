@@ -96,7 +96,7 @@ import { AuthService } from '../../../core/services/auth.service';
     .page { max-width: 900px; }
     .welcome-banner {
       display: flex; align-items: center; justify-content: space-between;
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      background: linear-gradient(135deg, #16a34a, #059669);
       color: white; border-radius: 20px; padding: 32px 28px; margin-bottom: 24px;
     }
     .welcome-banner h1 { font-size: 24px; font-weight: 700; margin: 0 0 6px; }
@@ -116,16 +116,16 @@ import { AuthService } from '../../../core/services/auth.service';
     }
     .card-icon.blue { background: #eff6ff; color: #2563eb; }
     .card-icon.green { background: #f0fdf4; color: #16a34a; }
-    .card-icon.purple { background: #faf5ff; color: #7c3aed; }
+    .card-icon.purple { background: #faf5ff; color: #059669; }
     .card-icon.orange { background: #fff7ed; color: #ea580c; }
     .info-card h3 { font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 4px; }
     .info-card p { font-size: 13px; color: #6b7280; margin: 0; }
     .next-appt-card {
       display: flex; align-items: center; gap: 16px; background: white;
       border-radius: 14px; padding: 20px 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-      border-left: 4px solid #4f46e5;
+      border-left: 4px solid #16a34a;
     }
-    .next-appt-label { font-size: 12px; font-weight: 600; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.5px; min-width: 90px; }
+    .next-appt-label { font-size: 12px; font-weight: 600; color: #16a34a; text-transform: uppercase; letter-spacing: 0.5px; min-width: 90px; }
     .next-appt-info { flex: 1; }
     .next-appt-info h3 { font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 4px; }
     .next-appt-info p { font-size: 13px; color: #6b7280; margin: 0; }

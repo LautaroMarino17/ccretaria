@@ -51,6 +51,41 @@ def send_appointment_cancelled(patient_email: str, patient_name: str, prof_name:
     return _send(patient_email, subject, html)
 
 
+def send_appointment_assigned(patient_email: str, patient_name: str, prof_name: str, formatted_dt: str, lugar: str = "") -> bool:
+    """Notifica al paciente que le fue asignado un turno."""
+    subject = "Nuevo turno asignado"
+    lugar_line = f"<p>📍 <strong>{lugar}</strong></p>" if lugar else ""
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 520px; margin: auto;">
+      <h2 style="color: #16a34a;">Turno asignado</h2>
+      <p>Hola <strong>{patient_name}</strong>,</p>
+      <p>Tu profesional <strong>{prof_name}</strong> te asignó un turno:</p>
+      <p>📅 <strong>{formatted_dt}</strong></p>
+      {lugar_line}
+      <br>
+      <p style="color: #888; font-size: 12px;">SecretarIA — gestión de salud</p>
+    </div>
+    """
+    return _send(patient_email, subject, html)
+
+
+def send_routine_by_email(patient_email: str, patient_name: str, prof_name: str, routine_title: str, routine_html: str) -> bool:
+    """Envía una rutina por email al paciente."""
+    subject = f"Tu rutina: {routine_title}"
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #16a34a;">Rutina de ejercicios</h2>
+      <p>Hola <strong>{patient_name}</strong>,</p>
+      <p>Tu profesional <strong>{prof_name}</strong> te compartió la siguiente rutina:</p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;">
+      {routine_html}
+      <br>
+      <p style="color: #888; font-size: 12px;">SecretarIA — gestión de salud</p>
+    </div>
+    """
+    return _send(patient_email, subject, html)
+
+
 def send_appointment_reminder(patient_email: str, patient_name: str, prof_name: str, formatted_dt: str, lugar: str = "") -> bool:
     """Recordatorio de turno próximo al paciente."""
     subject = "Recordatorio: tenés un turno mañana"

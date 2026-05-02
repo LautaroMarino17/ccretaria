@@ -83,7 +83,7 @@ import { AuthService } from '../../../core/services/auth.service';
     /* ── Sidebar ── */
     .sidebar {
       width: 240px;
-      background: #1e1b4b;
+      background: #111111;
       color: white;
       display: flex;
       flex-direction: column;
@@ -105,7 +105,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
     .brand-icon {
       width: 36px; height: 36px;
-      background: #4f46e5;
+      background: #16a34a;
       border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
     }
@@ -132,7 +132,7 @@ import { AuthService } from '../../../core/services/auth.service';
     }
 
     .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
-    .nav-item.active { background: #4f46e5; color: white; }
+    .nav-item.active { background: #16a34a; color: white; }
 
     .nav-icon { display: flex; align-items: center; }
 
@@ -146,7 +146,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
     .user-avatar {
       width: 34px; height: 34px;
-      background: #4f46e5;
+      background: #16a34a;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 14px;

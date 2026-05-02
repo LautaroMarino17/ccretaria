@@ -26,7 +26,7 @@ import { ApiService } from '../../../core/services/api.service';
               <span class="prof-code">{{ prof.code }}</span>
             </div>
             @if (selectedProfUid() === prof.uid) {
-              <svg class="check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg class="check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             }
           </div>
         }
@@ -208,11 +208,11 @@ import { ApiService } from '../../../core/services/api.service';
     /* Selector de profesional */
     .prof-selector { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
     .prof-card { display: flex; align-items: center; gap: 12px; background: white; border: 1.5px solid #e5e7eb; border-radius: 14px; padding: 14px 18px; cursor: pointer; transition: all 0.15s; min-width: 220px; }
-    .prof-card:hover { border-color: #4f46e5; }
-    .prof-card.selected { border-color: #4f46e5; background: #eef2ff; }
+    .prof-card:hover { border-color: #16a34a; }
+    .prof-card.selected { border-color: #16a34a; background: #f0fdf4; }
     .prof-card.add-card { color: #6b7280; font-size: 14px; font-weight: 500; border-style: dashed; }
-    .prof-card.add-card:hover { color: #4f46e5; }
-    .prof-avatar { width: 40px; height: 40px; background: #eef2ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+    .prof-card.add-card:hover { color: #16a34a; }
+    .prof-avatar { width: 40px; height: 40px; background: #f0fdf4; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
     .prof-info { flex: 1; }
     .prof-name { font-size: 14px; font-weight: 600; color: #111827; margin: 0 0 2px; }
     .prof-code { font-size: 12px; color: #6b7280; font-family: monospace; }
@@ -223,8 +223,8 @@ import { ApiService } from '../../../core/services/api.service';
     label { font-size: 13px; font-weight: 500; color: #374151; }
     .input-row { display: flex; gap: 10px; }
     input { flex: 1; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; }
-    input:focus { border-color: #4f46e5; }
-    .btn-search { padding: 10px 16px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    input:focus { border-color: #16a34a; }
+    .btn-search { padding: 10px 16px; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-search:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .hint-box { display: flex; align-items: center; gap: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; font-size: 14px; color: #6b7280; margin-bottom: 16px; }
@@ -232,12 +232,12 @@ import { ApiService } from '../../../core/services/api.service';
     /* Date nav */
     .date-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
     .nav-btn { width: 36px; height: 36px; background: white; border: 1.5px solid #e5e7eb; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #374151; transition: all 0.15s; }
-    .nav-btn:hover { border-color: #4f46e5; color: #4f46e5; }
+    .nav-btn:hover { border-color: #16a34a; color: #16a34a; }
     .date-display-wrap { flex: 1; display: flex; justify-content: center; position: relative; }
     .date-day { font-size: 16px; font-weight: 700; color: #111827; cursor: pointer; padding: 4px 10px; border-radius: 8px; transition: background 0.15s; }
-    .date-day:hover { background: #eef2ff; color: #4f46e5; }
+    .date-day:hover { background: #f0fdf4; color: #16a34a; }
     .date-picker-hidden { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
-    .btn-today { padding: 7px 14px; background: #eef2ff; color: #4f46e5; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-today { padding: 7px 14px; background: #f0fdf4; color: #16a34a; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-toggle-cal { display: flex; align-items: center; gap: 5px; padding: 7px 14px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-toggle-cal:hover { background: #e5e7eb; }
 
@@ -246,17 +246,17 @@ import { ApiService } from '../../../core/services/api.service';
     .cal-header { display: grid; grid-template-columns: 90px 1fr 160px; padding: 10px 16px; background: #f3f4f6; font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
     .cal-row { display: grid; grid-template-columns: 90px 1fr 160px; padding: 12px 16px; border-top: 1px solid #f3f4f6; align-items: center; gap: 12px; }
     .cal-row.available { background: #f0fdf4; }
-    .cal-row.mine { background: #eef2ff; }
+    .cal-row.mine { background: #f0fdf4; }
     .cal-row.occupied { background: #f9fafb; }
     .cal-time span { font-size: 15px; font-weight: 700; color: #111827; display: block; }
     .cal-dur { font-size: 11px; color: #9ca3af; font-weight: 400 !important; }
     .cal-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .status-pill { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .status-pill.available { background: #dcfce7; color: #15803d; }
-    .status-pill.mine { background: #e0e7ff; color: #3730a3; }
+    .status-pill.mine { background: #dcfce7; color: #166534; }
     .status-pill.occupied { background: #f3f4f6; color: #6b7280; }
     .appt-status-sub { font-size: 12px; color: #6b7280; }
-    .btn-reservar { padding: 5px 12px; background: #4f46e5; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-reservar { padding: 5px 12px; background: #16a34a; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-cancelar { padding: 4px 10px; background: #fef2f2; color: #991b1b; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
     .cal-sede { font-size: 13px; color: #374151; }
     .text-muted { color: #9ca3af; }
@@ -281,12 +281,12 @@ import { ApiService } from '../../../core/services/api.service';
     .appt-card.scheduled { border-left-color: #f59e0b; }
     .appt-card.cancelled { border-left-color: #ef4444; opacity: 0.6; }
     .appt-left { text-align: center; min-width: 50px; }
-    .appt-day { display: block; font-size: 28px; font-weight: 700; color: #4f46e5; line-height: 1; }
+    .appt-day { display: block; font-size: 28px; font-weight: 700; color: #16a34a; line-height: 1; }
     .appt-month { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #9ca3af; }
     .appt-center { flex: 1; }
     .appt-center h3 { font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 4px; }
     .appt-time { font-size: 13px; color: #6b7280; margin: 0 0 4px; }
-    .appt-lugar { font-size: 12px; color: #4f46e5; margin: 0 0 2px; }
+    .appt-lugar { font-size: 12px; color: #16a34a; margin: 0 0 2px; }
     .appt-notes { font-size: 12px; color: #9ca3af; margin: 0; }
     .appt-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
     .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
@@ -297,7 +297,7 @@ import { ApiService } from '../../../core/services/api.service';
     .empty-small { font-size: 14px; color: #9ca3af; padding: 20px 0; text-align: center; }
 
     /* Shared */
-    .btn-primary { padding: 10px 20px; background: #4f46e5; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-primary { padding: 10px 20px; background: #16a34a; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-secondary { padding: 10px 18px; background: #f3f4f6; color: #374151; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; }
     .btn-cancel { padding: 4px 10px; background: #fef2f2; color: #991b1b; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }

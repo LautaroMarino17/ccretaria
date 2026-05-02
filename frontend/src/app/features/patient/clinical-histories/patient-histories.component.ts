@@ -143,10 +143,10 @@ import { ApiService } from '../../../core/services/api.service';
       box-shadow: 0 1px 4px rgba(0,0,0,0.05); cursor: pointer;
       border: 1.5px solid #e5e7eb; transition: border-color 0.15s;
     }
-    .history-card.expanded { border-color: #4f46e5; }
+    .history-card.expanded { border-color: #16a34a; }
     .history-summary { display: flex; align-items: flex-start; justify-content: space-between; padding: 18px 20px; }
     .history-date { font-size: 12px; color: #9ca3af; font-weight: 500; display: block; margin-bottom: 4px; }
-    .prof-tag { margin-left: 8px; padding: 2px 8px; background: #eef2ff; color: #4f46e5; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .prof-tag { margin-left: 8px; padding: 2px 8px; background: #f0fdf4; color: #16a34a; border-radius: 20px; font-size: 11px; font-weight: 600; }
     .history-summary h3 { font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 4px; }
     .history-dx { font-size: 13px; color: #6b7280; margin: 0; }
     .chevron { transition: transform 0.2s; flex-shrink: 0; color: #9ca3af; }
@@ -166,11 +166,11 @@ import { ApiService } from '../../../core/services/api.service';
     .feet-display { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .foot-item-sm { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .foot-path-sm { fill: #e5e7eb; stroke: #9ca3af; stroke-width: 1; }
-    .foot-path-sm.foot-yes { fill: #a5b4fc; stroke: #4f46e5; }
-    .foot-zone-sm { fill: rgba(79,70,229,0.4); }
+    .foot-path-sm.foot-yes { fill: #a5b4fc; stroke: #16a34a; }
+    .foot-zone-sm { fill: rgba(22,163,74,0.4); }
     .foot-lbl { font-size: 10px; color: #9ca3af; font-weight: 600; letter-spacing: 0.5px; }
     .plantilla-tag { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #f3f4f6; color: #9ca3af; }
-    .plantilla-tag.yes { background: #eef2ff; color: #4f46e5; }
+    .plantilla-tag.yes { background: #f0fdf4; color: #16a34a; }
   `]
 })
 export class PatientHistoriesComponent implements OnInit {

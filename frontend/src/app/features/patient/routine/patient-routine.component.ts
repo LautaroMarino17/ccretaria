@@ -85,12 +85,12 @@ import { ApiService } from '../../../core/services/api.service';
     .routine-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; gap: 12px; }
     .routine-card h2 { font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 6px; }
     .routine-desc { font-size: 14px; color: #6b7280; margin: 0; }
-    .prof-badge { padding: 4px 12px; background: #eef2ff; color: #4f46e5; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+    .prof-badge { padding: 4px 12px; background: #f0fdf4; color: #16a34a; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 
     .circuit-block { margin-bottom: 16px; }
     .circuit-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .circuit-name { font-size: 14px; font-weight: 700; color: #1e1b4b; }
-    .rondas-badge { background: #4f46e5; color: white; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 700; }
+    .circuit-name { font-size: 14px; font-weight: 700; color: #111111; }
+    .rondas-badge { background: #16a34a; color: white; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 700; }
 
     .exercises-table { border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb; }
     .table-head { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr; padding: 8px 14px; background: #f3f4f6; gap: 8px; }
@@ -98,7 +98,7 @@ import { ApiService } from '../../../core/services/api.service';
     .table-row { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr; padding: 10px 14px; border-top: 1px solid #f3f4f6; gap: 8px; align-items: center; }
     .ex-name { font-size: 14px; font-weight: 500; color: #111827; }
     .ex-desc { font-size: 13px; color: #9ca3af; }
-    .ex-reps { font-size: 14px; font-weight: 600; color: #4f46e5; }
+    .ex-reps { font-size: 14px; font-weight: 600; color: #16a34a; }
     .ex-carga { font-size: 13px; color: #374151; font-weight: 500; }
 
     .obs-box { background: #fffbeb; border-radius: 10px; padding: 14px; margin-top: 8px; }

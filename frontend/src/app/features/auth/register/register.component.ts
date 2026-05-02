@@ -5,8 +5,6 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
-import { UserRole } from '../../../core/models/user.model';
-
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -21,7 +19,7 @@ import { UserRole } from '../../../core/models/user.model';
             </svg>
           </div>
           <h1>Crear cuenta</h1>
-          <p>Completá tus datos para comenzar</p>
+          <p>Acceso exclusivo para profesionales de la salud</p>
         </div>
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
@@ -49,49 +47,11 @@ import { UserRole } from '../../../core/models/user.model';
             </div>
           </div>
 
-          @if (form.value.role === 'patient') {
-            <div class="field-group">
-              <label for="dni">DNI <span class="required">*</span></label>
-              <input id="dni" type="text" formControlName="dni" placeholder="Ej: 44884488" inputmode="numeric" maxlength="8" />
-              <span class="field-hint">7 u 8 dígitos, sin puntos ni espacios</span>
-              @if (form.get('dni')?.dirty && form.get('dni')?.invalid) {
-                <span class="field-error">DNI inválido — ingresá 7 u 8 números</span>
-              }
-            </div>
-          }
-
-          <div class="field-group">
-            <label>Tipo de cuenta</label>
-            <div class="role-selector">
-              <button
-                type="button"
-                class="role-btn"
-                [class.active]="form.value.role === 'professional'"
-                (click)="form.patchValue({ role: 'professional' })">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-                Profesional
-              </button>
-              <button
-                type="button"
-                class="role-btn"
-                [class.active]="form.value.role === 'patient'"
-                (click)="form.patchValue({ role: 'patient' })">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-                Paciente
-              </button>
-            </div>
-          </div>
-
           @if (error) {
             <div class="error-banner">{{ error }}</div>
           }
 
-          <button type="submit" class="btn-primary" [disabled]="loading || form.invalid || !form.value.role || (form.value.role === 'patient' && !form.value.dni)">
+          <button type="submit" class="btn-primary" [disabled]="loading || form.invalid">
             @if (loading) {
               <span class="spinner"></span>
             } @else {
@@ -125,7 +85,7 @@ import { UserRole } from '../../../core/models/user.model';
     }
     .auth-brand { text-align: center; margin-bottom: 32px; }
     .brand-icon {
-      width: 56px; height: 56px; background: #4f46e5; border-radius: 16px;
+      width: 56px; height: 56px; background: #16a34a; border-radius: 16px;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 16px; color: white;
     }
@@ -139,11 +99,11 @@ import { UserRole } from '../../../core/models/user.model';
       border-radius: 10px; font-size: 15px; outline: none; transition: border-color 0.2s;
       width: 100%; box-sizing: border-box;
     }
-    input:focus { border-color: #4f46e5; }
+    input:focus { border-color: #16a34a; }
     .password-wrap { position: relative; display: flex; align-items: center; }
     .password-wrap input { padding-right: 44px; }
     .btn-eye { position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: #9ca3af; display: flex; padding: 0; }
-    .btn-eye:hover { color: #4f46e5; }
+    .btn-eye:hover { color: #16a34a; }
     .role-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .role-btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -151,18 +111,18 @@ import { UserRole } from '../../../core/models/user.model';
       background: white; cursor: pointer; font-size: 14px; font-weight: 500;
       color: #6b7280; transition: all 0.2s;
     }
-    .role-btn.active { border-color: #4f46e5; background: #eef2ff; color: #4f46e5; }
+    .role-btn.active { border-color: #16a34a; background: #f0fdf4; color: #16a34a; }
     .error-banner {
       background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
       border-radius: 8px; padding: 10px 14px; font-size: 14px;
     }
     .btn-primary {
-      padding: 13px; background: #4f46e5; color: white; border: none;
+      padding: 13px; background: #16a34a; color: white; border: none;
       border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
       transition: background 0.2s; display: flex; align-items: center;
       justify-content: center; min-height: 46px;
     }
-    .btn-primary:hover:not(:disabled) { background: #4338ca; }
+    .btn-primary:hover:not(:disabled) { background: #15803d; }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
     .spinner {
       width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4);
@@ -170,7 +130,7 @@ import { UserRole } from '../../../core/models/user.model';
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .auth-footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px; }
-    .auth-footer a { color: #4f46e5; font-weight: 600; text-decoration: none; }
+    .auth-footer a { color: #16a34a; font-weight: 600; text-decoration: none; }
     .required { color: #dc2626; }
     .field-hint { font-size: 12px; color: #9ca3af; margin-top: 2px; }
     .field-error { font-size: 12px; color: #dc2626; margin-top: 2px; }
@@ -190,30 +150,24 @@ export class RegisterComponent {
     displayName: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
-    role: ['' as UserRole | ''],
-    dni: ['', [Validators.pattern(/^\d{7,8}$/)]]
   });
 
   onSubmit() {
-    if (this.form.invalid || !this.form.value.role) return;
+    if (this.form.invalid) return;
     this.loading = true;
     this.error = '';
 
-    const { email, password, displayName, role, dni } = this.form.value;
+    const { email, password, displayName } = this.form.value;
 
     this.authService.register(email!, password!, displayName!).subscribe({
       next: async (cred) => {
-        const rolePayload: any = { uid: cred.user.uid, role };
-        if (role === 'patient' && dni) rolePayload.dni = dni.trim();
-        // Asignar el rol en el backend
-        this.http.post(`${environment.apiUrl}/auth/set-role`, rolePayload).subscribe({
+        this.http.post(`${environment.apiUrl}/auth/set-role`, { uid: cred.user.uid, role: 'professional' }).subscribe({
           next: async () => {
-            // Refrescar token y actualizar estado del servicio de auth
             await this.authService.refreshUser();
-            this.router.navigate([role === 'patient' ? '/patient/dashboard' : '/professional/dashboard']);
+            this.router.navigate(['/professional/dashboard']);
           },
           error: () => {
-            this.error = 'Error al asignar el rol. Contactá al administrador.';
+            this.error = 'Error al configurar la cuenta. Contactá al administrador.';
             this.loading = false;
           }
         });

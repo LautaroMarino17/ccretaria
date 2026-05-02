@@ -554,16 +554,21 @@ def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_cur
     # Verificar que el paciente no tenga ya un turno este mismo día
     day_start = dt_naive.replace(hour=0, minute=0, second=0, microsecond=0)
     day_end = day_start + timedelta(days=1)
-    existing_today = list(
+    all_patient_appts = list(
         db.collection("professionals").document(user["uid"])
           .collection("appointments")
           .where("patient_doc_id", "==", body.patient_id)
-          .where("appointment_datetime", ">=", day_start)
-          .where("appointment_datetime", "<", day_end)
           .stream()
     )
-    if any(a.to_dict().get("status") != "cancelled" for a in existing_today):
-        raise HTTPException(status_code=409, detail="Este paciente ya tiene un turno asignado para este día")
+    for a in all_patient_appts:
+        data = a.to_dict()
+        if data.get("status") == "cancelled":
+            continue
+        ea_dt = data.get("appointment_datetime")
+        if ea_dt:
+            ea_dt_n = ea_dt.replace(tzinfo=None) if hasattr(ea_dt, "tzinfo") and ea_dt.tzinfo else ea_dt
+            if day_start <= ea_dt_n < day_end:
+                raise HTTPException(status_code=409, detail="Este paciente ya tiene un turno asignado para este día")
 
     try:
         prof_profile = get_user(user["uid"])

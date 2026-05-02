@@ -124,6 +124,62 @@ def list_appointments(user: dict = Depends(get_current_user)):
 
 # ── PACIENTE: ve disponibilidad y agenda ─────────────────────────
 
+@router.get("/day")
+def list_day_appointments(date: str, user: dict = Depends(get_current_user)):
+    """Profesional: retorna los turnos de un día dado."""
+    require_professional(user)
+    db = get_firestore()
+    try:
+        day_start = datetime.fromisoformat(date)
+        day_end = day_start + timedelta(days=1)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato inválido (use YYYY-MM-DD)")
+
+    ref = db.collection("professionals").document(user["uid"]).collection("appointments")
+    docs = list(ref.where("appointment_datetime", ">=", day_start)
+                   .where("appointment_datetime", "<", day_end).stream())
+
+    results = []
+    for d in docs:
+        data = d.to_dict()
+        if data.get("status") == "cancelled":
+            continue
+        dt = data.get("appointment_datetime")
+        results.append({
+            "id": d.id,
+            "patient_name": data.get("patient_name", ""),
+            "patient_doc_id": data.get("patient_doc_id", ""),
+            "appointment_datetime": dt.isoformat() if hasattr(dt, "isoformat") else str(dt),
+            "status": data.get("status", "confirmed"),
+            "lugar": data.get("lugar", ""),
+            "notes": data.get("notes", ""),
+        })
+
+    results.sort(key=lambda x: x.get("appointment_datetime") or "")
+    return results
+
+
+@router.delete("/{appointment_id}")
+def delete_appointment(appointment_id: str, user: dict = Depends(get_current_user)):
+    """Profesional: elimina un turno asignado."""
+    require_professional(user)
+    db = get_firestore()
+    ref = db.collection("professionals").document(user["uid"]) \
+        .collection("appointments").document(appointment_id)
+    doc = ref.get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Turno no encontrado")
+    # Eliminar slot asociado si existe
+    slot_id = doc.to_dict().get("slot_id")
+    if slot_id:
+        slot_ref = db.collection("professionals").document(user["uid"]) \
+            .collection("available_slots").document(slot_id)
+        if slot_ref.get().exists:
+            slot_ref.delete()
+    ref.delete()
+    return {"message": "Turno eliminado"}
+
+
 @router.get("/available/{professional_uid}")
 def list_available_slots(professional_uid: str, user: dict = Depends(get_current_user)):
     """Paciente: consulta los horarios disponibles de su profesional (solo futuros)."""
@@ -476,7 +532,7 @@ class AssignAppointmentBody(BaseModel):
 
 @router.post("/assign")
 def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_current_user)):
-    """Profesional: asigna un turno directamente a un paciente (crea slot y appointment)."""
+    """Profesional: asigna un turno directamente a un paciente. Permite múltiples pacientes por horario."""
     require_professional(user)
     try:
         dt = datetime.fromisoformat(body.datetime_iso)
@@ -495,55 +551,19 @@ def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_cur
     if not patient_ref.exists:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
-    slots_ref = db.collection("professionals").document(user["uid"]).collection("available_slots")
-
-    # Validar que no haya slot (y por ende turno) en el mismo horario
-    existing_slot = slots_ref.where("datetime", "==", dt_naive).limit(1).stream()
-    if next(existing_slot, None):
-        raise HTTPException(status_code=409, detail="Ya existe un horario ocupado en esa fecha y hora")
-
-    # Validar que el paciente no tenga ya un turno activo y no vencido con este profesional
-    now = datetime.utcnow()
-
-    def _active_appt_error(appt_data):
-        ea_dt = appt_data.get("appointment_datetime")
-        if ea_dt and appt_data.get("status") in ("pending_confirmation", "confirmed"):
-            ea_dt_naive = ea_dt.replace(tzinfo=None) if hasattr(ea_dt, "tzinfo") and ea_dt.tzinfo else ea_dt
-            if ea_dt_naive > now:
-                local_dt = ea_dt_naive - timedelta(hours=3)
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"El paciente ya tiene un turno activo el {local_dt.strftime('%d/%m/%Y a las %H:%M')}. Cancelalo antes de asignar otro."
-                )
-
-    for ea in db.collection("professionals").document(user["uid"]) \
-            .collection("appointments").where("patient_doc_id", "==", body.patient_id).stream():
-        _active_appt_error(ea.to_dict())
-
-    # También verificar si el paciente está registrado en la app (por patient_uid)
-    link_docs = db.collection("patient_links").where("patient_doc_id", "==", body.patient_id).limit(1).stream()
-    link = next(link_docs, None)
-    if link:
-        for ea in db.collection("professionals").document(user["uid"]) \
-                .collection("appointments").where("patient_uid", "==", link.id).stream():
-            _active_appt_error(ea.to_dict())
-
     try:
         prof_profile = get_user(user["uid"])
         prof_name = prof_profile.get("display_name") or prof_profile.get("email", "")
     except Exception:
         prof_name = ""
 
-    duration = 60  # siempre 60 min
-
     appointment_data = {
-        "patient_uid": None,  # sin uid de Firebase del paciente
         "patient_name": body.patient_name,
         "patient_doc_id": body.patient_id,
         "professional_uid": user["uid"],
         "professional_name": prof_name,
         "appointment_datetime": dt_naive,
-        "duration_minutes": duration,
+        "duration_minutes": 60,
         "notes": body.notes,
         "lugar": body.lugar,
         "status": "confirmed",
@@ -553,28 +573,5 @@ def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_cur
 
     appt_ref = db.collection("professionals").document(user["uid"]).collection("appointments")
     doc = appt_ref.add(appointment_data)
-    appt_id = doc[1].id
 
-    # Crear slot booked para que aparezca en el calendario
-    slot_data = {
-        "datetime": dt_naive,
-        "duration_minutes": duration,
-        "notes": body.notes,
-        "lugar": body.lugar,
-        "booked": True,
-        "appointment_id": appt_id,
-        "professional_uid": user["uid"],
-        "assigned_by_professional": True,
-        "created_at": SERVER_TIMESTAMP,
-    }
-    slots_ref.document(appt_id).set(slot_data)
-
-    # Actualizar el appointment con el slot_id
-    appt_ref.document(appt_id).update({"slot_id": appt_id})
-
-    # Guardar también en la subcolección del paciente para que pueda verlo
-    patient_appt_ref = db.collection("professionals").document(user["uid"]) \
-        .collection("patients").document(body.patient_id).collection("appointments")
-    patient_appt_ref.document(appt_id).set({**appointment_data, "slot_id": appt_id})
-
-    return {"id": appt_id, "message": "Turno asignado correctamente"}
+    return {"id": doc[1].id, "message": "Turno asignado correctamente"}

@@ -83,11 +83,6 @@ export const routes: Routes = [
           .then(m => m.PatientDashboardComponent)
       },
       {
-        path: 'link',
-        loadComponent: () => import('./features/patient/link/patient-link.component')
-          .then(m => m.PatientLinkComponent)
-      },
-      {
         path: 'histories',
         loadComponent: () => import('./features/patient/clinical-histories/patient-histories.component')
           .then(m => m.PatientHistoriesComponent)
@@ -96,11 +91,6 @@ export const routes: Routes = [
         path: 'routine',
         loadComponent: () => import('./features/patient/routine/patient-routine.component')
           .then(m => m.PatientRoutineComponent)
-      },
-      {
-        path: 'appointments',
-        loadComponent: () => import('./features/patient/appointments/patient-appointments.component')
-          .then(m => m.PatientAppointmentsComponent)
       },
       {
         path: 'evaluations',

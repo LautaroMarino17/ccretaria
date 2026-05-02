@@ -288,11 +288,9 @@ export class ShellComponent {
   private patientNav() {
     return [
       { path: '/patient/dashboard', label: 'Inicio', icon: this.icon('home') },
-      { path: '/patient/link', label: 'Vincular médico', icon: this.icon('link') },
       { path: '/patient/histories', label: 'Mis historias', icon: this.icon('file') },
       { path: '/patient/routine', label: 'Mi rutina', icon: this.icon('activity') },
       { path: '/patient/evaluations', label: 'Evaluaciones', icon: this.icon('check') },
-      { path: '/patient/appointments', label: 'Mis turnos', icon: this.icon('calendar') },
       { path: '/profile', label: 'Mi perfil', icon: this.icon('user') },
     ];
   }

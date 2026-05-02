@@ -270,6 +270,18 @@ export class ApiService {
     );
   }
 
+  getDayAppointments(date: string) {
+    return this.withAuth(h =>
+      this.http.get<any[]>(`${this.base}/appointments/day?date=${date}`, { headers: h })
+    );
+  }
+
+  deleteAppointment(appointmentId: string) {
+    return this.withAuth(h =>
+      this.http.delete<any>(`${this.base}/appointments/${appointmentId}`, { headers: h })
+    );
+  }
+
   triggerNotifications() {
     return this.withAuth(h =>
       this.http.post<any>(`${this.base}/appointments/notify`, {}, { headers: h })

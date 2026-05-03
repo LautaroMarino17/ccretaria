@@ -36,7 +36,7 @@ export class ApiService {
     return this.withAuth(h => this.http.patch<any>(`${this.base}/auth/patient-phone`, { telefono }, { headers: h }));
   }
 
-  assignAppointment(data: { patient_id: string; patient_name: string; datetime_iso: string; duration_minutes: number; notes?: string; lugar?: string }) {
+  assignAppointment(data: { patient_id: string; patient_name: string; datetime_iso: string; duration_minutes: number; notes?: string; lugar?: string; tipo?: string }) {
     return this.withAuth(h => this.http.post<any>(`${this.base}/appointments/assign`, data, { headers: h }));
   }
 
@@ -87,12 +87,6 @@ export class ApiService {
   deleteRoutine(routineId: string, patientId: string) {
     return this.withAuth(h =>
       this.http.delete<any>(`${this.base}/routines/${routineId}/patient/${patientId}`, { headers: h })
-    );
-  }
-
-  shareRoutineByEmail(routineId: string, patientId: string) {
-    return this.withAuth(h =>
-      this.http.post<any>(`${this.base}/routines/${routineId}/patient/${patientId}/share-email`, {}, { headers: h })
     );
   }
 
@@ -151,6 +145,17 @@ export class ApiService {
   }
 
   // ── Grabación / Transcripción ────────────────────────────────────
+  transcribeRoutine(audioBlob: Blob): Observable<any> {
+    return from(this.auth.getIdToken()).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+        return this.http.post<any>(`${this.base}/recording/transcribe-routine`, formData, { headers });
+      })
+    );
+  }
+
   transcribeAndStructure(audioBlob: Blob): Observable<any> {
     return from(this.auth.getIdToken()).pipe(
       switchMap(token => {
@@ -251,6 +256,18 @@ export class ApiService {
   triggerNotifications() {
     return this.withAuth(h =>
       this.http.post<any>(`${this.base}/appointments/notify`, {}, { headers: h })
+    );
+  }
+
+  saveFcmToken(token: string) {
+    return this.withAuth(h =>
+      this.http.post<any>(`${this.base}/auth/fcm-token`, { token }, { headers: h })
+    );
+  }
+
+  triggerDailyPush() {
+    return this.withAuth(h =>
+      this.http.post<any>(`${this.base}/appointments/notify-push`, {}, { headers: h })
     );
   }
 }

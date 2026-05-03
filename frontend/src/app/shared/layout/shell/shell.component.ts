@@ -1,7 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Messaging, getToken } from '@angular/fire/messaging';
 import { AuthService } from '../../../core/services/auth.service';
+import { ApiService } from '../../../core/services/api.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-shell',
@@ -246,9 +249,39 @@ import { AuthService } from '../../../core/services/auth.service';
     }
   `]
 })
-export class ShellComponent {
+export class ShellComponent implements OnInit {
   private authService = inject(AuthService);
-  private router = inject(Router);
+  private router      = inject(Router);
+  private api         = inject(ApiService);
+  private messaging   = inject(Messaging);
+
+  ngOnInit() {
+    if (this.authService.currentUser?.role === 'professional') {
+      this.initPush();
+    }
+  }
+
+  private async initPush() {
+    // Trigger daily agenda push regardless of FCM/device support
+    const today = new Date().toDateString();
+    if (localStorage.getItem('lastDailyPush') !== today) {
+      this.api.triggerDailyPush().subscribe({
+        next: () => localStorage.setItem('lastDailyPush', today),
+        error: () => {}
+      });
+    }
+
+    // Best-effort: register FCM token for push delivery (may fail on iOS without APNs)
+    if (!('Notification' in window)) return;
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      const token = await getToken(this.messaging, { vapidKey: environment.vapidKey });
+      if (token) this.api.saveFcmToken(token).subscribe();
+    } catch (e) {
+      console.warn('[FCM] token registration failed:', e);
+    }
+  }
 
   sidebarOpen = signal(false);
   user = this.authService.currentUser;

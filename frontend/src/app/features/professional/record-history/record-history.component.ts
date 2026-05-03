@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
-import { ClinicalHistory, EMPTY_SIGNOS_VITALES } from '../../../core/models/clinical-history.model';
+import { ClinicalHistory, EMPTY_SIGNOS_VITALES, MANIOBRA_SECTIONS, emptyManiobras } from '../../../core/models/clinical-history.model';
 
 type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewing' | 'saving' | 'done';
 
@@ -195,6 +195,46 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
               <textarea class="mf-textarea" [(ngModel)]="history().examen_fisico" rows="3" placeholder="—"></textarea>
             </div>
 
+            <!-- Exploración estática -->
+            <div class="mf-section">
+              <span class="mf-label">Exploración estática</span>
+              <textarea class="mf-textarea" [(ngModel)]="history().exploracion_estatica" rows="3" placeholder="—"></textarea>
+            </div>
+
+            <!-- Inspección dinámica -->
+            <div class="mf-section">
+              <span class="mf-label">Inspección dinámica</span>
+              <textarea class="mf-textarea" [(ngModel)]="history().exploracion_dinamica" rows="3" placeholder="—"></textarea>
+            </div>
+
+            <!-- Maniobras semiológicas -->
+            <div class="mf-section">
+              <span class="mf-label">Maniobras semiológicas</span>
+              <table class="maniobras-table">
+                <thead>
+                  <tr>
+                    <th>Articulación</th>
+                    <th>Medición</th>
+                    <th>Comentario</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (section of maniobra_sections; track section.label) {
+                    <tr class="maniobra-section-row">
+                      <td colspan="3">{{ section.label }}</td>
+                    </tr>
+                    @for (joint of section.joints; track joint) {
+                      <tr>
+                        <td class="joint-name">{{ joint }}</td>
+                        <td><input class="maniobra-input" [(ngModel)]="history().maniobras![joint].medicion" placeholder="—" /></td>
+                        <td><input class="maniobra-input" [(ngModel)]="history().maniobras![joint].comentario" placeholder="—" /></td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+
             <!-- Diagnóstico -->
             <div class="mf-section">
               <span class="mf-label">Diagnóstico</span>
@@ -249,6 +289,14 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
                 <span class="feet-hint">Clic en los pies para indicar</span>
               </div>
             </div>
+
+            <!-- Descripción pedografía -->
+            @if (history().plantillas) {
+              <div class="mf-section">
+                <span class="mf-label">Descripción de plantilla</span>
+                <textarea class="mf-textarea" [(ngModel)]="history().descripcion_pedografia" rows="2" placeholder="—"></textarea>
+              </div>
+            }
 
             <!-- Indicaciones / Plan terapéutico -->
             <div class="mf-section">
@@ -474,6 +522,27 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
       transparent, transparent calc(1.9em - 1px), #a5b4fc calc(1.9em - 1px), #a5b4fc 1.9em
     ); }
 
+    /* ── Maniobras table ── */
+    .maniobras-table {
+      width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; margin-top: 6px;
+    }
+    .maniobras-table thead th {
+      background: #f3f4f6; font-weight: 700; color: #374151; padding: 5px 10px;
+      border: 1px solid #e5e7eb; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .maniobras-table td { border: 1px solid #e9eaec; padding: 3px 8px; vertical-align: middle; }
+    .maniobra-section-row td {
+      background: #f8f9fa; font-weight: 700; font-size: 11px; color: #6b7280;
+      text-transform: uppercase; letter-spacing: 0.6px; padding: 4px 10px;
+    }
+    .joint-name { width: 120px; color: #374151; font-size: 12px; }
+    .maniobra-input {
+      border: none; outline: none; width: 100%; background: transparent;
+      font-family: Georgia, serif; font-size: 13px; color: #111827;
+      border-bottom: 1px dotted #9ca3af; padding: 1px 2px;
+    }
+    .maniobra-input:focus { border-bottom-color: #16a34a; }
+
     /* ── Feet / Plantillas ── */
     .mf-plantillas-row { display: flex; flex-direction: column; gap: 6px; }
     .mf-plantillas-body { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
@@ -553,6 +622,7 @@ export class RecordHistoryComponent implements OnDestroy {
   private cdr = inject(ChangeDetectorRef);
 
   patientId = this.route.snapshot.params['patientId'] || '';
+  maniobra_sections = MANIOBRA_SECTIONS;
 
   state = signal<RecordingState>('idle');
   error = signal('');
@@ -567,6 +637,9 @@ export class RecordHistoryComponent implements OnDestroy {
     motivo_consulta: '',
     antecedentes_sintomas: '',
     examen_fisico: '',
+    exploracion_estatica: '',
+    exploracion_dinamica: '',
+    maniobras: emptyManiobras(),
     signos_vitales: { ...EMPTY_SIGNOS_VITALES },
     diagnostico: '',
     plan_terapeutico: '',
@@ -575,6 +648,7 @@ export class RecordHistoryComponent implements OnDestroy {
     medicacion: '',
     observaciones: '',
     plantillas: false,
+    descripcion_pedografia: '',
     transcripcion_original: '',
     verificada: false
   });
@@ -661,6 +735,9 @@ export class RecordHistoryComponent implements OnDestroy {
         motivo_consulta: ch.motivo_consulta || '',
         antecedentes_sintomas: ch.antecedentes_sintomas || '',
         examen_fisico: ch.examen_fisico || '',
+        exploracion_estatica: ch.exploracion_estatica || '',
+        exploracion_dinamica: ch.exploracion_dinamica || '',
+        maniobras: emptyManiobras(),
         signos_vitales: ch.signos_vitales || { ...EMPTY_SIGNOS_VITALES },
         diagnostico: ch.diagnostico || '',
         plan_terapeutico: ch.plan_terapeutico || '',
@@ -669,6 +746,7 @@ export class RecordHistoryComponent implements OnDestroy {
         medicacion: ch.medicacion || '',
         observaciones: ch.observaciones || '',
         plantillas: ch.plantillas || false,
+        descripcion_pedografia: ch.descripcion_pedografia || '',
         transcripcion_original: result.transcription || '',
         verificada: false
       });

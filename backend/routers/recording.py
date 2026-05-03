@@ -97,3 +97,33 @@ async def transcribe_and_structure(
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error en el pipeline: {str(e)}")
+
+
+@router.post("/transcribe-routine")
+@limiter.limit("10/minute")
+async def transcribe_routine(
+    request: Request,
+    audio: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
+    """Pipeline: audio → transcripción → rutina estructurada."""
+    print(f"[RECORDING] transcribe-routine. User: {user.get('uid')}")
+    require_professional(user)
+
+    audio_bytes = await audio.read()
+    if len(audio_bytes) == 0:
+        raise HTTPException(status_code=400, detail="El archivo de audio está vacío")
+
+    try:
+        print("[RECORDING] Transcribiendo rutina...")
+        transcription = transcribe_audio_file(audio_bytes, filename=audio.filename or "audio.webm")
+        print(f"[RECORDING] OK: {repr(transcription[:100])}")
+
+        from services.llm_service import structure_routine_from_voice
+        routine = structure_routine_from_voice(transcription)
+        print("[RECORDING] Rutina estructurada OK")
+
+        return {"transcription": transcription, "routine": routine}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error en el pipeline: {str(e)}")

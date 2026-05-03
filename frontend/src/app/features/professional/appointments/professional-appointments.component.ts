@@ -36,6 +36,12 @@ interface HourRow {
         <button class="btn-today" (click)="goToday()">Hoy</button>
       </div>
 
+      <!-- Leyenda -->
+      <div class="legend-row">
+        <span class="legend-dot consulta"></span><span class="legend-lbl">Consulta</span>
+        <span class="legend-dot sesion"></span><span class="legend-lbl">Sesión</span>
+      </div>
+
       <!-- Tabla de turnos -->
       @if (loadingDay()) {
         <div class="loading-text">Cargando...</div>
@@ -53,7 +59,7 @@ interface HourRow {
               </div>
               <div class="col-patients">
                 @for (appt of row.appointments; track appt.id) {
-                  <span class="patient-chip">
+                  <span class="patient-chip" [class.tipo-sesion]="appt.tipo === 'sesion'">
                     {{ appt.patient_name }}
                     <button class="btn-chip-remove" (click)="removeAppt(appt.id)" title="Quitar paciente">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -97,6 +103,17 @@ interface HourRow {
             <button class="btn-modal-close" (click)="closeModal()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
+          </div>
+
+          <div class="tipo-row">
+            <label class="tipo-opt" [class.active]="assignTipo() === 'consulta'">
+              <input type="radio" name="tipo" value="consulta" [(ngModel)]="assignTipoValue" (change)="assignTipo.set('consulta')" />
+              <span class="tipo-dot consulta"></span> Consulta
+            </label>
+            <label class="tipo-opt" [class.active]="assignTipo() === 'sesion'">
+              <input type="radio" name="tipo" value="sesion" [(ngModel)]="assignTipoValue" (change)="assignTipo.set('sesion')" />
+              <span class="tipo-dot sesion"></span> Sesión
+            </label>
           </div>
 
           @if (patients().length === 0) {
@@ -153,8 +170,17 @@ interface HourRow {
     .hour-label { font-size: 14px; font-weight: 700; color: #374151; font-variant-numeric: tabular-nums; }
     .col-patients { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 8px 14px; min-height: 50px; }
 
+    /* Legend */
+    .legend-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 13px; color: #6b7280; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-dot.consulta { background: #16a34a; }
+    .legend-dot.sesion { background: #1d4ed8; }
+    .legend-lbl { margin-right: 6px; }
+
     /* Patient chips */
     .patient-chip { display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #166534; border-radius: 20px; padding: 4px 10px 4px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .patient-chip.tipo-sesion { background: #dbeafe; color: #1d4ed8; }
+    .patient-chip.tipo-sesion .btn-chip-remove { color: #1d4ed8; }
     .btn-chip-remove { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; border: none; background: rgba(55,48,163,0.15); color: #166534; cursor: pointer; padding: 0; flex-shrink: 0; transition: all 0.15s; }
     .btn-chip-remove:hover { background: #dc2626; color: white; }
 
@@ -188,6 +214,16 @@ interface HourRow {
     .saving-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; animation: pulse 1s infinite; flex-shrink: 0; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
+    /* Tipo radio */
+    .tipo-row { display: flex; gap: 10px; padding: 12px 20px 4px; flex-shrink: 0; }
+    .tipo-opt { display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 10px; border: 1.5px solid #e5e7eb; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151; user-select: none; transition: all 0.15s; }
+    .tipo-opt input { display: none; }
+    .tipo-opt.active { border-color: #16a34a; background: #f0fdf4; }
+    .tipo-opt.active:last-child { border-color: #1d4ed8; background: #eff6ff; color: #1d4ed8; }
+    .tipo-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .tipo-dot.consulta { background: #16a34a; }
+    .tipo-dot.sesion { background: #1d4ed8; }
+
     @media (max-width: 600px) {
       .cal-head, .cal-row { grid-template-columns: 65px 1fr; }
       .hour-label { font-size: 12px; }
@@ -205,6 +241,8 @@ export class ProfessionalAppointmentsComponent implements OnInit {
   openDropdownHour = signal<number | null>(null);
   savingHour       = signal<number | null>(null);
   showFullDay      = signal(false);
+  assignTipo       = signal<string>('consulta');
+  assignTipoValue  = 'consulta';
   currentDate      = new Date();
 
   assignedTodayIds = computed(() => new Set(this.rawAppts().map(a => a.patient_doc_id)));
@@ -263,7 +301,7 @@ export class ProfessionalAppointmentsComponent implements OnInit {
     });
   }
 
-  openModal(hour: number)  { this.openDropdownHour.set(hour); }
+  openModal(hour: number)  { this.assignTipo.set('consulta'); this.assignTipoValue = 'consulta'; this.openDropdownHour.set(hour); }
   closeModal()             { this.openDropdownHour.set(null); }
 
   isAssignedToday(patientDocId: string): boolean {
@@ -279,7 +317,8 @@ export class ProfessionalAppointmentsComponent implements OnInit {
       patient_id: patient.id,
       patient_name: `${patient.nombre} ${patient.apellido}`.trim(),
       datetime_iso: d.toISOString(),
-      duration_minutes: 60
+      duration_minutes: 60,
+      tipo: this.assignTipo()
     }).subscribe({
       next: () => {
         this.savingHour.set(null);

@@ -1,0 +1,25 @@
+{
+  "name": "SecretarIA",
+  "short_name": "SecretarIA",
+  "description": "Gestión de turnos y pacientes para profesionales de la salud",
+  "theme_color": "#16a34a",
+  "background_color": "#16a34a",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/professional/dashboard",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

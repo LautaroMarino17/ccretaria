@@ -47,6 +47,12 @@ import { ApiService } from '../../../core/services/api.service';
             </div>
             <div><h3>Evaluaciones</h3><p>Testeos y mediciones</p></div>
           </a>
+          <a [routerLink]="['/professional/patients', patientId, 'histories']" class="action-card">
+            <div class="action-icon blue">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <div><h3>Historias clínicas</h3><p>Ver y gestionar consultas</p></div>
+          </a>
         </div>
 
         <!-- Datos del paciente -->
@@ -108,8 +114,8 @@ import { ApiService } from '../../../core/services/api.service';
           </div>
         }
 
-        <!-- Modal editar historia -->
-        @if (editingHistory()) {
+        <!-- (historias clínicas movidas a /patients/:id/histories) -->
+        @if (false && editingHistory()) {
           <div class="modal-overlay" (click)="editingHistory.set(null)">
             <div class="modal modal-lg" (click)="$event.stopPropagation()">
               <h3>Editar historia clínica</h3>
@@ -169,8 +175,7 @@ import { ApiService } from '../../../core/services/api.service';
           </div>
         }
 
-        <!-- Modal nueva historia manual -->
-        @if (showNewHistory()) {
+        @if (false && showNewHistory()) {
           <div class="modal-overlay" (click)="showNewHistory.set(false)">
             <div class="modal modal-lg" (click)="$event.stopPropagation()">
               <h3>Nueva historia clínica</h3>
@@ -218,125 +223,6 @@ import { ApiService } from '../../../core/services/api.service';
           </div>
         }
 
-        <!-- Historias clínicas -->
-        <div class="section-card">
-          <div class="section-header">
-            <h2>Historias clínicas</h2>
-            <button class="btn-edit" (click)="openNewHistory()">+ Nueva historia</button>
-          </div>
-          @if (histories().length === 0) {
-            <div class="empty-small">No hay historias clínicas registradas aún</div>
-          } @else {
-            <div class="history-list">
-              @for (h of histories(); track h.id) {
-                <div class="history-card" [class.expanded]="expanded() === h.id">
-                  <div class="history-summary" (click)="toggleExpand(h.id)">
-                    <div class="history-left">
-                      <span class="history-date">{{ formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha) }}</span>
-                      <p class="history-motivo">{{ h.motivo_consulta || 'Sin motivo registrado' }}</p>
-                      @if (h.diagnostico) { <p class="history-dx">Dx: {{ h.diagnostico }}</p> }
-                      @if (h.professional_name) { <p class="history-prof">{{ h.professional_name }}</p> }
-                    </div>
-                    <div class="history-actions" (click)="$event.stopPropagation()">
-                      <button class="btn-icon-sm" (click)="printHistory(h)" title="Imprimir">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                      </button>
-                      <button class="btn-icon-sm" (click)="downloadHistory(h)" title="Descargar PDF">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                      </button>
-                      <button class="btn-icon-sm" (click)="openEdit(h)" title="Editar">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                      <button class="btn-icon-sm danger" (click)="deleteHistory(h.id)" title="Eliminar">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                      </button>
-                      <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                  </div>
-
-                  @if (expanded() === h.id) {
-                    <div class="history-detail">
-                      @if (h.antecedentes_sintomas) {
-                        <div class="detail-section"><label>Antecedentes y síntomas</label><p>{{ h.antecedentes_sintomas }}</p></div>
-                      }
-                      @if (h.examen_fisico) {
-                        <div class="detail-section"><label>Exploración física</label><p>{{ h.examen_fisico }}</p></div>
-                      }
-                      @if (h.signos_vitales) {
-                        <div class="detail-section">
-                          <label>Signos vitales</label>
-                          <div class="signos-row">
-                            @if (h.signos_vitales.tension_arterial) { <span class="signo-tag">TA: {{ h.signos_vitales.tension_arterial }}</span> }
-                            @if (h.signos_vitales.frecuencia_cardiaca) { <span class="signo-tag">FC: {{ h.signos_vitales.frecuencia_cardiaca }}</span> }
-                            @if (h.signos_vitales.temperatura) { <span class="signo-tag">Temp: {{ h.signos_vitales.temperatura }}</span> }
-                            @if (h.signos_vitales.peso) { <span class="signo-tag">Peso: {{ h.signos_vitales.peso }}</span> }
-                            @if (h.signos_vitales.saturacion) { <span class="signo-tag">SatO2: {{ h.signos_vitales.saturacion }}</span> }
-                          </div>
-                        </div>
-                      }
-                      @if (h.plan_terapeutico) {
-                        <div class="detail-section"><label>Indicaciones / Plan terapéutico</label><p>{{ h.plan_terapeutico }}</p></div>
-                      }
-                      @if (h.estudios_complementarios) {
-                        <div class="detail-section"><label>Estudios complementarios</label><p>{{ h.estudios_complementarios }}</p></div>
-                      }
-                      @if (h.laboratorio) {
-                        <div class="detail-section"><label>Laboratorio</label><p>{{ h.laboratorio }}</p></div>
-                      }
-                      @if (h.medicacion) {
-                        <div class="detail-section"><label>Medicación</label><p>{{ h.medicacion }}</p></div>
-                      }
-                      @if (h.observaciones) {
-                        <div class="detail-section"><label>Comentarios</label><p>{{ h.observaciones }}</p></div>
-                      }
-                      <!-- Plantillas -->
-                      <div class="detail-section">
-                        <label>Plantillas</label>
-                        <div class="feet-display">
-                          <div class="foot-item-sm">
-                            <svg viewBox="25 5 75 100" width="44" height="59"><g transform="scale(-1,1) translate(-129,0)"><path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></g></svg>
-                            <span class="foot-lbl">I</span>
-                          </div>
-                          <div class="foot-item-sm">
-                            <svg viewBox="25 5 75 100" width="44" height="59"><path [class.foot-yes]="h.plantillas" class="foot-path-sm" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></svg>
-                            <span class="foot-lbl">D</span>
-                          </div>
-                          <span class="plantilla-tag" [class.yes]="h.plantillas">{{ h.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</span>
-                        </div>
-                      </div>
-                      @if (h.imagenes?.length > 0) {
-                        <div class="detail-section">
-                          <label>Imágenes</label>
-                          <div class="archivos-list">
-                            @for (img of h.imagenes; track $index) {
-                              <a [href]="img.url" target="_blank" class="estudio-link">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                                {{ img.nombre || img.url }}
-                              </a>
-                            }
-                          </div>
-                        </div>
-                      }
-                      @if (h.estudios?.length > 0) {
-                        <div class="detail-section">
-                          <label>Estudios / Informes</label>
-                          <div class="archivos-list">
-                            @for (est of h.estudios; track $index) {
-                              <a [href]="est.url" target="_blank" class="estudio-link">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                                {{ est.nombre || est.url }}
-                              </a>
-                            }
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
-        </div>
       }
     </div>
   `,
@@ -350,7 +236,7 @@ import { ApiService } from '../../../core/services/api.service';
     h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
     .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
 
-    .quick-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
     .action-card { display: flex; align-items: center; gap: 12px; padding: 16px; background: white; border-radius: 14px; text-decoration: none; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1.5px solid #e5e7eb; transition: all 0.15s; }
     .action-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); border-color: #16a34a; }
     .action-card.primary { background: #16a34a; color: white; border-color: transparent; }
@@ -358,6 +244,7 @@ import { ApiService } from '../../../core/services/api.service';
     .action-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .action-icon.secondary { background: #f0fdf4; color: #16a34a; }
     .action-icon.green { background: #f0fdf4; color: #16a34a; }
+    .action-icon.blue { background: #eff6ff; color: #1d4ed8; }
     .action-card h3 { font-size: 13px; font-weight: 600; color: #111827; margin: 0 0 2px; }
     .action-card p { font-size: 11px; color: #6b7280; margin: 0; }
 
@@ -452,7 +339,7 @@ import { ApiService } from '../../../core/services/api.service';
     .plantilla-toggle:hover { background: #f9fafb; border-color: #c7d2fe; }
 
     @media (max-width: 768px) {
-      .quick-actions { grid-template-columns: 1fr 1fr; }
+      .quick-actions { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
       .data-grid { grid-template-columns: 1fr 1fr; }
       .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
       .edit-field-row { grid-template-columns: 1fr; }

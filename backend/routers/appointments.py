@@ -153,6 +153,7 @@ def list_day_appointments(date: str, user: dict = Depends(get_current_user)):
             "status": data.get("status", "confirmed"),
             "lugar": data.get("lugar", ""),
             "notes": data.get("notes", ""),
+            "tipo": data.get("tipo", "consulta"),
         })
 
     results.sort(key=lambda x: x.get("appointment_datetime") or "")
@@ -597,6 +598,7 @@ class AssignAppointmentBody(BaseModel):
     duration_minutes: int = 60
     notes: Optional[str] = ""
     lugar: Optional[str] = ""
+    tipo: Optional[str] = "consulta"
 
 
 @router.post("/assign")
@@ -654,6 +656,7 @@ def assign_appointment(body: AssignAppointmentBody, user: dict = Depends(get_cur
         "duration_minutes": 60,
         "notes": body.notes,
         "lugar": body.lugar,
+        "tipo": body.tipo or "consulta",
         "status": "confirmed",
         "assigned_by_professional": True,
         "created_at": SERVER_TIMESTAMP,

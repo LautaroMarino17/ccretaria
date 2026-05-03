@@ -28,6 +28,9 @@ class ClinicalHistoryCreate(BaseModel):
     motivo_consulta: Optional[str] = ""
     antecedentes_sintomas: Optional[str] = ""
     examen_fisico: Optional[str] = ""
+    exploracion_estatica: Optional[str] = ""
+    exploracion_dinamica: Optional[str] = ""
+    maniobras: Optional[dict] = None
     signos_vitales: Optional[SignosVitales] = None
     diagnostico: Optional[str] = ""
     plan_terapeutico: Optional[str] = ""
@@ -36,6 +39,7 @@ class ClinicalHistoryCreate(BaseModel):
     medicacion: Optional[str] = ""
     observaciones: Optional[str] = ""
     plantillas: Optional[bool] = False
+    descripcion_pedografia: Optional[str] = ""
     transcripcion_original: Optional[str] = ""
     verificada: bool = False
     imagenes: Optional[List[ArchivoLink]] = []
@@ -46,6 +50,9 @@ class ClinicalHistoryUpdate(BaseModel):
     motivo_consulta: Optional[str] = None
     antecedentes_sintomas: Optional[str] = None
     examen_fisico: Optional[str] = None
+    exploracion_estatica: Optional[str] = None
+    exploracion_dinamica: Optional[str] = None
+    maniobras: Optional[dict] = None
     signos_vitales: Optional[SignosVitales] = None
     diagnostico: Optional[str] = None
     plan_terapeutico: Optional[str] = None
@@ -54,6 +61,7 @@ class ClinicalHistoryUpdate(BaseModel):
     medicacion: Optional[str] = None
     observaciones: Optional[str] = None
     plantillas: Optional[bool] = None
+    descripcion_pedografia: Optional[str] = None
     imagenes: Optional[List[ArchivoLink]] = None
     estudios: Optional[List[ArchivoLink]] = None
 

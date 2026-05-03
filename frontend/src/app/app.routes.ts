@@ -66,6 +66,11 @@ export const routes: Routes = [
         path: 'patients/:patientId/evaluations',
         loadComponent: () => import('./features/professional/evaluations/professional-evaluations.component')
           .then(m => m.ProfessionalEvaluationsComponent)
+      },
+      {
+        path: 'patients/:patientId/histories',
+        loadComponent: () => import('./features/professional/patients/patient-clinical-histories.component')
+          .then(m => m.PatientClinicalHistoriesComponent)
       }
     ]
   },

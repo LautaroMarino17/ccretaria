@@ -31,10 +31,23 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
           </div>
         </div>
         @if (!showForm() || editing()) {
-          <button class="btn-new" (click)="openNew()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Nueva rutina
-          </button>
+          <div class="header-btns">
+            <button class="btn-voice" (click)="toggleVoice()" [class.recording]="voiceState() === 'recording'" [disabled]="voiceState() === 'processing'" title="Crear rutina con voz">
+              @if (voiceState() === 'idle') {
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                Crear con voz
+              } @else if (voiceState() === 'recording') {
+                <span class="rec-dot"></span> Detener grabación
+              } @else {
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Procesando...
+              }
+            </button>
+            <button class="btn-new" (click)="openNew()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nueva rutina
+            </button>
+          </div>
         }
       </div>
 
@@ -77,15 +90,8 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
                     <button class="btn-icon" (click)="openEdit(r)" title="Editar">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
-                    <button class="btn-icon share" (click)="copyRoutine(r)" [title]="copiedId() === r.id ? '¡Copiado!' : 'Copiar rutina'">
-                      @if (copiedId() === r.id) {
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                      } @else {
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                      }
-                    </button>
-                    <button class="btn-icon whatsapp" (click)="shareWhatsApp(r)" title="Compartir por WhatsApp">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+                    <button class="btn-icon download" (click)="downloadRoutine(r)" title="Descargar como planilla">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     </button>
                     <button class="btn-icon danger" (click)="confirmDelete(r)" title="Eliminar">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -123,7 +129,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
 
                 @if (r.observaciones) {
                   <div class="obs-box">
-                    <span class="obs-label">Observaciones</span>
+                    <span class="obs-label">Cuestiones importantes</span>
                     <p>{{ r.observaciones }}</p>
                   </div>
                 }
@@ -133,11 +139,9 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
         </div>
       }
 
-      <!-- ── Toast compartir ───────────────────────── -->
-      @if (shareToast()) {
-        <div class="share-toast" [class.toast-error]="!shareToast()!.ok">
-          {{ shareToast()!.msg }}
-        </div>
+      <!-- ── Toast voz ──────────────────────────────── -->
+      @if (voiceError()) {
+        <div class="voice-toast error">{{ voiceError() }}</div>
       }
 
       <!-- ── Modal eliminar ──────────────────────────── -->
@@ -214,8 +218,8 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
       }
 
       <div class="obs-edit">
-        <label>Observaciones (opcional)</label>
-        <textarea [(ngModel)]="form().observaciones" rows="2" placeholder="Notas adicionales..."></textarea>
+        <label>Cuestiones importantes (opcional)</label>
+        <textarea [(ngModel)]="form().observaciones" rows="2" placeholder="Notas importantes, advertencias..."></textarea>
       </div>
 
       @if (formError()) { <div class="error-banner">{{ formError() }}</div> }
@@ -248,12 +252,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .topbar-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
     .btn-icon { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid #e5e7eb; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280; transition: all 0.15s; }
     .btn-icon:hover { border-color: #16a34a; color: #16a34a; }
-    .btn-icon.share:hover { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
-    .btn-icon.whatsapp:hover { border-color: #25d366; color: #25d366; background: #f0fdf4; }
-    .share-spinner { width: 13px; height: 13px; border-radius: 50%; border: 2px solid #d1fae5; border-top-color: #16a34a; animation: spin 0.6s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .share-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #166534; color: white; padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.2); white-space: nowrap; }
-    .share-toast.toast-error { background: #dc2626; }
+    .btn-icon.download:hover { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
     .btn-icon:hover { border-color: #16a34a; color: #16a34a; }
     .btn-icon.danger:hover { border-color: #ef4444; color: #ef4444; }
 
@@ -337,8 +336,17 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .obs-box p { font-size: 13px; color: #78350f; margin: 0; line-height: 1.6; }
 
     /* Buttons */
+    .header-btns { display: flex; align-items: center; gap: 8px; }
     .btn-new { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #16a34a; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-new:hover { background: #15803d; }
+    .btn-voice { display: flex; align-items: center; gap: 7px; padding: 10px 16px; background: white; color: #374151; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+    .btn-voice:hover:not(:disabled) { border-color: #16a34a; color: #16a34a; }
+    .btn-voice.recording { background: #fef2f2; border-color: #ef4444; color: #dc2626; }
+    .btn-voice:disabled { opacity: 0.6; cursor: not-allowed; }
+    .rec-dot { width: 10px; height: 10px; background: #ef4444; border-radius: 50%; animation: blink 1s infinite; flex-shrink: 0; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .voice-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .voice-toast.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
     .btn-save { padding: 8px 18px; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-save:hover:not(:disabled) { background: #15803d; }
     .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -375,17 +383,19 @@ export class ManageRoutinesComponent implements OnInit {
   private api   = inject(ApiService);
   private route = inject(ActivatedRoute);
 
-  patientId      = this.route.snapshot.params['patientId'];
-  routines       = signal<any[]>([]);
-  loading        = signal(true);
-  showForm       = signal(false);
-  saving         = signal(false);
-  editing        = signal<string | null>(null);
+  patientId       = this.route.snapshot.params['patientId'];
+  routines        = signal<any[]>([]);
+  loading         = signal(true);
+  showForm        = signal(false);
+  saving          = signal(false);
+  editing         = signal<string | null>(null);
   deletingRoutine = signal<any>(null);
-  formError      = signal('');
-  form           = signal<Routine>(EMPTY_ROU());
-  copiedId       = signal<string | null>(null);
-  shareToast     = signal<{ ok: boolean; msg: string } | null>(null);
+  formError       = signal('');
+  form            = signal<Routine>(EMPTY_ROU());
+  voiceState      = signal<'idle' | 'recording' | 'processing'>('idle');
+  voiceError      = signal('');
+  private _recorder: MediaRecorder | null = null;
+  private _chunks: Blob[] = [];
 
   ngOnInit() { this.load(); }
 
@@ -478,38 +488,185 @@ export class ManageRoutinesComponent implements OnInit {
     });
   }
 
-  private formatRoutineText(r: any): string {
-    let text = `*${r.titulo}*\n`;
-    if (r.descripcion) text += `${r.descripcion}\n`;
-    text += '\n';
-    for (const circ of r.circuitos || []) {
-      text += `*${circ.nombre || 'Bloque'}*`;
-      if (circ.rondas) text += ` · ${circ.rondas} rondas`;
-      text += '\n';
-      for (const ex of circ.ejercicios || []) {
-        text += `  • ${ex.nombre}`;
-        if (ex.reps_seg_mts) text += ` — ${ex.reps_seg_mts}`;
-        if (ex.carga) text += ` · ${ex.carga}`;
-        if (ex.enlace) text += `\n    ${ex.enlace}`;
-        text += '\n';
-      }
-      text += '\n';
-    }
-    if (r.observaciones) text += `_Observaciones: ${r.observaciones}_\n`;
-    return text.trim();
-  }
+  async downloadRoutine(r: any) {
+    const mod = await import('exceljs');
+    const ExcelJS = (mod as any).default ?? mod;
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Rutina');
 
-  copyRoutine(r: any) {
-    const text = this.formatRoutineText(r);
-    navigator.clipboard.writeText(text).then(() => {
-      this.copiedId.set(r.id);
-      setTimeout(() => this.copiedId.set(null), 2000);
+    ws.columns = [
+      { width: 36 },
+      { width: 30 },
+      { width: 18 },
+      { width: 16 },
+    ];
+
+    const green     = { argb: 'FF16a34a' };
+    const greenDark = { argb: 'FF166534' };
+    const greenBg   = { argb: 'FFdcfce7' };
+    const greenDeep = { argb: 'FF052e16' };
+    const grayBg    = { argb: 'FFf3f4f6' };
+    const grayBord  = { argb: 'FFd1d5db' };
+    const hairBord  = { argb: 'FFe5e7eb' };
+    const amberBg   = { argb: 'FFfffbeb' };
+    const amberBord = { argb: 'FFd97706' };
+    const amberText = { argb: 'FF78350f' };
+    const white     = { argb: 'FFFFFFFF' };
+
+    const thinBox = (color: any) => ({
+      top: { style: 'thin' as const, color },
+      bottom: { style: 'thin' as const, color },
+      left: { style: 'thin' as const, color },
+      right: { style: 'thin' as const, color },
     });
+
+    // ── Título ──────────────────────────────────────────────────────
+    ws.mergeCells('A1:D1');
+    const titleCell = ws.getCell('A1');
+    titleCell.value = r.titulo;
+    titleCell.font  = { bold: true, size: 16, color: white };
+    titleCell.fill  = { type: 'pattern', pattern: 'solid', fgColor: green };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    titleCell.border = thinBox(green);
+    ws.getRow(1).height = 34;
+
+    let row = 2;
+
+    if (r.descripcion) {
+      ws.mergeCells(`A${row}:D${row}`);
+      const dc = ws.getCell(`A${row}`);
+      dc.value = r.descripcion;
+      dc.font  = { italic: true, size: 11, color: { argb: 'FF6b7280' } };
+      dc.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFf9fafb' } };
+      dc.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws.getRow(row).height = 20;
+      row++;
+    }
+
+    row++; // separador
+
+    // ── Bloques ──────────────────────────────────────────────────────
+    for (const circ of r.circuitos || []) {
+      // Encabezado de bloque
+      ws.mergeCells(`A${row}:D${row}`);
+      const bc = ws.getCell(`A${row}`);
+      const rounds = circ.rondas ? `  ·  ${circ.rondas} rondas` : '';
+      bc.value = (circ.nombre || 'Bloque') + rounds;
+      bc.font  = { bold: true, size: 12, color: greenDark };
+      bc.fill  = { type: 'pattern', pattern: 'solid', fgColor: greenBg };
+      bc.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+      bc.border = thinBox(green);
+      ws.getRow(row).height = 26;
+      row++;
+
+      // Encabezados de columna
+      const hdrs = ['EJERCICIO', 'ENLACE', 'REP / SEG / MTS', 'CARGA'];
+      const hRow = ws.getRow(row);
+      hdrs.forEach((h, i) => {
+        const c = hRow.getCell(i + 1);
+        c.value = h;
+        c.font  = { bold: true, size: 9, color: { argb: 'FF374151' } };
+        c.fill  = { type: 'pattern', pattern: 'solid', fgColor: grayBg };
+        c.alignment = { horizontal: 'center', vertical: 'middle' };
+        c.border = thinBox(grayBord);
+      });
+      hRow.height = 20;
+      row++;
+
+      // Filas de ejercicios
+      for (const ex of circ.ejercicios || []) {
+        const eRow = ws.getRow(row);
+        [ex.nombre || '', ex.enlace || ex.descripcion || '', ex.reps_seg_mts || '', ex.carga || ''].forEach((v, i) => {
+          const c = eRow.getCell(i + 1);
+          c.value = v;
+          c.font  = { size: 11, color: greenDeep };
+          c.alignment = { vertical: 'middle', wrapText: true };
+          c.border = {
+            top:    { style: 'hair',  color: hairBord },
+            bottom: { style: 'hair',  color: hairBord },
+            left:   { style: 'thin',  color: grayBord },
+            right:  { style: 'thin',  color: grayBord },
+          };
+        });
+        eRow.height = 22;
+        row++;
+      }
+
+      row++; // separador entre bloques
+    }
+
+    // ── Observaciones ────────────────────────────────────────────────
+    if (r.observaciones) {
+      ws.mergeCells(`A${row}:D${row}`);
+      const oc = ws.getCell(`A${row}`);
+      oc.value = `Observaciones: ${r.observaciones}`;
+      oc.font  = { italic: true, size: 11, color: amberText };
+      oc.fill  = { type: 'pattern', pattern: 'solid', fgColor: amberBg };
+      oc.border = thinBox(amberBord);
+      oc.alignment = { wrapText: true, vertical: 'middle', indent: 1 };
+      ws.getRow(row).height = 28;
+    }
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `${(r.titulo || 'rutina').replace(/[^a-z0-9áéíóúñ ]/gi, '_')}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
-  shareWhatsApp(r: any) {
-    const text = this.formatRoutineText(r);
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  toggleVoice() {
+    if (this.voiceState() === 'recording') {
+      this._recorder?.stop();
+    } else {
+      this.voiceError.set('');
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        this._chunks = [];
+        this._recorder = new MediaRecorder(stream);
+        this._recorder.ondataavailable = e => { if (e.data.size > 0) this._chunks.push(e.data); };
+        this._recorder.onstop = () => {
+          stream.getTracks().forEach(t => t.stop());
+          const blob = new Blob(this._chunks, { type: 'audio/webm' });
+          this._chunks = [];
+          this.voiceState.set('processing');
+          this.api.transcribeRoutine(blob).subscribe({
+            next: (res: any) => {
+              const r = res.routine;
+              if (r) {
+                this.form.set({
+                  titulo: r.titulo || '',
+                  descripcion: r.descripcion || '',
+                  observaciones: r.observaciones || '',
+                  circuitos: (r.circuitos?.length ? r.circuitos : []).map((c: any) => ({
+                    nombre: c.nombre || '',
+                    rondas: c.rondas || '',
+                    ejercicios: (c.ejercicios?.length ? c.ejercicios : [EMPTY_EX()]).map((e: any) => ({
+                      nombre: e.nombre || '', enlace: e.enlace || '', reps_seg_mts: e.reps_seg_mts || '', carga: e.carga || ''
+                    }))
+                  }))
+                });
+                this.editing.set(null);
+                this.formError.set('');
+                this.showForm.set(true);
+              }
+              this.voiceState.set('idle');
+            },
+            error: () => {
+              this.voiceError.set('Error al procesar el audio. Intentá de nuevo.');
+              this.voiceState.set('idle');
+              setTimeout(() => this.voiceError.set(''), 4000);
+            }
+          });
+        };
+        this._recorder.start();
+        this.voiceState.set('recording');
+      }).catch(() => {
+        this.voiceError.set('No se pudo acceder al micrófono.');
+        setTimeout(() => this.voiceError.set(''), 4000);
+      });
+    }
   }
 
   confirmDelete(r: any) { this.deletingRoutine.set(r); }

@@ -49,12 +49,22 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/manifest.webmanifest",
+              "src/firebase-messaging-sw.js",
+              {
+                "glob": "**/*",
+                "input": "src/icons",
+                "output": "icons"
+              }
             ],
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "exceljs"
+            ]
           },
           "configurations": {
             "production": {

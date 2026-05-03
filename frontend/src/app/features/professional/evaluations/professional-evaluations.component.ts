@@ -125,6 +125,9 @@ const EMPTY_FORM = (): EvalForm => ({
                   @if (ev.professional_name) { <span class="prof-badge">{{ ev.professional_name }}</span> }
                 </div>
                 <div class="eval-actions">
+                  <button class="btn-icon" (click)="downloadEval(ev)" title="Descargar Excel">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </button>
                   <button class="btn-icon" (click)="editEval(ev)" title="Editar">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </button>
@@ -330,6 +333,73 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     this.api.deleteEvaluation(id, this.patientId).subscribe({
       next: () => this.evals.update(ev => ev.filter(e => e.id !== id))
     });
+  }
+
+  async downloadEval(ev: any) {
+    const mod = await import('exceljs');
+    const ExcelJS = (mod as any).default ?? mod;
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Evaluación');
+    ws.columns = [{ width: 36 }, { width: 24 }, { width: 16 }];
+
+    const green    = { argb: 'FF16a34a' };
+    const greenDk  = { argb: 'FF166534' };
+    const grayBg   = { argb: 'FFf3f4f6' };
+    const grayBord = { argb: 'FFd1d5db' };
+    const hairBord = { argb: 'FFe5e7eb' };
+    const amberBg  = { argb: 'FFfffbeb' };
+    const amberBord= { argb: 'FFd97706' };
+    const amberTxt = { argb: 'FF78350f' };
+    const white    = { argb: 'FFFFFFFF' };
+    const thin = (c: any) => ({ top:{style:'thin' as const,color:c},bottom:{style:'thin' as const,color:c},left:{style:'thin' as const,color:c},right:{style:'thin' as const,color:c} });
+
+    // Title
+    ws.mergeCells('A1:C1');
+    const t = ws.getCell('A1');
+    t.value = ev.nombre; t.font = { bold:true, size:15, color:white }; t.fill = { type:'pattern', pattern:'solid', fgColor:green };
+    t.alignment = { vertical:'middle', horizontal:'center' }; t.border = thin(green); ws.getRow(1).height = 32;
+
+    // Date
+    ws.mergeCells('A2:C2');
+    const d = ws.getCell('A2');
+    d.value = this.formatDate(ev.fecha); d.font = { italic:true, size:11, color:{ argb:'FF6b7280' } };
+    d.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFf9fafb' } }; d.alignment = { horizontal:'center' }; ws.getRow(2).height = 18;
+
+    let row = 4;
+
+    // Column headers
+    const hRow = ws.getRow(row);
+    ['MEDIDA','VALOR','UNIDAD'].forEach((h, i) => {
+      const c = hRow.getCell(i+1); c.value = h;
+      c.font = { bold:true, size:9, color:{ argb:'FF374151' } };
+      c.fill = { type:'pattern', pattern:'solid', fgColor:grayBg };
+      c.alignment = { horizontal:'center', vertical:'middle' }; c.border = thin(grayBord);
+    }); hRow.height = 20; row++;
+
+    for (const m of ev.medidas || []) {
+      const eRow = ws.getRow(row);
+      [m.nombre||'', m.valor||'', m.unidad||''].forEach((v, i) => {
+        const c = eRow.getCell(i+1); c.value = v;
+        c.font = { size:11, color:greenDk }; c.alignment = { vertical:'middle' };
+        c.border = { top:{style:'hair',color:hairBord}, bottom:{style:'hair',color:hairBord}, left:{style:'thin',color:grayBord}, right:{style:'thin',color:grayBord} };
+      }); eRow.height = 20; row++;
+    }
+
+    if (ev.observaciones) {
+      row++;
+      ws.mergeCells(`A${row}:C${row}`);
+      const oc = ws.getCell(`A${row}`);
+      oc.value = `Observaciones: ${ev.observaciones}`; oc.font = { italic:true, size:11, color:amberTxt };
+      oc.fill = { type:'pattern', pattern:'solid', fgColor:amberBg }; oc.border = thin(amberBord);
+      oc.alignment = { wrapText:true, vertical:'middle', indent:1 }; ws.getRow(row).height = 28;
+    }
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `${(ev.nombre||'evaluacion').replace(/[^a-z0-9áéíóúñ ]/gi,'_')}.xlsx`;
+    a.click(); URL.revokeObjectURL(url);
   }
 
   formatDate(dateStr: string): string {

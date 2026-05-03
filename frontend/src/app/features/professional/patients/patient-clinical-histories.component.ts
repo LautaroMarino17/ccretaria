@@ -7,6 +7,7 @@ import { MANIOBRA_SECTIONS, ALL_JOINTS, emptyManiobras } from '../../../core/mod
 
 function emptyForm() {
   return {
+    nombre_paciente: '',
     motivo_consulta: '', diagnostico: '', antecedentes_sintomas: '',
     examen_fisico: '', exploracion_estatica: '', exploracion_dinamica: '',
     maniobras: emptyManiobras(),
@@ -82,46 +83,45 @@ function emptyForm() {
                       <span class="mf-title">HISTORIA CLÍNICA</span>
                       <span class="mf-date">{{ formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha) }}{{ h.professional_name ? ' · ' + h.professional_name : '' }}</span>
                     </div>
-                    <div class="mf-patient-row">
-                      <div class="mf-patient-field wide"><span class="mf-plabel">Paciente</span><span class="mf-pval">{{ h.nombre_paciente || patientName() }}</span></div>
-                      @if (h.signos_vitales?.tension_arterial) { <div class="mf-patient-field"><span class="mf-plabel">T.A.</span><span class="mf-pval">{{ h.signos_vitales.tension_arterial }}</span></div> }
-                      @if (h.signos_vitales?.frecuencia_cardiaca) { <div class="mf-patient-field"><span class="mf-plabel">FC</span><span class="mf-pval">{{ h.signos_vitales.frecuencia_cardiaca }}</span></div> }
-                      @if (h.signos_vitales?.temperatura) { <div class="mf-patient-field"><span class="mf-plabel">Temp.</span><span class="mf-pval">{{ h.signos_vitales.temperatura }}</span></div> }
-                      @if (h.signos_vitales?.peso) { <div class="mf-patient-field"><span class="mf-plabel">Peso</span><span class="mf-pval">{{ h.signos_vitales.peso }}</span></div> }
-                      @if (h.signos_vitales?.talla) { <div class="mf-patient-field"><span class="mf-plabel">Talla</span><span class="mf-pval">{{ h.signos_vitales.talla }}</span></div> }
-                      @if (h.signos_vitales?.saturacion) { <div class="mf-patient-field"><span class="mf-plabel">SatO2</span><span class="mf-pval">{{ h.signos_vitales.saturacion }}</span></div> }
+                    <!-- Nombre del paciente -->
+                    <div class="mf-patient-row mf-name-row">
+                      <div class="mf-patient-field" style="flex:1"><span class="mf-plabel">Apellido y Nombre</span><span class="mf-pval">{{ h.nombre_paciente || patientName() }}</span></div>
                     </div>
-                    @if (h.motivo_consulta) { <div class="mf-section"><span class="mf-label">Motivo de consulta</span><p class="mf-text">{{ h.motivo_consulta }}</p></div> }
-                    @if (h.antecedentes_sintomas) { <div class="mf-section"><span class="mf-label">Antecedentes y síntomas</span><p class="mf-text">{{ h.antecedentes_sintomas }}</p></div> }
-                    @if (h.exploracion_estatica) { <div class="mf-section"><span class="mf-label">Exploración estática</span><p class="mf-text">{{ h.exploracion_estatica }}</p></div> }
-                    @if (h.exploracion_dinamica) { <div class="mf-section"><span class="mf-label">Inspección dinámica</span><p class="mf-text">{{ h.exploracion_dinamica }}</p></div> }
-                    @if (hasManiobras(h)) {
-                      <div class="mf-section">
-                        <span class="mf-label">Maniobras semiológicas</span>
-                        <table class="mf-man-table">
-                          <thead><tr><th>Articulación</th><th>Comentario</th></tr></thead>
-                          <tbody>
-                            @for (section of maniobra_sections; track section.label) {
-                              @if (section.joints.length > 1) {
-                                @if (sectionHasManiobras(h, section.joints)) {
-                                  <tr class="mf-man-section"><td colspan="2">{{ section.label }}</td></tr>
-                                  @for (joint of section.joints; track joint) {
-                                    @if (h.maniobras?.[joint]?.comentario) {
-                                      <tr><td class="mf-man-joint">{{ joint }}</td><td class="mf-man-com">{{ h.maniobras[joint].comentario }}</td></tr>
-                                    }
-                                  }
-                                }
-                              } @else {
-                                @if (h.maniobras?.[section.joints[0]]?.comentario) {
-                                  <tr><td class="mf-man-joint">{{ section.label }}</td><td class="mf-man-com">{{ h.maniobras[section.joints[0]].comentario }}</td></tr>
-                                }
+                    <!-- Signos vitales -->
+                    <div class="mf-patient-row">
+                      <div class="mf-patient-field"><span class="mf-plabel">T.A.</span><span class="mf-pval">{{ h.signos_vitales?.tension_arterial || '—' }}</span></div>
+                      <div class="mf-patient-field"><span class="mf-plabel">FC</span><span class="mf-pval">{{ h.signos_vitales?.frecuencia_cardiaca || '—' }}</span></div>
+                      <div class="mf-patient-field"><span class="mf-plabel">Temp.</span><span class="mf-pval">{{ h.signos_vitales?.temperatura || '—' }}</span></div>
+                      <div class="mf-patient-field"><span class="mf-plabel">Peso</span><span class="mf-pval">{{ h.signos_vitales?.peso || '—' }}</span></div>
+                      <div class="mf-patient-field"><span class="mf-plabel">Talla</span><span class="mf-pval">{{ h.signos_vitales?.talla || '—' }}</span></div>
+                      <div class="mf-patient-field"><span class="mf-plabel">SatO2</span><span class="mf-pval">{{ h.signos_vitales?.saturacion || '—' }}</span></div>
+                    </div>
+                    <!-- Campos clínicos -->
+                    <div class="mf-section"><span class="mf-label">Motivo de consulta</span><p class="mf-text">{{ h.motivo_consulta || '—' }}</p></div>
+                    <div class="mf-section"><span class="mf-label">Antecedentes y síntomas</span><p class="mf-text">{{ h.antecedentes_sintomas || '—' }}</p></div>
+                    <div class="mf-section"><span class="mf-label">Exploración estática</span><p class="mf-text">{{ h.exploracion_estatica || '—' }}</p></div>
+                    <div class="mf-section"><span class="mf-label">Inspección dinámica</span><p class="mf-text">{{ h.exploracion_dinamica || '—' }}</p></div>
+                    <!-- Maniobras semiológicas (siempre visible) -->
+                    <div class="mf-section">
+                      <span class="mf-label">Maniobras semiológicas</span>
+                      <table class="mf-man-table">
+                        <thead><tr><th>Articulación</th><th>Comentario</th></tr></thead>
+                        <tbody>
+                          @for (section of maniobra_sections; track section.label) {
+                            @if (section.joints.length > 1) {
+                              <tr class="mf-man-section"><td colspan="2">{{ section.label }}</td></tr>
+                              @for (joint of section.joints; track joint) {
+                                <tr><td class="mf-man-joint">{{ joint }}</td><td class="mf-man-com">{{ h.maniobras?.[joint]?.comentario || '—' }}</td></tr>
                               }
+                            } @else {
+                              <tr><td class="mf-man-joint">{{ section.label }}</td><td class="mf-man-com">{{ h.maniobras?.[section.joints[0]]?.comentario || '—' }}</td></tr>
                             }
-                          </tbody>
-                        </table>
-                      </div>
-                    }
-                    @if (h.diagnostico) { <div class="mf-section"><span class="mf-label">Diagnóstico</span><p class="mf-text">{{ h.diagnostico }}</p></div> }
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="mf-section"><span class="mf-label">Diagnóstico</span><p class="mf-text">{{ h.diagnostico || '—' }}</p></div>
+                    <!-- Plantillas -->
                     <div class="mf-section mf-plantillas-row">
                       <span class="mf-label">Plantillas</span>
                       <div class="mf-plantillas-body">
@@ -131,17 +131,15 @@ function emptyForm() {
                         </div>
                         <div class="plantilla-status" [class.active]="h.plantillas">{{ h.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</div>
                       </div>
-                      @if (h.plantillas && h.descripcion_pedografia) { <p class="mf-text" style="margin-top:6px">{{ h.descripcion_pedografia }}</p> }
                     </div>
-                    @if (h.plan_terapeutico) { <div class="mf-section"><span class="mf-label">Plan terapéutico</span><p class="mf-text">{{ h.plan_terapeutico }}</p></div> }
-                    @if (h.estudios_complementarios || h.laboratorio) {
-                      <div class="mf-section mf-row">
-                        @if (h.estudios_complementarios) { <div class="mf-col"><span class="mf-label">Estudios complementarios</span><p class="mf-text">{{ h.estudios_complementarios }}</p></div> }
-                        @if (h.laboratorio) { <div class="mf-col"><span class="mf-label">Laboratorio</span><p class="mf-text">{{ h.laboratorio }}</p></div> }
-                      </div>
-                    }
-                    @if (h.medicacion) { <div class="mf-section"><span class="mf-label">Medicación</span><p class="mf-text">{{ h.medicacion }}</p></div> }
-                    @if (h.observaciones) { <div class="mf-section mf-last"><span class="mf-label">Observaciones</span><p class="mf-text">{{ h.observaciones }}</p></div> }
+                    <!-- Pedografía (siempre visible) -->
+                    <div class="mf-section"><span class="mf-label">Descripción de plantilla (pedografía)</span><p class="mf-text">{{ h.descripcion_pedografia || '—' }}</p></div>
+                    <!-- Resto de campos -->
+                    <div class="mf-section"><span class="mf-label">Indicaciones / Plan terapéutico</span><p class="mf-text">{{ h.plan_terapeutico || '—' }}</p></div>
+                    <div class="mf-section"><span class="mf-label">Estudios complementarios</span><p class="mf-text">{{ h.estudios_complementarios || '—' }}</p></div>
+                    <div class="mf-section"><span class="mf-label">Laboratorio</span><p class="mf-text">{{ h.laboratorio || '—' }}</p></div>
+                    <div class="mf-section"><span class="mf-label">Medicación</span><p class="mf-text">{{ h.medicacion || '—' }}</p></div>
+                    <div class="mf-section mf-last"><span class="mf-label">Comentarios</span><p class="mf-text">{{ h.observaciones || '—' }}</p></div>
                   </div>
                   @if (h.imagenes?.length > 0 || h.estudios?.length > 0) {
                     <div class="attachments-row">
@@ -186,6 +184,14 @@ function emptyForm() {
                 <span class="mf-title">HISTORIA CLÍNICA</span>
                 <span class="mf-date">{{ today() }}</span>
               </div>
+              <!-- Nombre del paciente -->
+              <div class="mf-patient-row mf-name-row">
+                <div class="mf-patient-field" style="flex:1">
+                  <span class="mf-plabel">Apellido y Nombre</span>
+                  <input class="mf-pinput" [(ngModel)]="form.nombre_paciente" placeholder="—" />
+                </div>
+              </div>
+              <!-- Signos vitales -->
               <div class="mf-patient-row">
                 <div class="mf-patient-field"><span class="mf-plabel">T.A.</span><input class="mf-pinput" [(ngModel)]="form.signos_vitales.tension_arterial" placeholder="—" /></div>
                 <div class="mf-patient-field"><span class="mf-plabel">FC</span><input class="mf-pinput" [(ngModel)]="form.signos_vitales.frecuencia_cardiaca" placeholder="—" /></div>
@@ -194,10 +200,12 @@ function emptyForm() {
                 <div class="mf-patient-field"><span class="mf-plabel">Talla</span><input class="mf-pinput" [(ngModel)]="form.signos_vitales.talla" placeholder="—" /></div>
                 <div class="mf-patient-field"><span class="mf-plabel">SatO2</span><input class="mf-pinput" [(ngModel)]="form.signos_vitales.saturacion" placeholder="—" /></div>
               </div>
+              <!-- Campos clínicos -->
               <div class="mf-section"><span class="mf-label">Motivo de consulta</span><textarea class="mf-textarea" [(ngModel)]="form.motivo_consulta" rows="2" placeholder="—"></textarea></div>
               <div class="mf-section"><span class="mf-label">Antecedentes y síntomas</span><textarea class="mf-textarea" [(ngModel)]="form.antecedentes_sintomas" rows="4" placeholder="—"></textarea></div>
               <div class="mf-section"><span class="mf-label">Exploración estática</span><textarea class="mf-textarea" [(ngModel)]="form.exploracion_estatica" rows="3" placeholder="—"></textarea></div>
               <div class="mf-section"><span class="mf-label">Inspección dinámica</span><textarea class="mf-textarea" [(ngModel)]="form.exploracion_dinamica" rows="3" placeholder="—"></textarea></div>
+              <!-- Maniobras -->
               <div class="mf-section">
                 <span class="mf-label">Maniobras semiológicas</span>
                 <table class="mf-man-table mf-man-edit">
@@ -217,6 +225,7 @@ function emptyForm() {
                 </table>
               </div>
               <div class="mf-section"><span class="mf-label">Diagnóstico</span><textarea class="mf-textarea" [(ngModel)]="form.diagnostico" rows="2" placeholder="—"></textarea></div>
+              <!-- Plantillas -->
               <div class="mf-section mf-plantillas-row">
                 <span class="mf-label">Plantillas</span>
                 <div class="mf-plantillas-body">
@@ -228,17 +237,16 @@ function emptyForm() {
                   <span class="feet-hint">Clic en los pies para indicar</span>
                 </div>
               </div>
-              @if (form.plantillas) {
-                <div class="mf-section"><span class="mf-label">Descripción de plantilla</span><textarea class="mf-textarea" [(ngModel)]="form.descripcion_pedografia" rows="2" placeholder="—"></textarea></div>
-              }
-              <div class="mf-section"><span class="mf-label">Plan terapéutico / Indicaciones</span><textarea class="mf-textarea" [(ngModel)]="form.plan_terapeutico" rows="3" placeholder="—"></textarea></div>
-              <div class="mf-section mf-row">
-                <div class="mf-col"><span class="mf-label">Estudios complementarios</span><textarea class="mf-textarea" [(ngModel)]="form.estudios_complementarios" rows="2" placeholder="—"></textarea></div>
-                <div class="mf-col"><span class="mf-label">Laboratorio</span><textarea class="mf-textarea" [(ngModel)]="form.laboratorio" rows="2" placeholder="—"></textarea></div>
-              </div>
+              <!-- Pedografía (siempre visible) -->
+              <div class="mf-section"><span class="mf-label">Descripción de plantilla (pedografía)</span><textarea class="mf-textarea" [(ngModel)]="form.descripcion_pedografia" rows="2" placeholder="—"></textarea></div>
+              <!-- Resto de campos -->
+              <div class="mf-section"><span class="mf-label">Indicaciones / Plan terapéutico</span><textarea class="mf-textarea" [(ngModel)]="form.plan_terapeutico" rows="3" placeholder="—"></textarea></div>
+              <div class="mf-section"><span class="mf-label">Estudios complementarios</span><textarea class="mf-textarea" [(ngModel)]="form.estudios_complementarios" rows="2" placeholder="—"></textarea></div>
+              <div class="mf-section"><span class="mf-label">Laboratorio</span><textarea class="mf-textarea" [(ngModel)]="form.laboratorio" rows="2" placeholder="—"></textarea></div>
               <div class="mf-section"><span class="mf-label">Medicación</span><textarea class="mf-textarea" [(ngModel)]="form.medicacion" rows="2" placeholder="—"></textarea></div>
-              <div class="mf-section mf-last"><span class="mf-label">Observaciones</span><textarea class="mf-textarea" [(ngModel)]="form.observaciones" rows="2" placeholder="—"></textarea></div>
+              <div class="mf-section mf-last"><span class="mf-label">Comentarios</span><textarea class="mf-textarea" [(ngModel)]="form.observaciones" rows="2" placeholder="—"></textarea></div>
             </div>
+            <!-- Archivos -->
             <div class="section-title" style="margin-top:16px">Archivos</div>
             <div class="field">
               <label>Imágenes</label>
@@ -305,38 +313,9 @@ function emptyForm() {
     .history-card.expanded .chevron { transform: rotate(180deg); }
 
     /* Detail expanded */
-    .history-detail { padding: 14px 16px 16px; border-top: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 12px; animation: slideDown 0.15s ease; }
+    .history-detail { padding: 16px; border-top: 1px solid #e5e7eb; animation: slideDown 0.15s ease; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-    .ds label { display: block; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .ds p { font-size: 14px; color: #374151; margin: 0; line-height: 1.6; }
-    .signos-row { display: flex; flex-wrap: wrap; gap: 6px; }
-    .signo-tag { background: white; border: 1px solid #e5e7eb; color: #374151; padding: 3px 8px; border-radius: 6px; font-size: 12px; }
 
-    /* Maniobras */
-    .maniobras-table { background: #f9fafb; border-radius: 8px; overflow: hidden; }
-    .man-head { display: grid; grid-template-columns: 160px 1fr; padding: 7px 10px; background: #f3f4f6; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
-    .man-section-row { padding: 5px 10px; background: #eff6ff; font-size: 10px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.6px; border-top: 1px solid #dbeafe; }
-    .man-section-row span { display: block; }
-    .man-row { display: grid; grid-template-columns: 160px 1fr; padding: 7px 10px; border-top: 1px solid #e5e7eb; align-items: center; }
-    .man-joint { font-size: 12px; color: #374151; font-weight: 600; }
-    .man-com { font-size: 13px; color: #6b7280; }
-    .man-section-divider { padding: 5px 10px; background: #eff6ff; font-size: 10px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.6px; border-top: 1px solid #dbeafe; }
-
-    /* Plantillas */
-    .feet-display { display: flex; align-items: center; gap: 12px; }
-    .foot-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-    .foot-path { fill: #e5e7eb; stroke: #9ca3af; stroke-width: 1; transition: fill 0.2s, stroke 0.2s; }
-    .foot-path.foot-yes { fill: #a5b4fc; stroke: #16a34a; }
-    .foot-lbl { font-size: 10px; color: #9ca3af; font-weight: 600; }
-    .plantilla-tag { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #f3f4f6; color: #9ca3af; }
-    .plantilla-tag.yes { background: #f0fdf4; color: #16a34a; }
-    .plantilla-toggle { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 8px; border-radius: 8px; border: 1.5px dashed #e5e7eb; user-select: none; }
-    .plantilla-toggle:hover { background: #f9fafb; }
-    .pedo-box { background: #f0fdf4; border-radius: 8px; padding: 10px 12px; margin-top: 8px; }
-    .pedo-label { display: block; font-size: 10px; font-weight: 700; color: #166534; text-transform: uppercase; margin-bottom: 3px; }
-    .pedo-box p { font-size: 13px; color: #166534; margin: 0; }
-
-    .links-list { display: flex; flex-direction: column; gap: 4px; }
     .file-link { display: inline-flex; align-items: center; gap: 6px; color: #16a34a; font-size: 13px; text-decoration: none; font-weight: 500; }
     .file-link:hover { text-decoration: underline; }
 
@@ -347,31 +326,13 @@ function emptyForm() {
     .modal-header h2 { font-size: 18px; font-weight: 700; color: #111827; margin: 0; }
     .btn-modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: #f3f4f6; color: #6b7280; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .btn-modal-close:hover { background: #e5e7eb; }
-    .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; max-height: 75vh; overflow-y: auto; }
+    .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; max-height: 78vh; overflow-y: auto; }
     .modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid #e5e7eb; }
     .btn-secondary { padding: 10px 18px; background: #f3f4f6; color: #374151; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; }
 
     .section-title { font-size: 11px; font-weight: 700; color: #16a34a; text-transform: uppercase; letter-spacing: 0.8px; padding: 6px 0 2px; border-bottom: 1.5px solid #f0fdf4; margin-top: 4px; }
     .field { display: flex; flex-direction: column; gap: 4px; }
     .field label { font-size: 12px; font-weight: 600; color: #6b7280; }
-    .field input, .field textarea { padding: 8px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; resize: vertical; }
-    .field input:focus, .field textarea:focus { border-color: #16a34a; }
-    .mt-8 { margin-top: 8px; }
-
-    /* Maniobras form */
-    .maniobras-form { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
-    .man-form-head { display: grid; grid-template-columns: 160px 1fr; padding: 8px 10px; background: #f3f4f6; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
-    .man-form-row { display: grid; grid-template-columns: 160px 1fr; padding: 5px 10px; border-top: 1px solid #f0f0f0; align-items: center; gap: 6px; }
-    .man-input.wide { width: 100%; }
-    .man-form-row:hover { background: #fafafa; }
-    .man-joint-label { font-size: 12px; font-weight: 600; color: #374151; }
-    .man-input { padding: 4px 8px; border: 1.5px solid #e5e7eb; border-radius: 6px; font-size: 13px; outline: none; font-family: inherit; }
-    .man-input:focus { border-color: #16a34a; }
-
-    /* Signos vitales form */
-    .signos-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .signos-inputs input { padding: 8px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
-    .signos-inputs input:focus { border-color: #16a34a; }
 
     /* Links */
     .link-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
@@ -383,23 +344,14 @@ function emptyForm() {
 
     .error-banner { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin: 0 24px; }
 
-    @media (max-width: 640px) {
-      .signos-inputs { grid-template-columns: 1fr 1fr; }
-      .man-form-row { grid-template-columns: 1fr; }
-      .man-joint-label { font-weight: 700; color: #16a34a; }
-      .man-head { display: none; }
-      .man-row { grid-template-columns: 1fr; gap: 2px; }
-      .man-head { display: none; }
-    }
-
-    /* ── Medical form (shared with record-history) ── */
+    /* ── Medical form ── */
     .medical-form { background: white; border: 1.5px solid #c9cdd4; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.07); font-family: Georgia, 'Times New Roman', serif; }
     .mf-header { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border-bottom: 1.5px solid #c9cdd4; padding: 10px 20px; }
     .mf-title { font-size: 13px; font-weight: 700; color: #374151; letter-spacing: 0.8px; font-family: Arial, sans-serif; }
     .mf-date { font-size: 12px; color: #6b7280; font-family: Arial, sans-serif; }
     .mf-patient-row { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1.5px solid #c9cdd4; }
+    .mf-name-row { border-bottom: 1px solid #e9eaec; }
     .mf-patient-field { display: flex; flex-direction: column; padding: 8px 14px; border-right: 1px solid #e5e7eb; min-width: 80px; }
-    .mf-patient-field.wide { flex: 1; min-width: 200px; }
     .mf-patient-field:last-child { border-right: none; }
     .mf-plabel { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.4px; font-family: Arial, sans-serif; margin-bottom: 3px; }
     .mf-pval { font-size: 13px; color: #111827; font-family: Georgia, serif; }
@@ -407,14 +359,11 @@ function emptyForm() {
     .mf-pinput:focus { border-bottom-color: #16a34a; }
     .mf-section { padding: 10px 20px; border-bottom: 1px solid #e9eaec; }
     .mf-section.mf-last { border-bottom: none; }
-    .mf-section.mf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 0; }
-    .mf-col { padding: 10px 20px; }
-    .mf-col:first-child { border-right: 1px solid #e9eaec; }
     .mf-label { display: block; font-size: 12px; font-weight: 700; color: #374151; font-family: Arial, sans-serif; margin-bottom: 4px; }
     .mf-text { font-size: 14px; color: #111827; margin: 0; line-height: 1.9; font-family: Georgia, serif; white-space: pre-wrap; }
     .mf-textarea { width: 100%; border: none; outline: none; resize: none; background: transparent; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; color: #111827; line-height: 1.9; background-image: repeating-linear-gradient(transparent, transparent calc(1.9em - 1px), #e5e7eb calc(1.9em - 1px), #e5e7eb 1.9em); padding: 0; margin-top: 2px; box-sizing: border-box; }
     .mf-textarea:focus { background-image: repeating-linear-gradient(transparent, transparent calc(1.9em - 1px), #a5b4fc calc(1.9em - 1px), #a5b4fc 1.9em); }
-    /* Plantillas in mf */
+    /* Plantillas */
     .mf-plantillas-row { display: flex; flex-direction: column; gap: 6px; }
     .mf-plantillas-body { display: flex; flex-direction: row; align-items: flex-end; gap: 14px; }
     .mf-feet { display: flex; gap: 12px; align-items: flex-end; }
@@ -425,7 +374,7 @@ function emptyForm() {
     .plantilla-status { font-size: 13px; font-weight: 600; color: #9ca3af; font-family: Arial, sans-serif; }
     .plantilla-status.active { color: #16a34a; }
     .feet-hint { font-size: 11px; color: #d1d5db; font-family: Arial, sans-serif; }
-    /* Maniobras table in mf */
+    /* Maniobras table */
     .mf-man-table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; margin-top: 6px; }
     .mf-man-table thead th { background: #f3f4f6; font-weight: 700; color: #374151; padding: 5px 10px; border: 1px solid #e5e7eb; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
     .mf-man-table td { border: 1px solid #e9eaec; padding: 3px 8px; vertical-align: middle; }
@@ -437,7 +386,11 @@ function emptyForm() {
     /* Attachments */
     .attachments-row { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid #e5e7eb; }
     .att-label { display: block; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-family: Arial, sans-serif; }
-    .history-detail { padding: 16px; border-top: 1px solid #e5e7eb; animation: slideDown 0.15s ease; }
+
+    @media (max-width: 640px) {
+      .mf-patient-row { flex-direction: column; }
+      .mf-patient-field { border-right: none; border-bottom: 1px solid #e9eaec; }
+    }
   `]
 })
 export class PatientClinicalHistoriesComponent implements OnInit {
@@ -485,6 +438,7 @@ export class PatientClinicalHistoriesComponent implements OnInit {
 
   openEdit(h: any) {
     this.form = {
+      nombre_paciente: h.nombre_paciente || '',
       motivo_consulta: h.motivo_consulta || '',
       diagnostico: h.diagnostico || '',
       antecedentes_sintomas: h.antecedentes_sintomas || '',
@@ -534,16 +488,6 @@ export class PatientClinicalHistoriesComponent implements OnInit {
     });
   }
 
-  hasManiobras(h: any): boolean {
-    if (!h.maniobras) return false;
-    return ALL_JOINTS.some(j => h.maniobras[j]?.comentario);
-  }
-
-  sectionHasManiobras(h: any, joints: string[]): boolean {
-    if (!h.maniobras) return false;
-    return joints.some(j => h.maniobras[j]?.comentario);
-  }
-
   printHistory(h: any) {
     const name = this.patientName();
     const date = this.formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha);
@@ -557,8 +501,8 @@ export class PatientClinicalHistoriesComponent implements OnInit {
       sv.saturacion ? `SatO2: ${sv.saturacion}` : '',
     ].filter(Boolean).join(' · ') : '';
     const maniobrasRows = h.maniobras
-      ? ALL_JOINTS.filter(j => h.maniobras[j]?.medicion || h.maniobras[j]?.comentario)
-          .map(j => `<tr><td>${j}</td><td>${h.maniobras[j].medicion || ''}</td><td>${h.maniobras[j].comentario || ''}</td></tr>`)
+      ? ALL_JOINTS.filter(j => h.maniobras[j]?.comentario)
+          .map(j => `<tr><td>${j}</td><td>${h.maniobras[j].comentario || ''}</td></tr>`)
           .join('')
       : '';
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>HC - ${name}</title>
@@ -575,16 +519,15 @@ export class PatientClinicalHistoriesComponent implements OnInit {
       ${h.motivo_consulta ? `<h2>Motivo de consulta</h2><p>${h.motivo_consulta}</p>` : ''}
       ${h.diagnostico ? `<h2>Diagnóstico</h2><p>${h.diagnostico}</p>` : ''}
       ${h.antecedentes_sintomas ? `<h2>Antecedentes y síntomas</h2><p>${h.antecedentes_sintomas}</p>` : ''}
-      ${h.examen_fisico ? `<h2>Exploración física general</h2><p>${h.examen_fisico}</p>` : ''}
       ${h.exploracion_estatica ? `<h2>Exploración estática</h2><p>${h.exploracion_estatica}</p>` : ''}
       ${h.exploracion_dinamica ? `<h2>Inspección dinámica</h2><p>${h.exploracion_dinamica}</p>` : ''}
-      ${maniobrasRows ? `<h2>Maniobras semiológicas</h2><table><thead><tr><th>Segmento</th><th>Medición</th><th>Comentario</th></tr></thead><tbody>${maniobrasRows}</tbody></table>` : ''}
+      ${maniobrasRows ? `<h2>Maniobras semiológicas</h2><table><thead><tr><th>Articulación</th><th>Comentario</th></tr></thead><tbody>${maniobrasRows}</tbody></table>` : ''}
       ${signosLine ? `<h2>Signos vitales</h2><p>${signosLine}</p>` : ''}
-      ${h.plan_terapeutico ? `<h2>Plan terapéutico</h2><p>${h.plan_terapeutico}</p>` : ''}
+      ${h.plan_terapeutico ? `<h2>Indicaciones / Plan terapéutico</h2><p>${h.plan_terapeutico}</p>` : ''}
       ${h.estudios_complementarios ? `<h2>Estudios complementarios</h2><p>${h.estudios_complementarios}</p>` : ''}
       ${h.laboratorio ? `<h2>Laboratorio</h2><p>${h.laboratorio}</p>` : ''}
       ${h.medicacion ? `<h2>Medicación</h2><p>${h.medicacion}</p>` : ''}
-      ${h.observaciones ? `<h2>Observaciones</h2><p>${h.observaciones}</p>` : ''}
+      ${h.observaciones ? `<h2>Comentarios</h2><p>${h.observaciones}</p>` : ''}
       <h2>Plantillas</h2><p>${h.plantillas ? 'Indicadas' : 'No indicadas'}${h.descripcion_pedografia ? ` — ${h.descripcion_pedografia}` : ''}</p>
       </body></html>`;
     const win = window.open('', '_blank');

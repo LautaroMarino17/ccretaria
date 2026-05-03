@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -32,16 +32,9 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
         </div>
         @if (!showForm() || editing()) {
           <div class="header-btns">
-            <button class="btn-voice" (click)="toggleVoice()" [class.recording]="voiceState() === 'recording'" [disabled]="voiceState() === 'processing'" title="Crear rutina con voz">
-              @if (voiceState() === 'idle') {
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                Crear con voz
-              } @else if (voiceState() === 'recording') {
-                <span class="rec-dot"></span> Detener grabación
-              } @else {
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Procesando...
-              }
+            <button class="btn-voice" (click)="openVoice()" title="Crear rutina con voz">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              Crear con voz
             </button>
             <button class="btn-new" (click)="openNew()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -142,6 +135,50 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
       <!-- ── Toast voz ──────────────────────────────── -->
       @if (voiceError()) {
         <div class="voice-toast error">{{ voiceError() }}</div>
+      }
+
+      <!-- ── Overlay grabación voz ──────────────────── -->
+      @if (voiceState() !== 'idle') {
+        <div class="voice-overlay">
+          @if (voiceState() === 'recording') {
+            <div class="voice-overlay-content">
+              <div class="rec-visual">
+                <div class="rec-pulse"></div>
+                <button class="rec-big-btn" (click)="stopVoice()">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                </button>
+              </div>
+              <p class="rec-time">{{ formatVoiceTime(voiceSeconds()) }}</p>
+              <div class="rec-wave">
+                @for (h of voiceWave(); track $index) {
+                  <div class="rec-bar" [style.height.px]="h"></div>
+                }
+              </div>
+              <p class="rec-hint">Describí los ejercicios de la rutina</p>
+            </div>
+          } @else if (voiceState() === 'stopped') {
+            <div class="voice-overlay-content">
+              <div class="rec-ok-icon">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <p class="rec-done-title">Audio grabado — {{ formatVoiceTime(voiceSeconds()) }}</p>
+              <p class="rec-hint">Presioná "Generar rutina" para procesarlo con IA</p>
+              <div class="rec-stopped-actions">
+                <button class="btn-secondary-sm" (click)="cancelVoice()">Cancelar</button>
+                <button class="btn-generate-voice" (click)="processVoice()">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Generar rutina
+                </button>
+              </div>
+            </div>
+          } @else if (voiceState() === 'processing') {
+            <div class="voice-overlay-content">
+              <div class="rec-spinner"></div>
+              <p class="rec-done-title">Generando rutina con IA...</p>
+              <p class="rec-hint">Esto puede tomar unos segundos</p>
+            </div>
+          }
+        </div>
       }
 
       <!-- ── Modal eliminar ──────────────────────────── -->
@@ -340,13 +377,61 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .btn-new { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #16a34a; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-new:hover { background: #15803d; }
     .btn-voice { display: flex; align-items: center; gap: 7px; padding: 10px 16px; background: white; color: #374151; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
-    .btn-voice:hover:not(:disabled) { border-color: #16a34a; color: #16a34a; }
-    .btn-voice.recording { background: #fef2f2; border-color: #ef4444; color: #dc2626; }
-    .btn-voice:disabled { opacity: 0.6; cursor: not-allowed; }
-    .rec-dot { width: 10px; height: 10px; background: #ef4444; border-radius: 50%; animation: blink 1s infinite; flex-shrink: 0; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .btn-voice:hover { border-color: #16a34a; color: #16a34a; }
     .voice-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
     .voice-toast.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+    /* ── Voice overlay ── */
+    .voice-overlay {
+      position: fixed; inset: 0; background: rgba(10,10,20,0.82);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 300; backdrop-filter: blur(4px);
+    }
+    .voice-overlay-content {
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+      color: white; text-align: center; padding: 40px 32px;
+    }
+    .rec-visual {
+      position: relative; width: 120px; height: 120px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rec-pulse {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 3px solid #ef4444; animation: rec-ring 1.5s ease-out infinite;
+    }
+    @keyframes rec-ring { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.6);opacity:0} }
+    .rec-big-btn {
+      width: 80px; height: 80px; border-radius: 50%; border: none;
+      background: #ef4444; color: white; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1; transition: background 0.2s, transform 0.1s;
+    }
+    .rec-big-btn:hover { background: #dc2626; transform: scale(1.05); }
+    .rec-time { font-size: 28px; font-weight: 700; letter-spacing: 2px; margin: 0; }
+    .rec-wave { display: flex; align-items: center; gap: 3px; height: 40px; }
+    .rec-bar { width: 4px; background: #ef4444; border-radius: 2px; transition: height 0.1s; min-height: 4px; }
+    .rec-hint { font-size: 14px; color: rgba(255,255,255,0.6); margin: 0; max-width: 320px; line-height: 1.6; }
+    .rec-ok-icon {
+      width: 80px; height: 80px; background: rgba(34,197,94,0.15);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    }
+    .rec-done-title { font-size: 20px; font-weight: 700; margin: 0; }
+    .rec-stopped-actions { display: flex; gap: 12px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
+    .btn-secondary-sm { padding: 12px 20px; background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.25); border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; }
+    .btn-secondary-sm:hover { background: rgba(255,255,255,0.2); }
+    .btn-generate-voice {
+      padding: 14px 28px; background: #16a34a; color: white; border: none;
+      border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 4px 14px rgba(22,163,74,0.4); transition: background 0.2s, transform 0.1s;
+    }
+    .btn-generate-voice:hover { background: #15803d; transform: translateY(-1px); }
+    .rec-spinner {
+      width: 56px; height: 56px; border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: #16a34a; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .btn-save { padding: 8px 18px; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-save:hover:not(:disabled) { background: #15803d; }
     .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -379,7 +464,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     }
   `]
 })
-export class ManageRoutinesComponent implements OnInit {
+export class ManageRoutinesComponent implements OnInit, OnDestroy {
   private api   = inject(ApiService);
   private route = inject(ActivatedRoute);
 
@@ -392,10 +477,15 @@ export class ManageRoutinesComponent implements OnInit {
   deletingRoutine = signal<any>(null);
   formError       = signal('');
   form            = signal<Routine>(EMPTY_ROU());
-  voiceState      = signal<'idle' | 'recording' | 'processing'>('idle');
-  voiceError      = signal('');
+  voiceState   = signal<'idle' | 'recording' | 'stopped' | 'processing'>('idle');
+  voiceError   = signal('');
+  voiceSeconds = signal(0);
+  voiceWave    = signal<number[]>(Array.from({ length: 20 }, () => 4));
   private _recorder: MediaRecorder | null = null;
+  private _stream: MediaStream | null = null;
   private _chunks: Blob[] = [];
+  private _voiceTimer: any = null;
+  private _waveInterval: any = null;
 
   ngOnInit() { this.load(); }
 
@@ -617,56 +707,92 @@ export class ManageRoutinesComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
-  toggleVoice() {
-    if (this.voiceState() === 'recording') {
-      this._recorder?.stop();
-    } else {
-      this.voiceError.set('');
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        this._chunks = [];
-        this._recorder = new MediaRecorder(stream);
-        this._recorder.ondataavailable = e => { if (e.data.size > 0) this._chunks.push(e.data); };
-        this._recorder.onstop = () => {
-          stream.getTracks().forEach(t => t.stop());
-          const blob = new Blob(this._chunks, { type: 'audio/webm' });
-          this._chunks = [];
-          this.voiceState.set('processing');
-          this.api.transcribeRoutine(blob).subscribe({
-            next: (res: any) => {
-              const r = res.routine;
-              if (r) {
-                this.form.set({
-                  titulo: r.titulo || '',
-                  descripcion: r.descripcion || '',
-                  observaciones: r.observaciones || '',
-                  circuitos: (r.circuitos?.length ? r.circuitos : []).map((c: any) => ({
-                    nombre: c.nombre || '',
-                    rondas: c.rondas || '',
-                    ejercicios: (c.ejercicios?.length ? c.ejercicios : [EMPTY_EX()]).map((e: any) => ({
-                      nombre: e.nombre || '', enlace: e.enlace || '', reps_seg_mts: e.reps_seg_mts || '', carga: e.carga || ''
-                    }))
-                  }))
-                });
-                this.editing.set(null);
-                this.formError.set('');
-                this.showForm.set(true);
-              }
-              this.voiceState.set('idle');
-            },
-            error: () => {
-              this.voiceError.set('Error al procesar el audio. Intentá de nuevo.');
-              this.voiceState.set('idle');
-              setTimeout(() => this.voiceError.set(''), 4000);
-            }
+  openVoice() {
+    this.voiceError.set('');
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      this._stream = stream;
+      this._chunks = [];
+      this._recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      this._recorder.ondataavailable = e => { if (e.data.size > 0) this._chunks.push(e.data); };
+      this._recorder.onstop = () => {
+        this._stream?.getTracks().forEach(t => t.stop());
+        this._stream = null;
+        this.voiceState.set('stopped');
+      };
+      this._recorder.start(1000);
+      this.voiceSeconds.set(0);
+      this.voiceState.set('recording');
+      this._voiceTimer = setInterval(() => this.voiceSeconds.update(v => v + 1), 1000);
+      this._waveInterval = setInterval(() => {
+        this.voiceWave.set(Array.from({ length: 20 }, () => Math.floor(Math.random() * 30) + 4));
+      }, 150);
+    }).catch(() => {
+      this.voiceError.set('No se pudo acceder al micrófono.');
+      setTimeout(() => this.voiceError.set(''), 4000);
+    });
+  }
+
+  stopVoice() {
+    clearInterval(this._voiceTimer);
+    clearInterval(this._waveInterval);
+    this._recorder?.stop();
+  }
+
+  cancelVoice() {
+    clearInterval(this._voiceTimer);
+    clearInterval(this._waveInterval);
+    if (this._recorder?.state === 'recording') this._recorder.stop();
+    this._stream?.getTracks().forEach(t => t.stop());
+    this._stream = null;
+    this._chunks = [];
+    this.voiceState.set('idle');
+  }
+
+  processVoice() {
+    if (!this._chunks.length) return;
+    const blob = new Blob(this._chunks, { type: 'audio/webm' });
+    this._chunks = [];
+    this.voiceState.set('processing');
+    this.api.transcribeRoutine(blob).subscribe({
+      next: (res: any) => {
+        const r = res.routine;
+        if (r) {
+          this.form.set({
+            titulo: r.titulo || '',
+            descripcion: r.descripcion || '',
+            observaciones: r.observaciones || '',
+            circuitos: (r.circuitos?.length ? r.circuitos : [EMPTY_CIR()]).map((c: any) => ({
+              nombre: c.nombre || '',
+              rondas: c.rondas || '',
+              ejercicios: (c.ejercicios?.length ? c.ejercicios : [EMPTY_EX()]).map((e: any) => ({
+                nombre: e.nombre || '', enlace: e.enlace || '', reps_seg_mts: e.reps_seg_mts || '', carga: e.carga || ''
+              }))
+            }))
           });
-        };
-        this._recorder.start();
-        this.voiceState.set('recording');
-      }).catch(() => {
-        this.voiceError.set('No se pudo acceder al micrófono.');
+          this.editing.set(null);
+          this.formError.set('');
+          this.showForm.set(true);
+        }
+        this.voiceState.set('idle');
+      },
+      error: () => {
+        this.voiceError.set('Error al procesar el audio. Intentá de nuevo.');
+        this.voiceState.set('idle');
         setTimeout(() => this.voiceError.set(''), 4000);
-      });
-    }
+      }
+    });
+  }
+
+  formatVoiceTime(s: number): string {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    return `${m}:${(s % 60).toString().padStart(2, '0')}`;
+  }
+
+  ngOnDestroy() {
+    clearInterval(this._voiceTimer);
+    clearInterval(this._waveInterval);
+    if (this._recorder?.state === 'recording') this._recorder.stop();
+    this._stream?.getTracks().forEach(t => t.stop());
   }
 
   confirmDelete(r: any) { this.deletingRoutine.set(r); }

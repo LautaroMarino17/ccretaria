@@ -189,12 +189,6 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
               <textarea class="mf-textarea" [(ngModel)]="history().antecedentes_sintomas" rows="4" placeholder="—"></textarea>
             </div>
 
-            <!-- Exploración física -->
-            <div class="mf-section">
-              <span class="mf-label">Exploración física</span>
-              <textarea class="mf-textarea" [(ngModel)]="history().examen_fisico" rows="3" placeholder="—"></textarea>
-            </div>
-
             <!-- Exploración estática -->
             <div class="mf-section">
               <span class="mf-label">Exploración estática</span>
@@ -214,19 +208,17 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
                 <thead>
                   <tr>
                     <th>Articulación</th>
-                    <th>Medición</th>
                     <th>Comentario</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (section of maniobra_sections; track section.label) {
                     <tr class="maniobra-section-row">
-                      <td colspan="3">{{ section.label }}</td>
+                      <td colspan="2">{{ section.label }}</td>
                     </tr>
                     @for (joint of section.joints; track joint) {
                       <tr>
                         <td class="joint-name">{{ joint }}</td>
-                        <td><input class="maniobra-input" [(ngModel)]="history().maniobras![joint].medicion" placeholder="—" /></td>
                         <td><input class="maniobra-input" [(ngModel)]="history().maniobras![joint].comentario" placeholder="—" /></td>
                       </tr>
                     }

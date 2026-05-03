@@ -80,9 +80,6 @@ function emptyForm() {
                   @if (h.antecedentes_sintomas) {
                     <div class="ds"><label>Antecedentes y síntomas</label><p>{{ h.antecedentes_sintomas }}</p></div>
                   }
-                  @if (h.examen_fisico) {
-                    <div class="ds"><label>Exploración física general</label><p>{{ h.examen_fisico }}</p></div>
-                  }
                   @if (h.exploracion_estatica) {
                     <div class="ds"><label>Exploración estática (postural)</label><p>{{ h.exploracion_estatica }}</p></div>
                   }
@@ -93,15 +90,14 @@ function emptyForm() {
                     <div class="ds">
                       <label>Maniobras semiológicas</label>
                       <div class="maniobras-table">
-                        <div class="man-head"><span>Segmento</span><span>Medición</span><span>Comentario</span></div>
+                        <div class="man-head"><span>Articulación</span><span>Comentario</span></div>
                         @for (section of maniobra_sections; track section.label) {
                           @if (sectionHasManiobras(h, section.joints)) {
                             <div class="man-section-row"><span>{{ section.label }}</span></div>
                             @for (joint of section.joints; track joint) {
-                              @if (h.maniobras?.[joint]?.medicion || h.maniobras?.[joint]?.comentario) {
+                              @if (h.maniobras?.[joint]?.comentario) {
                                 <div class="man-row">
                                   <span class="man-joint">{{ joint }}</span>
-                                  <span class="man-med">{{ h.maniobras[joint].medicion }}</span>
                                   <span class="man-com">{{ h.maniobras[joint].comentario }}</span>
                                 </div>
                               }
@@ -213,21 +209,19 @@ function emptyForm() {
 
             <!-- Exploración física -->
             <div class="section-title">Exploración física</div>
-            <div class="field"><label>Exploración física general</label><textarea [(ngModel)]="form.examen_fisico" rows="2" placeholder="Hallazgos generales del examen físico"></textarea></div>
             <div class="field"><label>Exploración estática (evaluación postural frente / perfil)</label><textarea [(ngModel)]="form.exploracion_estatica" rows="3" placeholder="Descripción de la postura estática, alineación, simetría..."></textarea></div>
             <div class="field"><label>Inspección dinámica</label><textarea [(ngModel)]="form.exploracion_dinamica" rows="3" placeholder="Marcha, patrones de movimiento, compensaciones..."></textarea></div>
 
             <!-- Maniobras semiológicas -->
             <div class="section-title">Maniobras semiológicas</div>
             <div class="maniobras-form">
-              <div class="man-form-head"><span>Segmento</span><span>Medición</span><span>Comentario</span></div>
+              <div class="man-form-head"><span>Articulación</span><span>Comentario</span></div>
               @for (section of maniobra_sections; track section.label) {
                 <div class="man-section-divider">{{ section.label }}</div>
                 @for (joint of section.joints; track joint) {
                   <div class="man-form-row">
                     <span class="man-joint-label">{{ joint }}</span>
-                    <input [(ngModel)]="form.maniobras[joint].medicion" placeholder="—" class="man-input" />
-                    <input [(ngModel)]="form.maniobras[joint].comentario" placeholder="—" class="man-input" />
+                    <input [(ngModel)]="form.maniobras[joint].comentario" placeholder="—" class="man-input wide" />
                   </div>
                 }
               }
@@ -345,12 +339,11 @@ function emptyForm() {
 
     /* Maniobras */
     .maniobras-table { background: #f9fafb; border-radius: 8px; overflow: hidden; }
-    .man-head { display: grid; grid-template-columns: 180px 1fr 1fr; padding: 7px 10px; background: #f3f4f6; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
+    .man-head { display: grid; grid-template-columns: 160px 1fr; padding: 7px 10px; background: #f3f4f6; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
     .man-section-row { padding: 5px 10px; background: #eff6ff; font-size: 10px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.6px; border-top: 1px solid #dbeafe; }
     .man-section-row span { display: block; }
-    .man-row { display: grid; grid-template-columns: 180px 1fr 1fr; padding: 7px 10px; border-top: 1px solid #e5e7eb; }
+    .man-row { display: grid; grid-template-columns: 160px 1fr; padding: 7px 10px; border-top: 1px solid #e5e7eb; align-items: center; }
     .man-joint { font-size: 12px; color: #374151; font-weight: 600; }
-    .man-med { font-size: 13px; color: #374151; }
     .man-com { font-size: 13px; color: #6b7280; }
     .man-section-divider { padding: 5px 10px; background: #eff6ff; font-size: 10px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.6px; border-top: 1px solid #dbeafe; }
 
@@ -392,8 +385,9 @@ function emptyForm() {
 
     /* Maniobras form */
     .maniobras-form { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
-    .man-form-head { display: grid; grid-template-columns: 160px 1fr 1fr; padding: 8px 10px; background: #f3f4f6; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
-    .man-form-row { display: grid; grid-template-columns: 160px 1fr 1fr; padding: 5px 10px; border-top: 1px solid #f0f0f0; align-items: center; gap: 6px; }
+    .man-form-head { display: grid; grid-template-columns: 160px 1fr; padding: 8px 10px; background: #f3f4f6; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
+    .man-form-row { display: grid; grid-template-columns: 160px 1fr; padding: 5px 10px; border-top: 1px solid #f0f0f0; align-items: center; gap: 6px; }
+    .man-input.wide { width: 100%; }
     .man-form-row:hover { background: #fafafa; }
     .man-joint-label { font-size: 12px; font-weight: 600; color: #374151; }
     .man-input { padding: 4px 8px; border: 1.5px solid #e5e7eb; border-radius: 6px; font-size: 13px; outline: none; font-family: inherit; }
@@ -520,12 +514,12 @@ export class PatientClinicalHistoriesComponent implements OnInit {
 
   hasManiobras(h: any): boolean {
     if (!h.maniobras) return false;
-    return ALL_JOINTS.some(j => h.maniobras[j]?.medicion || h.maniobras[j]?.comentario);
+    return ALL_JOINTS.some(j => h.maniobras[j]?.comentario);
   }
 
   sectionHasManiobras(h: any, joints: string[]): boolean {
     if (!h.maniobras) return false;
-    return joints.some(j => h.maniobras[j]?.medicion || h.maniobras[j]?.comentario);
+    return joints.some(j => h.maniobras[j]?.comentario);
   }
 
   printHistory(h: any) {

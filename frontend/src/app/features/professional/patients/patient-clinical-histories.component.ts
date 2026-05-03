@@ -132,8 +132,8 @@ function emptyForm() {
                         <div class="plantilla-status" [class.active]="h.plantillas">{{ h.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</div>
                       </div>
                     </div>
-                    <!-- Pedografía (siempre visible) -->
-                    <div class="mf-section"><span class="mf-label">Descripción de plantilla (pedografía)</span><p class="mf-text">{{ h.descripcion_pedografia || '—' }}</p></div>
+                    <!-- Pedigrafía (siempre visible) -->
+                    <div class="mf-section"><span class="mf-label">Descripción de plantilla (pedigrafía)</span><p class="mf-text">{{ h.descripcion_pedografia || '—' }}</p></div>
                     <!-- Resto de campos -->
                     <div class="mf-section"><span class="mf-label">Indicaciones / Plan terapéutico</span><p class="mf-text">{{ h.plan_terapeutico || '—' }}</p></div>
                     <div class="mf-section"><span class="mf-label">Estudios complementarios</span><p class="mf-text">{{ h.estudios_complementarios || '—' }}</p></div>
@@ -237,8 +237,8 @@ function emptyForm() {
                   <span class="feet-hint">Clic en los pies para indicar</span>
                 </div>
               </div>
-              <!-- Pedografía (siempre visible) -->
-              <div class="mf-section"><span class="mf-label">Descripción de plantilla (pedografía)</span><textarea class="mf-textarea" [(ngModel)]="form.descripcion_pedografia" rows="2" placeholder="—"></textarea></div>
+              <!-- Pedigrafía (siempre visible) -->
+              <div class="mf-section"><span class="mf-label">Descripción de plantilla (pedigrafía)</span><textarea class="mf-textarea" [(ngModel)]="form.descripcion_pedografia" rows="2" placeholder="—"></textarea></div>
               <!-- Resto de campos -->
               <div class="mf-section"><span class="mf-label">Indicaciones / Plan terapéutico</span><textarea class="mf-textarea" [(ngModel)]="form.plan_terapeutico" rows="3" placeholder="—"></textarea></div>
               <div class="mf-section"><span class="mf-label">Estudios complementarios</span><textarea class="mf-textarea" [(ngModel)]="form.estudios_complementarios" rows="2" placeholder="—"></textarea></div>
@@ -326,7 +326,7 @@ function emptyForm() {
     .modal-header h2 { font-size: 18px; font-weight: 700; color: #111827; margin: 0; }
     .btn-modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: #f3f4f6; color: #6b7280; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .btn-modal-close:hover { background: #e5e7eb; }
-    .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; max-height: 78vh; overflow-y: auto; }
+    .modal-body { padding: 20px 24px; display: block; max-height: 78vh; overflow-y: auto; }
     .modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid #e5e7eb; }
     .btn-secondary { padding: 10px 18px; background: #f3f4f6; color: #374151; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; }
 

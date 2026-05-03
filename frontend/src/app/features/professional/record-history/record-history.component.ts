@@ -282,13 +282,11 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
               </div>
             </div>
 
-            <!-- Descripción pedografía -->
-            @if (history().plantillas) {
-              <div class="mf-section">
-                <span class="mf-label">Descripción de plantilla</span>
-                <textarea class="mf-textarea" [(ngModel)]="history().descripcion_pedografia" rows="2" placeholder="—"></textarea>
-              </div>
-            }
+            <!-- Pedigrafía (siempre visible) -->
+            <div class="mf-section">
+              <span class="mf-label">Descripción de plantilla (pedigrafía)</span>
+              <textarea class="mf-textarea" [(ngModel)]="history().descripcion_pedografia" rows="2" placeholder="—"></textarea>
+            </div>
 
             <!-- Indicaciones / Plan terapéutico -->
             <div class="mf-section">

@@ -44,14 +44,14 @@ export const EMPTY_SIGNOS_VITALES: SignosVitales = {
 
 export const MANIOBRA_SECTIONS: { label: string; joints: string[] }[] = [
   { label: 'Columna', joints: ['Cervical', 'Dorsal', 'Lumbar'] },
-  { label: 'Hombro',  joints: ['Hombro D', 'Hombro I'] },
-  { label: 'Codo',    joints: ['Codo D', 'Codo I'] },
-  { label: 'Muñeca',  joints: ['Muñeca D', 'Muñeca I'] },
-  { label: 'Cadera',  joints: ['Cadera D', 'Cadera I'] },
-  { label: 'Rodilla', joints: ['Rodilla D', 'Rodilla I'] },
-  { label: 'Tobillo', joints: ['Tobillo D', 'Tobillo I'] },
-  { label: 'Mano',    joints: ['Mano D', 'Mano I'] },
-  { label: 'Pie',     joints: ['Pie D', 'Pie I'] },
+  { label: 'Hombro',  joints: ['Hombro'] },
+  { label: 'Codo',    joints: ['Codo'] },
+  { label: 'Muñeca',  joints: ['Muñeca'] },
+  { label: 'Cadera',  joints: ['Cadera'] },
+  { label: 'Rodilla', joints: ['Rodilla'] },
+  { label: 'Tobillo', joints: ['Tobillo'] },
+  { label: 'Mano',    joints: ['Mano'] },
+  { label: 'Pie',     joints: ['Pie'] },
 ];
 
 export const ALL_JOINTS = MANIOBRA_SECTIONS.flatMap(s => s.joints);

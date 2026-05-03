@@ -77,108 +77,88 @@ function emptyForm() {
 
               @if (expanded() === h.id) {
                 <div class="history-detail">
-                  @if (h.antecedentes_sintomas) {
-                    <div class="ds"><label>Antecedentes y síntomas</label><p>{{ h.antecedentes_sintomas }}</p></div>
-                  }
-                  @if (h.exploracion_estatica) {
-                    <div class="ds"><label>Exploración estática (postural)</label><p>{{ h.exploracion_estatica }}</p></div>
-                  }
-                  @if (h.exploracion_dinamica) {
-                    <div class="ds"><label>Inspección dinámica</label><p>{{ h.exploracion_dinamica }}</p></div>
-                  }
-                  @if (hasManiobras(h)) {
-                    <div class="ds">
-                      <label>Maniobras semiológicas</label>
-                      <div class="maniobras-table">
-                        <div class="man-head"><span>Articulación</span><span>Comentario</span></div>
-                        @for (section of maniobra_sections; track section.label) {
-                          @if (sectionHasManiobras(h, section.joints)) {
-                            <div class="man-section-row"><span>{{ section.label }}</span></div>
-                            @for (joint of section.joints; track joint) {
-                              @if (h.maniobras?.[joint]?.comentario) {
-                                <div class="man-row">
-                                  <span class="man-joint">{{ joint }}</span>
-                                  <span class="man-com">{{ h.maniobras[joint].comentario }}</span>
-                                </div>
+                  <div class="medical-form">
+                    <div class="mf-header">
+                      <span class="mf-title">HISTORIA CLÍNICA</span>
+                      <span class="mf-date">{{ formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha) }}{{ h.professional_name ? ' · ' + h.professional_name : '' }}</span>
+                    </div>
+                    <div class="mf-patient-row">
+                      <div class="mf-patient-field wide"><span class="mf-plabel">Paciente</span><span class="mf-pval">{{ h.nombre_paciente || patientName() }}</span></div>
+                      @if (h.signos_vitales?.tension_arterial) { <div class="mf-patient-field"><span class="mf-plabel">T.A.</span><span class="mf-pval">{{ h.signos_vitales.tension_arterial }}</span></div> }
+                      @if (h.signos_vitales?.frecuencia_cardiaca) { <div class="mf-patient-field"><span class="mf-plabel">FC</span><span class="mf-pval">{{ h.signos_vitales.frecuencia_cardiaca }}</span></div> }
+                      @if (h.signos_vitales?.temperatura) { <div class="mf-patient-field"><span class="mf-plabel">Temp.</span><span class="mf-pval">{{ h.signos_vitales.temperatura }}</span></div> }
+                      @if (h.signos_vitales?.peso) { <div class="mf-patient-field"><span class="mf-plabel">Peso</span><span class="mf-pval">{{ h.signos_vitales.peso }}</span></div> }
+                      @if (h.signos_vitales?.talla) { <div class="mf-patient-field"><span class="mf-plabel">Talla</span><span class="mf-pval">{{ h.signos_vitales.talla }}</span></div> }
+                      @if (h.signos_vitales?.saturacion) { <div class="mf-patient-field"><span class="mf-plabel">SatO2</span><span class="mf-pval">{{ h.signos_vitales.saturacion }}</span></div> }
+                    </div>
+                    @if (h.motivo_consulta) { <div class="mf-section"><span class="mf-label">Motivo de consulta</span><p class="mf-text">{{ h.motivo_consulta }}</p></div> }
+                    @if (h.antecedentes_sintomas) { <div class="mf-section"><span class="mf-label">Antecedentes y síntomas</span><p class="mf-text">{{ h.antecedentes_sintomas }}</p></div> }
+                    @if (h.exploracion_estatica) { <div class="mf-section"><span class="mf-label">Exploración estática</span><p class="mf-text">{{ h.exploracion_estatica }}</p></div> }
+                    @if (h.exploracion_dinamica) { <div class="mf-section"><span class="mf-label">Inspección dinámica</span><p class="mf-text">{{ h.exploracion_dinamica }}</p></div> }
+                    @if (hasManiobras(h)) {
+                      <div class="mf-section">
+                        <span class="mf-label">Maniobras semiológicas</span>
+                        <table class="mf-man-table">
+                          <thead><tr><th>Articulación</th><th>Comentario</th></tr></thead>
+                          <tbody>
+                            @for (section of maniobra_sections; track section.label) {
+                              @if (section.joints.length > 1) {
+                                @if (sectionHasManiobras(h, section.joints)) {
+                                  <tr class="mf-man-section"><td colspan="2">{{ section.label }}</td></tr>
+                                  @for (joint of section.joints; track joint) {
+                                    @if (h.maniobras?.[joint]?.comentario) {
+                                      <tr><td class="mf-man-joint">{{ joint }}</td><td class="mf-man-com">{{ h.maniobras[joint].comentario }}</td></tr>
+                                    }
+                                  }
+                                }
+                              } @else {
+                                @if (h.maniobras?.[section.joints[0]]?.comentario) {
+                                  <tr><td class="mf-man-joint">{{ section.label }}</td><td class="mf-man-com">{{ h.maniobras[section.joints[0]].comentario }}</td></tr>
+                                }
                               }
                             }
-                          }
-                        }
+                          </tbody>
+                        </table>
                       </div>
-                    </div>
-                  }
-                  @if (h.signos_vitales) {
-                    <div class="ds">
-                      <label>Signos vitales</label>
-                      <div class="signos-row">
-                        @if (h.signos_vitales.tension_arterial) { <span class="signo-tag">TA: {{ h.signos_vitales.tension_arterial }}</span> }
-                        @if (h.signos_vitales.frecuencia_cardiaca) { <span class="signo-tag">FC: {{ h.signos_vitales.frecuencia_cardiaca }}</span> }
-                        @if (h.signos_vitales.temperatura) { <span class="signo-tag">Temp: {{ h.signos_vitales.temperatura }}</span> }
-                        @if (h.signos_vitales.peso) { <span class="signo-tag">Peso: {{ h.signos_vitales.peso }}</span> }
-                        @if (h.signos_vitales.talla) { <span class="signo-tag">Talla: {{ h.signos_vitales.talla }}</span> }
-                        @if (h.signos_vitales.saturacion) { <span class="signo-tag">SatO2: {{ h.signos_vitales.saturacion }}</span> }
-                      </div>
-                    </div>
-                  }
-                  @if (h.diagnostico) {
-                    <div class="ds"><label>Diagnóstico</label><p>{{ h.diagnostico }}</p></div>
-                  }
-                  @if (h.plan_terapeutico) {
-                    <div class="ds"><label>Plan terapéutico</label><p>{{ h.plan_terapeutico }}</p></div>
-                  }
-                  @if (h.estudios_complementarios) {
-                    <div class="ds"><label>Estudios complementarios</label><p>{{ h.estudios_complementarios }}</p></div>
-                  }
-                  @if (h.laboratorio) {
-                    <div class="ds"><label>Laboratorio</label><p>{{ h.laboratorio }}</p></div>
-                  }
-                  @if (h.medicacion) {
-                    <div class="ds"><label>Medicación</label><p>{{ h.medicacion }}</p></div>
-                  }
-                  @if (h.observaciones) {
-                    <div class="ds"><label>Observaciones</label><p>{{ h.observaciones }}</p></div>
-                  }
-                  <div class="ds">
-                    <label>Plantillas</label>
-                    <div class="feet-display">
-                      <div class="foot-item">
-                        <svg viewBox="25 5 75 100" width="40" height="54"><g transform="scale(-1,1) translate(-129,0)"><path [class.foot-yes]="h.plantillas" class="foot-path" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></g></svg>
-                        <span class="foot-lbl">I</span>
-                      </div>
-                      <div class="foot-item">
-                        <svg viewBox="25 5 75 100" width="40" height="54"><path [class.foot-yes]="h.plantillas" class="foot-path" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></svg>
-                        <span class="foot-lbl">D</span>
-                      </div>
-                      <span class="plantilla-tag" [class.yes]="h.plantillas">{{ h.plantillas ? 'Indicadas' : 'No indicadas' }}</span>
-                    </div>
-                    @if (h.plantillas && h.descripcion_pedografia) {
-                      <div class="pedo-box"><span class="pedo-label">Pedografía</span><p>{{ h.descripcion_pedografia }}</p></div>
                     }
-                  </div>
-                  @if (h.imagenes?.length > 0) {
-                    <div class="ds">
-                      <label>Imágenes</label>
-                      <div class="links-list">
-                        @for (img of h.imagenes; track $index) {
-                          <a [href]="img.url" target="_blank" class="file-link">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                            {{ img.nombre || img.url }}
-                          </a>
-                        }
+                    @if (h.diagnostico) { <div class="mf-section"><span class="mf-label">Diagnóstico</span><p class="mf-text">{{ h.diagnostico }}</p></div> }
+                    <div class="mf-section mf-plantillas-row">
+                      <span class="mf-label">Plantillas</span>
+                      <div class="mf-plantillas-body">
+                        <div class="mf-feet">
+                          <div class="mf-foot-item"><svg viewBox="25 5 75 100" width="44" height="58"><g transform="scale(-1,1) translate(-129,0)"><path [class.foot-yes]="h.plantillas" class="foot-path" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></g></svg><span class="foot-side">I</span></div>
+                          <div class="mf-foot-item"><svg viewBox="25 5 75 100" width="44" height="58"><path [class.foot-yes]="h.plantillas" class="foot-path" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></svg><span class="foot-side">D</span></div>
+                        </div>
+                        <div class="plantilla-status" [class.active]="h.plantillas">{{ h.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</div>
                       </div>
+                      @if (h.plantillas && h.descripcion_pedografia) { <p class="mf-text" style="margin-top:6px">{{ h.descripcion_pedografia }}</p> }
                     </div>
-                  }
-                  @if (h.estudios?.length > 0) {
-                    <div class="ds">
-                      <label>Estudios / Informes</label>
-                      <div class="links-list">
-                        @for (est of h.estudios; track $index) {
-                          <a [href]="est.url" target="_blank" class="file-link">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                            {{ est.nombre || est.url }}
-                          </a>
-                        }
+                    @if (h.plan_terapeutico) { <div class="mf-section"><span class="mf-label">Plan terapéutico</span><p class="mf-text">{{ h.plan_terapeutico }}</p></div> }
+                    @if (h.estudios_complementarios || h.laboratorio) {
+                      <div class="mf-section mf-row">
+                        @if (h.estudios_complementarios) { <div class="mf-col"><span class="mf-label">Estudios complementarios</span><p class="mf-text">{{ h.estudios_complementarios }}</p></div> }
+                        @if (h.laboratorio) { <div class="mf-col"><span class="mf-label">Laboratorio</span><p class="mf-text">{{ h.laboratorio }}</p></div> }
                       </div>
+                    }
+                    @if (h.medicacion) { <div class="mf-section"><span class="mf-label">Medicación</span><p class="mf-text">{{ h.medicacion }}</p></div> }
+                    @if (h.observaciones) { <div class="mf-section mf-last"><span class="mf-label">Observaciones</span><p class="mf-text">{{ h.observaciones }}</p></div> }
+                  </div>
+                  @if (h.imagenes?.length > 0 || h.estudios?.length > 0) {
+                    <div class="attachments-row">
+                      @if (h.imagenes?.length > 0) {
+                        <div><span class="att-label">Imágenes</span>
+                          @for (img of h.imagenes; track $index) {
+                            <a [href]="img.url" target="_blank" class="file-link"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>{{ img.nombre || img.url }}</a>
+                          }
+                        </div>
+                      }
+                      @if (h.estudios?.length > 0) {
+                        <div><span class="att-label">Estudios</span>
+                          @for (est of h.estudios; track $index) {
+                            <a [href]="est.url" target="_blank" class="file-link"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>{{ est.nombre || est.url }}</a>
+                          }
+                        </div>
+                      }
                     </div>
                   }
                 </div>
@@ -201,70 +181,65 @@ function emptyForm() {
           </div>
 
           <div class="modal-body">
-            <!-- Datos básicos -->
-            <div class="section-title">Consulta</div>
-            <div class="field"><label>Motivo de consulta</label><textarea [(ngModel)]="form.motivo_consulta" rows="2" placeholder="Razón principal de la consulta"></textarea></div>
-            <div class="field"><label>Diagnóstico</label><textarea [(ngModel)]="form.diagnostico" rows="2" placeholder="Diagnóstico presuntivo o definitivo"></textarea></div>
-            <div class="field"><label>Antecedentes y síntomas</label><textarea [(ngModel)]="form.antecedentes_sintomas" rows="3" placeholder="Cuadro actual, síntomas, antecedentes relevantes"></textarea></div>
-
-            <!-- Exploración física -->
-            <div class="section-title">Exploración física</div>
-            <div class="field"><label>Exploración estática (evaluación postural frente / perfil)</label><textarea [(ngModel)]="form.exploracion_estatica" rows="3" placeholder="Descripción de la postura estática, alineación, simetría..."></textarea></div>
-            <div class="field"><label>Inspección dinámica</label><textarea [(ngModel)]="form.exploracion_dinamica" rows="3" placeholder="Marcha, patrones de movimiento, compensaciones..."></textarea></div>
-
-            <!-- Maniobras semiológicas -->
-            <div class="section-title">Maniobras semiológicas</div>
-            <div class="maniobras-form">
-              <div class="man-form-head"><span>Articulación</span><span>Comentario</span></div>
-              @for (section of maniobra_sections; track section.label) {
-                <div class="man-section-divider">{{ section.label }}</div>
-                @for (joint of section.joints; track joint) {
-                  <div class="man-form-row">
-                    <span class="man-joint-label">{{ joint }}</span>
-                    <input [(ngModel)]="form.maniobras[joint].comentario" placeholder="—" class="man-input wide" />
+            <div class="medical-form">
+              <div class="mf-header">
+                <span class="mf-title">HISTORIA CLÍNICA</span>
+                <span class="mf-date">{{ today() }}</span>
+              </div>
+              <div class="mf-patient-row">
+                <div class="mf-patient-field"><span class="mf-plabel">T.A.</span><input class="mf-pinput" [(ngModel)]="form.signos_vitales.tension_arterial" placeholder="—" /></div>
+                <div class="mf-patient-field"><span class="mf-plabel">FC</span><input class="mf-pinput" [(ngModel)]="form.signos_vitales.frecuencia_cardiaca" placeholder="—" /></div>
+                <div class="mf-patient-field"><span class="mf-plabel">Temp.</span><input class="mf-pinput" [(ngModel)]="form.signos_vitales.temperatura" placeholder="—" /></div>
+                <div class="mf-patient-field"><span class="mf-plabel">Peso</span><input class="mf-pinput" [(ngModel)]="form.signos_vitales.peso" placeholder="—" /></div>
+                <div class="mf-patient-field"><span class="mf-plabel">Talla</span><input class="mf-pinput" [(ngModel)]="form.signos_vitales.talla" placeholder="—" /></div>
+                <div class="mf-patient-field"><span class="mf-plabel">SatO2</span><input class="mf-pinput" [(ngModel)]="form.signos_vitales.saturacion" placeholder="—" /></div>
+              </div>
+              <div class="mf-section"><span class="mf-label">Motivo de consulta</span><textarea class="mf-textarea" [(ngModel)]="form.motivo_consulta" rows="2" placeholder="—"></textarea></div>
+              <div class="mf-section"><span class="mf-label">Antecedentes y síntomas</span><textarea class="mf-textarea" [(ngModel)]="form.antecedentes_sintomas" rows="4" placeholder="—"></textarea></div>
+              <div class="mf-section"><span class="mf-label">Exploración estática</span><textarea class="mf-textarea" [(ngModel)]="form.exploracion_estatica" rows="3" placeholder="—"></textarea></div>
+              <div class="mf-section"><span class="mf-label">Inspección dinámica</span><textarea class="mf-textarea" [(ngModel)]="form.exploracion_dinamica" rows="3" placeholder="—"></textarea></div>
+              <div class="mf-section">
+                <span class="mf-label">Maniobras semiológicas</span>
+                <table class="mf-man-table mf-man-edit">
+                  <thead><tr><th>Articulación</th><th>Comentario</th></tr></thead>
+                  <tbody>
+                    @for (section of maniobra_sections; track section.label) {
+                      @if (section.joints.length > 1) {
+                        <tr class="mf-man-section"><td colspan="2">{{ section.label }}</td></tr>
+                        @for (joint of section.joints; track joint) {
+                          <tr><td class="mf-man-joint">{{ joint }}</td><td><input class="mf-man-input" [(ngModel)]="form.maniobras[joint].comentario" placeholder="—" /></td></tr>
+                        }
+                      } @else {
+                        <tr><td class="mf-man-joint">{{ section.label }}</td><td><input class="mf-man-input" [(ngModel)]="form.maniobras[section.joints[0]].comentario" placeholder="—" /></td></tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="mf-section"><span class="mf-label">Diagnóstico</span><textarea class="mf-textarea" [(ngModel)]="form.diagnostico" rows="2" placeholder="—"></textarea></div>
+              <div class="mf-section mf-plantillas-row">
+                <span class="mf-label">Plantillas</span>
+                <div class="mf-plantillas-body">
+                  <div class="mf-feet" (click)="form.plantillas = !form.plantillas" style="cursor:pointer">
+                    <div class="mf-foot-item"><svg viewBox="25 5 75 100" width="44" height="58"><g transform="scale(-1,1) translate(-129,0)"><path [class.foot-yes]="form.plantillas" class="foot-path" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></g></svg><span class="foot-side">I</span></div>
+                    <div class="mf-foot-item"><svg viewBox="25 5 75 100" width="44" height="58"><path [class.foot-yes]="form.plantillas" class="foot-path" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></svg><span class="foot-side">D</span></div>
                   </div>
-                }
+                  <div class="plantilla-status" [class.active]="form.plantillas">{{ form.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</div>
+                  <span class="feet-hint">Clic en los pies para indicar</span>
+                </div>
+              </div>
+              @if (form.plantillas) {
+                <div class="mf-section"><span class="mf-label">Descripción de plantilla</span><textarea class="mf-textarea" [(ngModel)]="form.descripcion_pedografia" rows="2" placeholder="—"></textarea></div>
               }
-            </div>
-
-            <!-- Signos vitales -->
-            <div class="section-title">Signos vitales</div>
-            <div class="signos-inputs">
-              <input [(ngModel)]="form.signos_vitales.tension_arterial" placeholder="TA (ej: 120/80)" />
-              <input [(ngModel)]="form.signos_vitales.frecuencia_cardiaca" placeholder="FC (ej: 72)" />
-              <input [(ngModel)]="form.signos_vitales.temperatura" placeholder="Temp (ej: 36.5°C)" />
-              <input [(ngModel)]="form.signos_vitales.peso" placeholder="Peso (ej: 70 kg)" />
-              <input [(ngModel)]="form.signos_vitales.talla" placeholder="Talla (ej: 175 cm)" />
-              <input [(ngModel)]="form.signos_vitales.saturacion" placeholder="SatO2 (ej: 98%)" />
-            </div>
-
-            <!-- Plan y tratamiento -->
-            <div class="section-title">Plan y tratamiento</div>
-            <div class="field"><label>Plan terapéutico / Indicaciones</label><textarea [(ngModel)]="form.plan_terapeutico" rows="3"></textarea></div>
-            <div class="field"><label>Estudios complementarios</label><textarea [(ngModel)]="form.estudios_complementarios" rows="2"></textarea></div>
-            <div class="field"><label>Laboratorio</label><textarea [(ngModel)]="form.laboratorio" rows="2"></textarea></div>
-            <div class="field"><label>Medicación</label><textarea [(ngModel)]="form.medicacion" rows="2"></textarea></div>
-            <div class="field"><label>Observaciones</label><textarea [(ngModel)]="form.observaciones" rows="2" placeholder="Información adicional que no encaja en otro campo"></textarea></div>
-
-            <!-- Plantillas -->
-            <div class="section-title">Plantillas</div>
-            <div class="plantilla-toggle" (click)="form.plantillas = !form.plantillas">
-              <div class="foot-item">
-                <svg viewBox="25 5 75 100" width="32" height="43"><g transform="scale(-1,1) translate(-129,0)"><path [class.foot-yes]="form.plantillas" class="foot-path" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></g></svg>
-                <span class="foot-lbl">I</span>
+              <div class="mf-section"><span class="mf-label">Plan terapéutico / Indicaciones</span><textarea class="mf-textarea" [(ngModel)]="form.plan_terapeutico" rows="3" placeholder="—"></textarea></div>
+              <div class="mf-section mf-row">
+                <div class="mf-col"><span class="mf-label">Estudios complementarios</span><textarea class="mf-textarea" [(ngModel)]="form.estudios_complementarios" rows="2" placeholder="—"></textarea></div>
+                <div class="mf-col"><span class="mf-label">Laboratorio</span><textarea class="mf-textarea" [(ngModel)]="form.laboratorio" rows="2" placeholder="—"></textarea></div>
               </div>
-              <div class="foot-item">
-                <svg viewBox="25 5 75 100" width="32" height="43"><path [class.foot-yes]="form.plantillas" class="foot-path" d="M 46.857 24.686 C 44.114 49.829 56.229 44.343 39.543 71.771 C 38.171 72.229 40.686 91.429 39.314 82.057 C 41 96 62 96 66 84 C 70 72 82 62 86 46 C 90 30 70 10 51.886 19.886 Z"/></svg>
-                <span class="foot-lbl">D</span>
-              </div>
-              <span class="plantilla-tag" [class.yes]="form.plantillas">{{ form.plantillas ? 'Plantillas: Sí' : 'Plantillas: No' }}</span>
+              <div class="mf-section"><span class="mf-label">Medicación</span><textarea class="mf-textarea" [(ngModel)]="form.medicacion" rows="2" placeholder="—"></textarea></div>
+              <div class="mf-section mf-last"><span class="mf-label">Observaciones</span><textarea class="mf-textarea" [(ngModel)]="form.observaciones" rows="2" placeholder="—"></textarea></div>
             </div>
-            @if (form.plantillas) {
-              <div class="field mt-8"><label>Pedografía / descripción de plantilla</label><textarea [(ngModel)]="form.descripcion_pedografia" rows="2" placeholder="Descripción de la plantilla ortopédica indicada..."></textarea></div>
-            }
-
-            <!-- Archivos -->
-            <div class="section-title">Archivos</div>
+            <div class="section-title" style="margin-top:16px">Archivos</div>
             <div class="field">
               <label>Imágenes</label>
               @for (img of form.imagenes; track $index) {
@@ -416,6 +391,53 @@ function emptyForm() {
       .man-row { grid-template-columns: 1fr; gap: 2px; }
       .man-head { display: none; }
     }
+
+    /* ── Medical form (shared with record-history) ── */
+    .medical-form { background: white; border: 1.5px solid #c9cdd4; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.07); font-family: Georgia, 'Times New Roman', serif; }
+    .mf-header { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border-bottom: 1.5px solid #c9cdd4; padding: 10px 20px; }
+    .mf-title { font-size: 13px; font-weight: 700; color: #374151; letter-spacing: 0.8px; font-family: Arial, sans-serif; }
+    .mf-date { font-size: 12px; color: #6b7280; font-family: Arial, sans-serif; }
+    .mf-patient-row { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1.5px solid #c9cdd4; }
+    .mf-patient-field { display: flex; flex-direction: column; padding: 8px 14px; border-right: 1px solid #e5e7eb; min-width: 80px; }
+    .mf-patient-field.wide { flex: 1; min-width: 200px; }
+    .mf-patient-field:last-child { border-right: none; }
+    .mf-plabel { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.4px; font-family: Arial, sans-serif; margin-bottom: 3px; }
+    .mf-pval { font-size: 13px; color: #111827; font-family: Georgia, serif; }
+    .mf-pinput { border: none; outline: none; font-size: 13px; color: #111827; background: transparent; font-family: Georgia, serif; width: 100%; border-bottom: 1px dotted #9ca3af; padding: 2px 0; }
+    .mf-pinput:focus { border-bottom-color: #16a34a; }
+    .mf-section { padding: 10px 20px; border-bottom: 1px solid #e9eaec; }
+    .mf-section.mf-last { border-bottom: none; }
+    .mf-section.mf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 0; }
+    .mf-col { padding: 10px 20px; }
+    .mf-col:first-child { border-right: 1px solid #e9eaec; }
+    .mf-label { display: block; font-size: 12px; font-weight: 700; color: #374151; font-family: Arial, sans-serif; margin-bottom: 4px; }
+    .mf-text { font-size: 14px; color: #111827; margin: 0; line-height: 1.9; font-family: Georgia, serif; white-space: pre-wrap; }
+    .mf-textarea { width: 100%; border: none; outline: none; resize: none; background: transparent; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; color: #111827; line-height: 1.9; background-image: repeating-linear-gradient(transparent, transparent calc(1.9em - 1px), #e5e7eb calc(1.9em - 1px), #e5e7eb 1.9em); padding: 0; margin-top: 2px; box-sizing: border-box; }
+    .mf-textarea:focus { background-image: repeating-linear-gradient(transparent, transparent calc(1.9em - 1px), #a5b4fc calc(1.9em - 1px), #a5b4fc 1.9em); }
+    /* Plantillas in mf */
+    .mf-plantillas-row { display: flex; flex-direction: column; gap: 6px; }
+    .mf-plantillas-body { display: flex; flex-direction: row; align-items: flex-end; gap: 14px; }
+    .mf-feet { display: flex; gap: 12px; align-items: flex-end; }
+    .mf-foot-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .foot-side { font-size: 10px; font-weight: 700; color: #9ca3af; letter-spacing: 1px; font-family: Arial, sans-serif; }
+    .foot-path { fill: #d1d5db; stroke: #9ca3af; stroke-width: 1.5; transition: fill 0.35s, stroke 0.35s; }
+    .foot-yes { fill: #818cf8; stroke: #15803d; }
+    .plantilla-status { font-size: 13px; font-weight: 600; color: #9ca3af; font-family: Arial, sans-serif; }
+    .plantilla-status.active { color: #16a34a; }
+    .feet-hint { font-size: 11px; color: #d1d5db; font-family: Arial, sans-serif; }
+    /* Maniobras table in mf */
+    .mf-man-table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; margin-top: 6px; }
+    .mf-man-table thead th { background: #f3f4f6; font-weight: 700; color: #374151; padding: 5px 10px; border: 1px solid #e5e7eb; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .mf-man-table td { border: 1px solid #e9eaec; padding: 3px 8px; vertical-align: middle; }
+    .mf-man-section td { background: #eff6ff; font-weight: 700; font-size: 11px; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.6px; padding: 4px 10px; }
+    .mf-man-joint { width: 130px; color: #374151; font-size: 12px; }
+    .mf-man-com { font-size: 13px; color: #374151; }
+    .mf-man-input { border: none; outline: none; width: 100%; background: transparent; font-family: Georgia, serif; font-size: 13px; color: #111827; border-bottom: 1px dotted #9ca3af; padding: 1px 2px; }
+    .mf-man-input:focus { border-bottom-color: #16a34a; }
+    /* Attachments */
+    .attachments-row { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid #e5e7eb; }
+    .att-label { display: block; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-family: Arial, sans-serif; }
+    .history-detail { padding: 16px; border-top: 1px solid #e5e7eb; animation: slideDown 0.15s ease; }
   `]
 })
 export class PatientClinicalHistoriesComponent implements OnInit {
@@ -567,6 +589,10 @@ export class PatientClinicalHistoriesComponent implements OnInit {
       </body></html>`;
     const win = window.open('', '_blank');
     if (win) { win.document.open(); win.document.write(html); win.document.close(); win.print(); }
+  }
+
+  today(): string {
+    return new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   formatDate(date: any): string {

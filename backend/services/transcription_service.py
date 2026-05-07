@@ -16,6 +16,44 @@ def _get_client():
 
 MAX_CHUNK_BYTES = 20 * 1024 * 1024  # 20 MB
 
+# WebM/EBML Cluster element ID — marks the start of each independent audio block
+_WEBM_CLUSTER_ID = b'\x1f\x43\xb6\x75'
+
+
+def _split_webm(data: bytes, max_bytes: int) -> list[bytes]:
+    """Split WebM bytes at cluster boundaries, prepending the file header to each chunk.
+
+    WebM files have a fixed header (EBML + Segment Info + Tracks) followed by
+    Cluster elements. Chunks 2..N need the header prepended so Whisper can
+    decode the codec info — raw cluster bytes alone are not valid WebM files.
+    """
+    first = data.find(_WEBM_CLUSTER_ID)
+    if first == -1:
+        return [data]  # can't parse structure, send whole file
+
+    header = data[:first]
+    budget = max_bytes - len(header)
+
+    # Collect all cluster start positions + a sentinel at end-of-file
+    positions: list[int] = []
+    pos = first
+    while (idx := data.find(_WEBM_CLUSTER_ID, pos)) != -1:
+        positions.append(idx)
+        pos = idx + 4
+    positions.append(len(data))
+
+    chunks: list[bytes] = []
+    i = 0
+    while i < len(positions) - 1:
+        j = i + 1
+        # Advance j while the accumulated clusters fit within budget
+        while j < len(positions) - 1 and (positions[j] - positions[i]) <= budget:
+            j += 1
+        chunks.append(header + data[positions[i]:positions[j]])
+        i = j
+
+    return chunks
+
 
 def _transcribe_chunk(chunk: bytes, chunk_name: str) -> str:
     with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
@@ -39,7 +77,7 @@ def _transcribe_chunk(chunk: bytes, chunk_name: str) -> str:
 
 def transcribe_audio_file(audio_bytes: bytes, filename: str = "audio.webm") -> str:
     """Transcribe audio usando Whisper large-v3 via Groq API.
-    Si el audio supera 20 MB lo divide en chunks y concatena las transcripciones."""
+    Archivos >20 MB se dividen en chunks WebM válidos (header + clusters)."""
     total = len(audio_bytes)
     print(f"[Groq Whisper] Transcribiendo {total} bytes...")
 
@@ -48,20 +86,17 @@ def transcribe_audio_file(audio_bytes: bytes, filename: str = "audio.webm") -> s
         print(f"[Groq Whisper] OK: {repr(text[:100])}")
         return text
 
-    n_chunks = -(-total // MAX_CHUNK_BYTES)  # ceil division
-    chunk_size = total // n_chunks
-    print(f"[Groq Whisper] Audio grande ({total} bytes) → {n_chunks} chunks de ~{chunk_size // 1024} KB")
+    print(f"[Groq Whisper] Audio grande ({total} bytes), dividiendo por clusters WebM...")
+    chunks = _split_webm(audio_bytes, MAX_CHUNK_BYTES)
+    print(f"[Groq Whisper] {len(chunks)} chunks generados")
 
-    parts = []
-    for i in range(n_chunks):
-        start = i * chunk_size
-        end = total if i == n_chunks - 1 else start + chunk_size
-        chunk = audio_bytes[start:end]
-        print(f"[Groq Whisper] Chunk {i+1}/{n_chunks} ({len(chunk)} bytes)...")
+    parts: list[str] = []
+    for i, chunk in enumerate(chunks):
+        print(f"[Groq Whisper] Chunk {i+1}/{len(chunks)} ({len(chunk)} bytes)...")
         part = _transcribe_chunk(chunk, f"chunk_{i}.webm")
         print(f"[Groq Whisper] Chunk {i+1} OK: {repr(part[:60])}")
         parts.append(part)
 
     full = " ".join(p for p in parts if p)
-    print(f"[Groq Whisper] Transcripción completa ({len(parts)} chunks): {repr(full[:100])}")
+    print(f"[Groq Whisper] Completo ({len(parts)} chunks): {repr(full[:100])}")
     return full

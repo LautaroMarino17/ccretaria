@@ -79,6 +79,7 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
 
             @if (error()) {
               <p class="record-hint retry-hint">{{ error() }}</p>
+              <p class="record-hint manual-hint">Si el error persiste, podés completar la historia clínica de forma manual.</p>
               <div class="stopped-actions">
                 <button class="btn-secondary" (click)="startOver()">Grabar de nuevo</button>
                 <button class="btn-generate" (click)="processAudio()">
@@ -86,6 +87,13 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
                     <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
                   </svg>
                   Reintentar
+                </button>
+                <button class="btn-manual" (click)="fillManually()">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  Completar manualmente
                 </button>
               </div>
             } @else {
@@ -594,6 +602,13 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
       border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite;
     }
     .retry-hint { color: #dc2626 !important; }
+    .manual-hint { color: #6b7280 !important; margin-top: 4px; }
+    .btn-manual {
+      padding: 12px 20px; background: #f3f4f6; color: #374151;
+      border: 1.5px solid #d1d5db; border-radius: 10px; font-size: 14px;
+      font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    }
+    .btn-manual:hover { background: #e5e7eb; }
     .error-banner {
       background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
       border-radius: 10px; padding: 12px 16px; font-size: 14px; margin-top: 16px;
@@ -786,6 +801,11 @@ export class RecordHistoryComponent implements OnDestroy {
         this.state.set('reviewing');
       }
     });
+  }
+
+  fillManually() {
+    this.error.set('');
+    this.state.set('reviewing');
   }
 
   startOver() {

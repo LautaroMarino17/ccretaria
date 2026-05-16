@@ -703,22 +703,37 @@ export class RecordHistoryComponent implements OnDestroy {
     if (!this.audioChunks.length) return;
     this.state.set('processing');
     this.processingStep.set(0);
-    this.processingMessage.set('Transcribiendo audio con Whisper...');
+    this.error.set('');
     this.cdr.detectChanges();
 
-    const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+    // Agrupar blobs en chunks de 2 minutos (120 blobs de 1s cada uno).
+    // El primer blob siempre se incluye al inicio de cada grupo para que
+    // todos sean WebM válidos (contiene el header EBML + Tracks).
+    const BLOBS_PER_CHUNK = 120;
+    const firstBlob = this.audioChunks[0];
+    const groups: Blob[] = [];
+    for (let i = 0; i < this.audioChunks.length; i += BLOBS_PER_CHUNK) {
+      const slice = this.audioChunks.slice(i, i + BLOBS_PER_CHUNK);
+      const blobsForGroup = i === 0 ? slice : [firstBlob, ...slice];
+      groups.push(new Blob(blobsForGroup, { type: 'audio/webm' }));
+    }
 
-    const stepTimer = setTimeout(() => {
+    const texts: string[] = [];
+    try {
+      for (let i = 0; i < groups.length; i++) {
+        this.processingMessage.set(`Transcribiendo parte ${i + 1} de ${groups.length}...`);
+        this.cdr.detectChanges();
+        const { text } = await firstValueFrom(this.api.transcribeChunk(groups[i]));
+        texts.push(text);
+      }
+
       this.processingStep.set(1);
       this.processingMessage.set('Estructurando historia clínica con IA...');
       this.cdr.detectChanges();
-    }, 3000);
 
-    try {
-      const result = await firstValueFrom(this.api.transcribeAndStructure(audioBlob));
-      clearTimeout(stepTimer);
+      const transcription = texts.join(' ');
+      const { clinical_history: ch } = await firstValueFrom(this.api.structureText(transcription));
 
-      const ch = result.clinical_history || {};
       this.history.set({
         patient_id: this.patientId,
         nombre_paciente: ch.nombre_paciente || '',
@@ -737,7 +752,7 @@ export class RecordHistoryComponent implements OnDestroy {
         observaciones: ch.observaciones || '',
         plantillas: ch.plantillas || false,
         descripcion_pedografia: ch.descripcion_pedografia || '',
-        transcripcion_original: result.transcription || '',
+        transcripcion_original: transcription,
         verificada: false
       });
       this.processingStep.set(2);
@@ -745,7 +760,6 @@ export class RecordHistoryComponent implements OnDestroy {
       this.cdr.detectChanges();
 
     } catch (err: unknown) {
-      clearTimeout(stepTimer);
       const httpErr = err as any;
       const detail: string = httpErr?.error?.detail || '';
       if (detail.includes('rate_limit_exceeded') || detail.includes('Rate limit') || httpErr?.status === 429) {

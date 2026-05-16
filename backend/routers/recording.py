@@ -99,6 +99,28 @@ async def transcribe_and_structure(
         raise HTTPException(status_code=500, detail=f"Error en el pipeline: {str(e)}")
 
 
+@router.post("/transcribe-chunk")
+@limiter.limit("60/minute")
+async def transcribe_chunk(
+    request: Request,
+    audio: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
+    """Transcribe un chunk de audio y devuelve el texto. Sin LLM."""
+    require_professional(user)
+    audio_bytes = await audio.read()
+    if not audio_bytes:
+        raise HTTPException(status_code=400, detail="Chunk de audio vacío")
+    print(f"[CHUNK] {len(audio_bytes)} bytes")
+    try:
+        text = transcribe_audio_file(audio_bytes, filename="chunk.webm")
+        print(f"[CHUNK] OK: {repr(text[:80])}")
+        return {"text": text}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error en transcripción: {str(e)}")
+
+
 @router.post("/transcribe-routine")
 @limiter.limit("10/minute")
 async def transcribe_routine(

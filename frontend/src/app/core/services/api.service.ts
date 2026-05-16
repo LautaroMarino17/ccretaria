@@ -145,6 +145,23 @@ export class ApiService {
   }
 
   // ── Grabación / Transcripción ────────────────────────────────────
+  transcribeChunk(audioBlob: Blob): Observable<{ text: string }> {
+    return from(this.auth.getIdToken()).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'chunk.webm');
+        return this.http.post<{ text: string }>(`${this.base}/recording/transcribe-chunk`, formData, { headers });
+      })
+    );
+  }
+
+  structureText(transcription: string): Observable<{ clinical_history: any }> {
+    return this.withAuth(h =>
+      this.http.post<any>(`${this.base}/recording/structure`, { transcription }, { headers: h })
+    );
+  }
+
   transcribeRoutine(audioBlob: Blob): Observable<any> {
     return from(this.auth.getIdToken()).pipe(
       switchMap(token => {

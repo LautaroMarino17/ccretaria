@@ -721,25 +721,35 @@ export class RecordHistoryComponent implements OnDestroy {
     this.error.set('');
     this.cdr.detectChanges();
 
+    try {
     // Agrupar blobs en chunks de 2 minutos (120 blobs de 1s cada uno).
-    // El primer blob siempre se incluye al inicio de cada grupo para que
-    // todos sean WebM válidos (contiene el header EBML + Tracks).
+    // Para grupos 2..N se prepende solo el header WebM (EBML + Tracks, sin
+    // datos de audio) para evitar timestamps no monotónicos que confunden a Whisper.
     const BLOBS_PER_CHUNK = 120;
-    const firstBlob = this.audioChunks[0];
+    const webmHeader = await this._extractWebmHeader(this.audioChunks[0]);
     const groups: Blob[] = [];
     for (let i = 0; i < this.audioChunks.length; i += BLOBS_PER_CHUNK) {
       const slice = this.audioChunks.slice(i, i + BLOBS_PER_CHUNK);
-      const blobsForGroup = i === 0 ? slice : [firstBlob, ...slice];
+      const blobsForGroup = i === 0 ? slice : [webmHeader, ...slice];
       groups.push(new Blob(blobsForGroup, { type: 'audio/webm' }));
     }
 
     const texts: string[] = [];
-    try {
+      let failedChunks = 0;
       for (let i = 0; i < groups.length; i++) {
         this.processingMessage.set(`Transcribiendo parte ${i + 1} de ${groups.length}...`);
         this.cdr.detectChanges();
-        const { text } = await firstValueFrom(this.api.transcribeChunk(groups[i]));
-        texts.push(text);
+        try {
+          const { text } = await firstValueFrom(this.api.transcribeChunk(groups[i]));
+          texts.push(text);
+        } catch (chunkErr) {
+          console.warn(`[Record] Chunk ${i + 1} fallido, se omite`, chunkErr);
+          failedChunks++;
+        }
+      }
+
+      if (texts.length === 0) {
+        throw new Error('No se pudo transcribir ninguna parte del audio.');
       }
 
       this.processingStep.set(1);
@@ -801,6 +811,16 @@ export class RecordHistoryComponent implements OnDestroy {
         this.state.set('reviewing');
       }
     });
+  }
+
+  private async _extractWebmHeader(blob: Blob): Promise<Blob> {
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    for (let i = 0; i < buf.length - 3; i++) {
+      if (buf[i] === 0x1f && buf[i+1] === 0x43 && buf[i+2] === 0xb6 && buf[i+3] === 0x75) {
+        return new Blob([buf.slice(0, i)], { type: 'audio/webm' });
+      }
+    }
+    return blob;
   }
 
   fillManually() {

@@ -1,5 +1,7 @@
 import os
+import time
 import tempfile
+import groq as groq_module
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -60,14 +62,23 @@ def _transcribe_chunk(chunk: bytes, chunk_name: str) -> str:
         tmp.write(chunk)
         tmp_path = tmp.name
     try:
-        with open(tmp_path, "rb") as f:
-            result = _get_client().audio.transcriptions.create(
-                file=(chunk_name, f, "audio/webm"),
-                model="whisper-large-v3",
-                language="es",
-                response_format="text"
-            )
-        return result.strip() if isinstance(result, str) else result.text.strip()
+        last_err: Exception = RuntimeError("No attempts made")
+        for attempt in range(3):
+            try:
+                with open(tmp_path, "rb") as f:
+                    result = _get_client().audio.transcriptions.create(
+                        file=(chunk_name, f, "audio/webm"),
+                        model="whisper-large-v3",
+                        language="es",
+                        response_format="text"
+                    )
+                return result.strip() if isinstance(result, str) else result.text.strip()
+            except (groq_module.APITimeoutError, groq_module.InternalServerError) as e:
+                last_err = e
+                if attempt < 2:
+                    print(f"[Groq Whisper] Intento {attempt+1} fallido ({type(e).__name__}), reintentando en 5s...")
+                    time.sleep(5)
+        raise last_err
     finally:
         try:
             os.unlink(tmp_path)

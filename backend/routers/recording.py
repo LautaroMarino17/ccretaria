@@ -7,6 +7,8 @@ from limiter import limiter
 
 router = APIRouter()
 
+_chunk_call_count = 0  # TEST ONLY — remove after testing
+
 
 @router.post("/transcribe")
 @limiter.limit("10/minute")
@@ -107,11 +109,16 @@ async def transcribe_chunk(
     user: dict = Depends(get_current_user)
 ):
     """Transcribe un chunk de audio y devuelve el texto. Sin LLM."""
+    global _chunk_call_count  # TEST ONLY — remove after testing
     require_professional(user)
     audio_bytes = await audio.read()
     if not audio_bytes:
         raise HTTPException(status_code=400, detail="Chunk de audio vacío")
-    print(f"[CHUNK] {len(audio_bytes)} bytes")
+    _chunk_call_count += 1
+    print(f"[CHUNK] {len(audio_bytes)} bytes (llamada #{_chunk_call_count})")
+    if _chunk_call_count % 2 == 0:  # TEST ONLY — falla en chunk 2, 4, 6...
+        print(f"[CHUNK TEST] Forzando error en llamada #{_chunk_call_count}")
+        raise HTTPException(status_code=500, detail="[TEST] Error forzado en chunk par")
     try:
         text = transcribe_audio_file(audio_bytes, filename="chunk.webm")
         print(f"[CHUNK] OK: {repr(text[:80])}")

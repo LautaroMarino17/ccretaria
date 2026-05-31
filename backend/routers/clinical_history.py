@@ -47,6 +47,7 @@ class ClinicalHistoryCreate(BaseModel):
 
 
 class ClinicalHistoryUpdate(BaseModel):
+    nombre_paciente: Optional[str] = None
     motivo_consulta: Optional[str] = None
     antecedentes_sintomas: Optional[str] = None
     examen_fisico: Optional[str] = None

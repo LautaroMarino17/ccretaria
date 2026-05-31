@@ -328,7 +328,7 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
           </div>
 
           <div class="review-actions">
-            <button class="btn-secondary" (click)="startOver()">Grabar de nuevo</button>
+            <button class="btn-secondary" (click)="discardHistory()">Descartar borrador</button>
             <button class="btn-primary" (click)="saveHistory()" [disabled]="state() === 'saving'">
               @if (state() === 'saving') {
                 <span class="spinner-sm"></span> Guardando...
@@ -635,6 +635,7 @@ export class RecordHistoryComponent implements OnDestroy {
   processingStep = signal(0);
   elapsedSeconds = signal(0);
   waveHeights = signal<number[]>(Array.from({ length: 20 }, () => 8));
+  savedHistoryId = signal<string>('');
 
   history = signal<ClinicalHistory>({
     patient_id: this.patientId,
@@ -780,6 +781,11 @@ export class RecordHistoryComponent implements OnDestroy {
         transcripcion_original: transcription,
         verificada: false
       });
+      this.processingMessage.set('Guardando borrador...');
+      this.cdr.detectChanges();
+      const saveResult = await firstValueFrom(this.api.saveClinicalHistory(this.history()));
+      this.savedHistoryId.set(saveResult.id);
+
       this.processingStep.set(2);
       this.state.set('reviewing');
       this.cdr.detectChanges();
@@ -804,13 +810,29 @@ export class RecordHistoryComponent implements OnDestroy {
 
   saveHistory() {
     this.state.set('saving');
-    this.api.saveClinicalHistory(this.history()).subscribe({
+    const id = this.savedHistoryId();
+    const obs = id
+      ? this.api.updateClinicalHistory(id, this.patientId, this.history())
+      : this.api.saveClinicalHistory(this.history());
+    obs.subscribe({
       next: () => this.state.set('done'),
       error: (err) => {
         this.error.set(err.error?.detail || 'Error al guardar la historia clínica');
         this.state.set('reviewing');
       }
     });
+  }
+
+  discardHistory() {
+    const id = this.savedHistoryId();
+    if (id) {
+      this.api.deleteClinicalHistory(id, this.patientId).subscribe({
+        next: () => { this.savedHistoryId.set(''); this.startOver(); },
+        error: () => this.startOver()
+      });
+    } else {
+      this.startOver();
+    }
   }
 
   private async _extractWebmHeader(blob: Blob): Promise<Blob> {

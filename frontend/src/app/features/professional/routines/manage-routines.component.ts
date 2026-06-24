@@ -209,8 +209,17 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
       </div>
 
       @for (circ of form().circuitos; track circ; let ci = $index) {
-        <div class="bloque-read">
+        <div class="bloque-read"
+          [class.drag-over-circ]="_dCiOver === ci"
+          (dragover)="onCircDragOver($event, ci)"
+          (dragleave)="onCircDragLeave()"
+          (drop)="onCircDrop($event, ci)">
           <div class="bloque-read-header">
+            <span class="drag-handle block-drag-handle"
+              draggable="true"
+              (dragstart)="onCircDragStart($event, ci)"
+              (dragend)="onCircDragEnd()"
+              title="Arrastrar bloque">⠿</span>
             <input class="bloque-name-inp" [(ngModel)]="circ.nombre" placeholder="NOMBRE BLOQUE" />
             @if (circ.rondas) {
               <span class="rondas-badge">
@@ -230,10 +239,19 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
           </div>
           <div class="ex-table">
             <div class="ex-head edit">
-              <span>EJERCICIO</span><span>ENLACE</span><span>REP/SEG/MTS</span><span>CARGA</span><span></span>
+              <span></span><span>EJERCICIO</span><span>ENLACE</span><span>REP/SEG/MTS</span><span>CARGA</span><span></span>
             </div>
             @for (ex of circ.ejercicios; track ex; let ei = $index, isLast = $last) {
-              <div class="ex-row-edit">
+              <div class="ex-row-edit"
+                [class.drag-over-ex]="_dExOver?.ci === ci && _dExOver?.ei === ei"
+                (dragover)="onExDragOver($event, ci, ei)"
+                (dragleave)="onExDragLeave()"
+                (drop)="onExDrop($event, ci, ei)">
+                <span class="drag-handle"
+                  draggable="true"
+                  (dragstart)="onExDragStart($event, ci, ei)"
+                  (dragend)="onExDragEnd()"
+                  title="Arrastrar para reordenar">⠿</span>
                 <input [(ngModel)]="ex.nombre" placeholder="Ejercicio..." />
                 <input [(ngModel)]="ex.enlace" placeholder="https://..." />
                 <input [(ngModel)]="ex.reps_seg_mts" placeholder="Ej: 3x10" />
@@ -330,7 +348,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .ex-table { border: 1px solid #e9eaec; border-radius: 10px; overflow: hidden; margin-bottom: 2px; }
     .ex-head { display: grid; background: #f8f9fa; padding: 8px 12px; gap: 8px; }
     .ex-head.read  { grid-template-columns: 2fr 2fr 1.5fr 1.5fr; }
-    .ex-head.edit  { grid-template-columns: 2fr 2fr 1.5fr 1.5fr auto; }
+    .ex-head.edit  { grid-template-columns: 18px 2fr 2fr 1.5fr 1.5fr auto; }
     .ex-head span  { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* Read rows */
@@ -339,8 +357,16 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .link-ex { color: #16a34a; font-size: 12px; font-weight: 600; text-decoration: none; }
     .link-ex:hover { text-decoration: underline; }
 
-    /* Edit rows — idéntico al read, pero con inputs transparentes */
-    .ex-row-edit { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr auto; padding: 7px 12px; gap: 8px; border-top: 1px solid #f0f0f0; background: white; align-items: center; }
+    /* Edit rows */
+    .ex-row-edit { display: grid; grid-template-columns: 18px 2fr 2fr 1.5fr 1.5fr auto; padding: 7px 12px; gap: 8px; border-top: 1px solid #f0f0f0; background: white; align-items: center; }
+    .ex-row-edit.drag-over-ex { background: #eff6ff; border-top: 2px solid #818cf8; }
+
+    /* Drag handles */
+    .drag-handle { cursor: grab; color: #d1d5db; user-select: none; font-size: 15px; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .drag-handle:hover { color: #9ca3af; }
+    .drag-handle:active { cursor: grabbing; }
+    .block-drag-handle { font-size: 17px; margin-right: 4px; }
+    .drag-over-circ { outline: 2px solid #6ee7b7; outline-offset: -2px; border-radius: 12px; }
     .ex-row-edit input { width: 100%; border: none; border-bottom: 1.5px solid transparent; outline: none; background: transparent; font-size: 13px; color: #374151; font-family: inherit; padding: 2px 0; transition: border-color 0.15s; box-sizing: border-box; }
     .ex-row-edit input:focus { border-bottom-color: #c7d2fe; }
     .ex-row-edit input::placeholder { color: #d1d5db; }
@@ -452,9 +478,9 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .empty-state p { font-size: 15px; margin: 0; }
 
     @media (max-width: 640px) {
-      .ex-head.edit  { grid-template-columns: 1.5fr 36px; }
-      .ex-head.edit span:not(:first-child):not(:last-child) { display: none; }
-      .ex-row-edit   { grid-template-columns: 1.5fr 36px; }
+      .ex-head.edit  { grid-template-columns: 18px 1.5fr 36px; }
+      .ex-head.edit span:not(:first-child):not(:nth-child(2)):not(:last-child) { display: none; }
+      .ex-row-edit   { grid-template-columns: 18px 1.5fr 36px; }
       .ex-row-edit input:not(:first-child) { display: none; }
       .ex-head.read  { grid-template-columns: 1.5fr 1.5fr; }
       .ex-head.read span:nth-child(n+3) { display: none; }
@@ -486,6 +512,12 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
   private _chunks: Blob[] = [];
   private _voiceTimer: any = null;
   private _waveInterval: any = null;
+
+  // Drag & drop state
+  _dExFrom: { ci: number; ei: number } | null = null;
+  _dCiFrom: number | null = null;
+  _dExOver: { ci: number; ei: number } | null = null;
+  _dCiOver: number | null = null;
 
   ngOnInit() { this.load(); }
 
@@ -793,6 +825,75 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
     clearInterval(this._waveInterval);
     if (this._recorder?.state === 'recording') this._recorder.stop();
     this._stream?.getTracks().forEach(t => t.stop());
+  }
+
+  // ── Drag & drop: exercises ──────────────────────────────────────────
+
+  onExDragStart(e: DragEvent, ci: number, ei: number) {
+    this._dExFrom = { ci, ei };
+    e.dataTransfer!.effectAllowed = 'move';
+  }
+
+  onExDragEnd() { this._dExFrom = null; this._dExOver = null; }
+
+  onExDragOver(e: DragEvent, ci: number, ei: number) {
+    if (!this._dExFrom) return;
+    e.preventDefault();
+    e.dataTransfer!.dropEffect = 'move';
+    this._dExOver = { ci, ei };
+  }
+
+  onExDragLeave() { this._dExOver = null; }
+
+  onExDrop(e: DragEvent, toCi: number, toEi: number) {
+    e.preventDefault();
+    if (!this._dExFrom) return;
+    const { ci: fromCi, ei: fromEi } = this._dExFrom;
+    this._dExFrom = null;
+    this._dExOver = null;
+    if (fromCi === toCi && fromEi === toEi) return;
+    this.form.update(f => {
+      const circs = f.circuitos.map(c => ({ ...c, ejercicios: [...c.ejercicios] }));
+      const [moved] = circs[fromCi].ejercicios.splice(fromEi, 1);
+      let target = toEi;
+      if (fromCi === toCi && fromEi < toEi) target--;
+      circs[toCi].ejercicios.splice(target, 0, moved);
+      return { ...f, circuitos: circs };
+    });
+  }
+
+  // ── Drag & drop: circuits ────────────────────────────────────────────
+
+  onCircDragStart(e: DragEvent, ci: number) {
+    this._dCiFrom = ci;
+    e.dataTransfer!.effectAllowed = 'move';
+    e.stopPropagation();
+  }
+
+  onCircDragEnd() { this._dCiFrom = null; this._dCiOver = null; }
+
+  onCircDragOver(e: DragEvent, ci: number) {
+    if (this._dCiFrom === null) return;
+    e.preventDefault();
+    e.dataTransfer!.dropEffect = 'move';
+    this._dCiOver = ci;
+  }
+
+  onCircDragLeave() { this._dCiOver = null; }
+
+  onCircDrop(e: DragEvent, toCi: number) {
+    e.preventDefault();
+    if (this._dCiFrom === null) return;
+    const fromCi = this._dCiFrom;
+    this._dCiFrom = null;
+    this._dCiOver = null;
+    if (fromCi === toCi) return;
+    this.form.update(f => {
+      const circs = [...f.circuitos];
+      const [moved] = circs.splice(fromCi, 1);
+      circs.splice(fromCi < toCi ? toCi - 1 : toCi, 0, moved);
+      return { ...f, circuitos: circs };
+    });
   }
 
   confirmDelete(r: any) { this.deletingRoutine.set(r); }

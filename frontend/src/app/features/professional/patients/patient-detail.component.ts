@@ -60,11 +60,36 @@ import { ApiService } from '../../../core/services/api.service';
           <div class="section-header">
             <h2>Datos del paciente</h2>
             <div class="section-actions">
-              <button class="btn-edit" (click)="editingPhone.set(!editingPhone()); editingEmail.set(false)">{{ editingPhone() ? 'Cancelar' : 'Editar teléfono' }}</button>
-              <button class="btn-edit" (click)="editingEmail.set(!editingEmail()); editingPhone.set(false)">{{ editingEmail() ? 'Cancelar' : 'Editar email' }}</button>
+              <button class="btn-edit" (click)="toggleEditInfo()">{{ editingInfo() ? 'Cancelar' : 'Editar datos' }}</button>
+              <button class="btn-edit" (click)="editingPhone.set(!editingPhone()); editingEmail.set(false); editingInfo.set(false)">{{ editingPhone() ? 'Cancelar' : 'Editar teléfono' }}</button>
+              <button class="btn-edit" (click)="editingEmail.set(!editingEmail()); editingPhone.set(false); editingInfo.set(false)">{{ editingEmail() ? 'Cancelar' : 'Editar email' }}</button>
               <button class="btn-danger" (click)="confirmDelete.set(true)">Eliminar paciente</button>
             </div>
           </div>
+
+          @if (editingInfo()) {
+            <div class="info-edit-form">
+              <div class="info-edit-row">
+                <div class="info-edit-field">
+                  <label>Nombre</label>
+                  <input [(ngModel)]="editInfoForm.nombre" placeholder="Nombre" />
+                </div>
+                <div class="info-edit-field">
+                  <label>Apellido</label>
+                  <input [(ngModel)]="editInfoForm.apellido" placeholder="Apellido" />
+                </div>
+                <div class="info-edit-field">
+                  <label>DNI</label>
+                  <input [(ngModel)]="editInfoForm.dni" placeholder="Ej: 12345678" maxlength="8" />
+                </div>
+              </div>
+              @if (infoError()) { <div class="error-banner-sm">{{ infoError() }}</div> }
+              <div class="info-edit-actions">
+                <button class="btn-cancel-sm" (click)="editingInfo.set(false)">Cancelar</button>
+                <button class="btn-save" (click)="saveInfo()" [disabled]="savingInfo()">{{ savingInfo() ? 'Guardando...' : 'Guardar cambios' }}</button>
+              </div>
+            </div>
+          }
           <div class="data-grid">
             <div class="data-item"><span class="data-label">Fecha de nacimiento</span><span class="data-value">{{ patient().fecha_nacimiento || '—' }}</span></div>
             <div class="data-item">
@@ -270,6 +295,16 @@ import { ApiService } from '../../../core/services/api.service';
     .phone-edit-row input:focus { border-color: #16a34a; }
     .btn-save { padding: 6px 12px; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+    .info-edit-form { background: #f9fafb; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .info-edit-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .info-edit-field { display: flex; flex-direction: column; gap: 4px; }
+    .info-edit-field label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; }
+    .info-edit-field input { padding: 7px 10px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; }
+    .info-edit-field input:focus { border-color: #16a34a; }
+    .info-edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-cancel-sm { padding: 6px 12px; background: #f3f4f6; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; color: #374151; }
+    .btn-cancel-sm:hover { background: #e5e7eb; }
+    .error-banner-sm { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 8px; padding: 8px 12px; font-size: 13px; }
 
     /* Histories */
     .history-list { display: flex; flex-direction: column; gap: 8px; }
@@ -363,6 +398,10 @@ export class PatientDetailComponent implements OnInit {
   savingPhone = signal(false);
   editingEmail = signal(false);
   savingEmail = signal(false);
+  editingInfo = signal(false);
+  savingInfo = signal(false);
+  infoError = signal('');
+  editInfoForm = { nombre: '', apellido: '', dni: '' };
   confirmDelete = signal(false);
   deleting = signal(false);
   expanded = signal<string | null>(null);
@@ -407,6 +446,38 @@ export class PatientDetailComponent implements OnInit {
       error: (err: any) => {
         this.newHistoryError.set(err.error?.detail || 'Error al guardar');
         this.savingNew.set(false);
+      }
+    });
+  }
+
+  toggleEditInfo() {
+    const p = this.patient();
+    if (!this.editingInfo()) {
+      this.editInfoForm = { nombre: p?.nombre || '', apellido: p?.apellido || '', dni: p?.dni || '' };
+      this.infoError.set('');
+      this.editingPhone.set(false);
+      this.editingEmail.set(false);
+    }
+    this.editingInfo.update(v => !v);
+  }
+
+  saveInfo() {
+    const data = { ...this.editInfoForm };
+    if (!data.nombre.trim() || !data.apellido.trim()) {
+      this.infoError.set('Nombre y apellido son obligatorios');
+      return;
+    }
+    this.savingInfo.set(true);
+    this.infoError.set('');
+    this.api.updatePatient(this.patientId, data).subscribe({
+      next: () => {
+        this.patient.update(p => ({ ...p, ...data }));
+        this.editingInfo.set(false);
+        this.savingInfo.set(false);
+      },
+      error: (err: any) => {
+        this.infoError.set(err.error?.detail || 'Error al guardar');
+        this.savingInfo.set(false);
       }
     });
   }

@@ -144,16 +144,47 @@ def get_patient(patient_id: str, user: dict = Depends(get_current_user)):
 
 @router.patch("/{patient_id}")
 def update_patient(patient_id: str, body: dict, user: dict = Depends(get_current_user)):
-    """Profesional: actualiza el teléfono o email del paciente."""
+    """Profesional: actualiza datos del paciente (nombre, apellido, dni, teléfono, email)."""
     require_professional(user)
     db = get_firestore()
     ref = db.collection("professionals").document(user["uid"]) \
         .collection("patients").document(patient_id)
-    if not ref.get().exists:
+    patient_doc = ref.get()
+    if not patient_doc.exists:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
-    allowed = {k: v for k, v in body.items() if k in ("telefono", "email")}
+
+    allowed = {k: v for k, v in body.items() if k in ("telefono", "email", "nombre", "apellido", "dni")}
     if not allowed:
-        raise HTTPException(status_code=400, detail="Solo se puede editar teléfono o email")
+        raise HTTPException(status_code=400, detail="No hay campos para actualizar")
+
+    # Si cambia el DNI, actualizar patient_registry
+    if "dni" in allowed:
+        old_dni = (patient_doc.to_dict().get("dni") or "").strip()
+        new_dni = (allowed["dni"] or "").strip()
+        if old_dni != new_dni and new_dni:
+            # Verificar que no esté tomado por otro paciente de este profesional
+            existing = next(ref.parent.where("dni", "==", new_dni).limit(1).stream(), None)
+            if existing and existing.id != patient_id:
+                raise HTTPException(status_code=400, detail="Ese DNI ya está registrado para otro paciente")
+            # Quitar del registry viejo
+            if old_dni:
+                try:
+                    old_reg = db.collection("patient_registry").document(old_dni)
+                    old_reg_doc = old_reg.get()
+                    if old_reg_doc.exists:
+                        professionals = [
+                            p for p in old_reg_doc.to_dict().get("professionals", [])
+                            if not (p["prof_uid"] == user["uid"] and p["patient_doc_id"] == patient_id)
+                        ]
+                        if professionals:
+                            old_reg.update({"professionals": professionals})
+                        else:
+                            old_reg.delete()
+                except Exception:
+                    pass
+            # Registrar con nuevo DNI
+            _register_patient(db, user["uid"], patient_id, new_dni)
+
     ref.update(allowed)
     return {"message": "Paciente actualizado"}
 

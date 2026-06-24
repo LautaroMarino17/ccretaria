@@ -855,9 +855,7 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
     this.form.update(f => {
       const circs = f.circuitos.map(c => ({ ...c, ejercicios: [...c.ejercicios] }));
       const [moved] = circs[fromCi].ejercicios.splice(fromEi, 1);
-      let target = toEi;
-      if (fromCi === toCi && fromEi < toEi) target--;
-      circs[toCi].ejercicios.splice(target, 0, moved);
+      circs[toCi].ejercicios.splice(toEi, 0, moved);
       return { ...f, circuitos: circs };
     });
   }
@@ -891,7 +889,7 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
     this.form.update(f => {
       const circs = [...f.circuitos];
       const [moved] = circs.splice(fromCi, 1);
-      circs.splice(fromCi < toCi ? toCi - 1 : toCi, 0, moved);
+      circs.splice(toCi, 0, moved);
       return { ...f, circuitos: circs };
     });
   }

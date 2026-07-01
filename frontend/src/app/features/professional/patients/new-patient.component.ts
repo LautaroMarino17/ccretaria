@@ -145,7 +145,7 @@ export class NewPatientComponent {
   form = this.fb.group({
     nombre: ['', Validators.required],
     apellido: ['', Validators.required],
-    dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
+    dni: ['', Validators.pattern(/^\d{7,8}$/)],
     fecha_nacimiento: ['', Validators.required],
     sexo: ['', Validators.required],
     telefono: [''],

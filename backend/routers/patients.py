@@ -15,7 +15,7 @@ router = APIRouter()
 class PatientCreate(BaseModel):
     nombre: str
     apellido: str
-    dni: str
+    dni: Optional[str] = ""
     fecha_nacimiento: str
     sexo: str
     telefono: Optional[str] = None
@@ -74,7 +74,7 @@ def create_patient(body: PatientCreate, user: dict = Depends(get_current_user)):
     """
     require_professional(user)
 
-    if not _DNI_RE.match(body.dni.strip()):
+    if body.dni and not _DNI_RE.match(body.dni.strip()):
         raise HTTPException(status_code=400, detail="DNI inválido. Ingresá 7 u 8 dígitos sin puntos ni espacios.")
 
     db = get_firestore()
@@ -96,9 +96,12 @@ def create_patient(body: PatientCreate, user: dict = Depends(get_current_user)):
                 )
             return {"id": existing_doc.id, "message": "Paciente existente recuperado"}
 
-    # Verificar DNI único por profesional
-    existing_dni = ref.where("dni", "==", body.dni).limit(1).stream()
-    existing_dni_doc = next(existing_dni, None)
+    # Verificar DNI único por profesional (solo si se ingresó)
+    if not body.dni:
+        existing_dni_doc = None
+    else:
+        existing_dni = ref.where("dni", "==", body.dni).limit(1).stream()
+        existing_dni_doc = next(existing_dni, None)
     if existing_dni_doc:
         existing_data = existing_dni_doc.to_dict()
         # Si tiene email distinto, también es un conflicto

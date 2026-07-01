@@ -661,7 +661,8 @@ export class RecordHistoryComponent implements OnDestroy {
 
   private mediaRecorder: MediaRecorder | null = null;
   private mediaStream: MediaStream | null = null;
-  private audioChunks: Blob[] = [];
+  private _groups: Blob[] = [];
+  private _chunkInterval: any = null;
   private timerInterval: any = null;
   private waveInterval: any = null;
 
@@ -678,14 +679,16 @@ export class RecordHistoryComponent implements OnDestroy {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.mediaStream = stream;
-      this.audioChunks = [];
-      this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      this._groups = [];
 
-      this.mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) this.audioChunks.push(e.data);
-      };
+      this._startChunkRecorder(stream);
 
-      this.mediaRecorder.start(1000);
+      // Rotate recorder every 2 minutes so each chunk starts at timestamp 0
+      this._chunkInterval = setInterval(() => {
+        this.mediaRecorder?.stop();
+        this._startChunkRecorder(stream);
+      }, 120_000);
+
       this.state.set('recording');
       this.elapsedSeconds.set(0);
 
@@ -704,10 +707,22 @@ export class RecordHistoryComponent implements OnDestroy {
     }
   }
 
+  private _startChunkRecorder(stream: MediaStream) {
+    const rec = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    const blobs: Blob[] = [];
+    rec.ondataavailable = (e) => { if (e.data.size > 0) blobs.push(e.data); };
+    rec.onstop = () => { if (blobs.length) this._groups.push(new Blob(blobs, { type: 'audio/webm' })); };
+    rec.start(1000);
+    this.mediaRecorder = rec;
+  }
+
   private stopRecording() {
     clearInterval(this.timerInterval);
     clearInterval(this.waveInterval);
-    this.mediaRecorder!.onstop = () => {
+    clearInterval(this._chunkInterval);
+    const prevOnStop = this.mediaRecorder?.onstop;
+    this.mediaRecorder!.onstop = (e) => {
+      (prevOnStop as any)?.(e);
       this.mediaStream?.getTracks().forEach(t => t.stop());
       this.mediaStream = null;
     };
@@ -716,25 +731,14 @@ export class RecordHistoryComponent implements OnDestroy {
   }
 
   async processAudio() {
-    if (!this.audioChunks.length) return;
+    if (!this._groups.length) return;
     this.state.set('processing');
     this.processingStep.set(0);
     this.error.set('');
     this.cdr.detectChanges();
 
     try {
-    // Agrupar blobs en chunks de 2 minutos (120 blobs de 1s cada uno).
-    // Para grupos 2..N se prepende solo el header WebM (EBML + Tracks, sin
-    // datos de audio) para evitar timestamps no monotónicos que confunden a Whisper.
-    const BLOBS_PER_CHUNK = 120;
-    const webmHeader = await this._extractWebmHeader(this.audioChunks[0]);
-    const groups: Blob[] = [];
-    for (let i = 0; i < this.audioChunks.length; i += BLOBS_PER_CHUNK) {
-      const slice = this.audioChunks.slice(i, i + BLOBS_PER_CHUNK);
-      const blobsForGroup = i === 0 ? slice : [webmHeader, ...slice];
-      groups.push(new Blob(blobsForGroup, { type: 'audio/webm' }));
-    }
-
+    const groups = this._groups;
     const texts: string[] = [];
       let failedChunks = 0;
       for (let i = 0; i < groups.length; i++) {
@@ -796,7 +800,7 @@ export class RecordHistoryComponent implements OnDestroy {
       if (detail.includes('rate_limit_exceeded') || detail.includes('Rate limit') || httpErr?.status === 429) {
         this.error.set('');
         this.state.set('idle');
-        this.audioChunks = [];
+        this._groups = [];
         this.elapsedSeconds.set(0);
         this.cdr.detectChanges();
         alert('Límite de transcripciones alcanzado. Esperá unos minutos e intentá de nuevo.');
@@ -835,16 +839,6 @@ export class RecordHistoryComponent implements OnDestroy {
     }
   }
 
-  private async _extractWebmHeader(blob: Blob): Promise<Blob> {
-    const buf = new Uint8Array(await blob.arrayBuffer());
-    for (let i = 0; i < buf.length - 3; i++) {
-      if (buf[i] === 0x1f && buf[i+1] === 0x43 && buf[i+2] === 0xb6 && buf[i+3] === 0x75) {
-        return new Blob([buf.slice(0, i)], { type: 'audio/webm' });
-      }
-    }
-    return blob;
-  }
-
   fillManually() {
     this.error.set('');
     this.state.set('reviewing');
@@ -853,7 +847,7 @@ export class RecordHistoryComponent implements OnDestroy {
   startOver() {
     this.state.set('idle');
     this.error.set('');
-    this.audioChunks = [];
+    this._groups = [];
     this.elapsedSeconds.set(0);
   }
 
@@ -879,6 +873,7 @@ export class RecordHistoryComponent implements OnDestroy {
   ngOnDestroy() {
     clearInterval(this.timerInterval);
     clearInterval(this.waveInterval);
+    clearInterval(this._chunkInterval);
     if (this.mediaRecorder?.state === 'recording') {
       this.mediaRecorder.stop();
     }

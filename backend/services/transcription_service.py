@@ -1,5 +1,4 @@
 import os
-import time
 import tempfile
 import groq as groq_module
 from groq import Groq
@@ -12,7 +11,7 @@ _client = None
 def _get_client():
     global _client
     if _client is None:
-        _client = Groq(api_key=os.getenv("GROQ_API_KEY"), max_retries=0)
+        _client = Groq(api_key=os.getenv("GROQ_API_KEY"), max_retries=0, timeout=20.0)
     return _client
 
 
@@ -62,23 +61,17 @@ def _transcribe_chunk(chunk: bytes, chunk_name: str) -> str:
         tmp.write(chunk)
         tmp_path = tmp.name
     try:
-        last_err: Exception = RuntimeError("No attempts made")
-        for attempt in range(3):
-            try:
-                with open(tmp_path, "rb") as f:
-                    result = _get_client().audio.transcriptions.create(
-                        file=(chunk_name, f, "audio/webm"),
-                        model="whisper-large-v3",
-                        language="es",
-                        response_format="text"
-                    )
-                return result.strip() if isinstance(result, str) else result.text.strip()
-            except (groq_module.APITimeoutError, groq_module.InternalServerError) as e:
-                last_err = e
-                if attempt < 2:
-                    print(f"[Groq Whisper] Intento {attempt+1} fallido ({type(e).__name__}), reintentando en 5s...")
-                    time.sleep(5)
-        raise last_err
+        with open(tmp_path, "rb") as f:
+            result = _get_client().audio.transcriptions.create(
+                file=(chunk_name, f, "audio/webm"),
+                model="whisper-large-v3",
+                language="es",
+                response_format="text"
+            )
+        return result.strip() if isinstance(result, str) else result.text.strip()
+    except Exception as e:
+        print(f"[Groq Whisper] ERROR en {chunk_name} ({len(chunk)} bytes): {type(e).__name__}: {e}")
+        raise
     finally:
         try:
             os.unlink(tmp_path)

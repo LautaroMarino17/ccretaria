@@ -17,6 +17,7 @@ interface Medida {
   nombre: string; unidad: string; tipo: Tipo;
   valor?: string;
   v1?: string; v2?: string; v3?: string;
+  nombre_izq?: string; nombre_der?: string;
   valor_izq?: string; valor_der?: string;
   izq1?: string; izq2?: string; izq3?: string;
   der1?: string; der2?: string; der3?: string;
@@ -95,8 +96,8 @@ const EMPTY_F = (): EvalForm => ({
               <select [(ngModel)]="m.tipo" (ngModelChange)="resetMedida(m)" class="tipo-sel">
                 <option value="simple">Simple</option>
                 <option value="triple">Triple (3 intentos)</option>
-                <option value="bilateral">Bilateral (Izq / Der)</option>
-                <option value="bilateral_triple">Bilateral + Triple</option>
+                <option value="bilateral">Comparación de asimetría</option>
+                <option value="bilateral_triple">Comp. asimetría + Triple</option>
               </select>
               <input [(ngModel)]="m.unidad" placeholder="Unidad" class="unit-inp" />
               @if (form().medidas.length > 1) {
@@ -126,12 +127,12 @@ const EMPTY_F = (): EvalForm => ({
               </div>
             }
 
-            <!-- Bilateral -->
+            <!-- Comparación de asimetría -->
             @if (m.tipo === 'bilateral') {
-              <div class="mrow-vals">
-                <span class="side-lbl blue">Izq</span>
+              <div class="mrow-vals side-names-row">
+                <input [(ngModel)]="m.nombre_izq" placeholder="Nombre lado A" class="side-name-inp" />
                 <input [(ngModel)]="m.valor_izq" placeholder="0" type="number" class="val-inp sm" />
-                <span class="side-lbl orange">Der</span>
+                <input [(ngModel)]="m.nombre_der" placeholder="Nombre lado B" class="side-name-inp" />
                 <input [(ngModel)]="m.valor_der" placeholder="0" type="number" class="val-inp sm" />
                 @if (m.valor_izq || m.valor_der) {
                   <span class="computed-lbl">Asim: {{ calcAsim(m.valor_izq, m.valor_der) | number:'1.1-1' }}%</span>
@@ -139,22 +140,26 @@ const EMPTY_F = (): EvalForm => ({
               </div>
             }
 
-            <!-- Bilateral + Triple: grid limpio -->
+            <!-- Comp. asimetría + Triple: grid limpio -->
             @if (m.tipo === 'bilateral_triple') {
+              <div class="mrow-vals side-names-row">
+                <input [(ngModel)]="m.nombre_izq" placeholder="Nombre lado A" class="side-name-inp" />
+                <input [(ngModel)]="m.nombre_der" placeholder="Nombre lado B" class="side-name-inp" />
+              </div>
               <div class="bt-grid">
                 <div></div>
                 <span class="bt-hdr">T1</span><span class="bt-hdr">T2</span><span class="bt-hdr">T3</span>
-                <span class="bt-hdr" style="color:#6b7280">Prom</span>
-                <span class="side-lbl blue">Izq</span>
+                <span class="bt-hdr" style="color:#6b7280">Mejor</span>
+                <span class="side-lbl blue">{{ m.nombre_izq || 'Lado A' }}</span>
                 <input [(ngModel)]="m.izq1" placeholder="0" type="number" class="val-inp xs" />
                 <input [(ngModel)]="m.izq2" placeholder="0" type="number" class="val-inp xs" />
                 <input [(ngModel)]="m.izq3" placeholder="0" type="number" class="val-inp xs" />
-                <span class="computed-lbl">{{ calcProm(m.izq1,m.izq2,m.izq3) | number:'1.1-2' }}</span>
-                <span class="side-lbl orange">Der</span>
+                <span class="computed-lbl">{{ calcMax(m.izq1,m.izq2,m.izq3) | number:'1.1-2' }}</span>
+                <span class="side-lbl orange">{{ m.nombre_der || 'Lado B' }}</span>
                 <input [(ngModel)]="m.der1" placeholder="0" type="number" class="val-inp xs" />
                 <input [(ngModel)]="m.der2" placeholder="0" type="number" class="val-inp xs" />
                 <input [(ngModel)]="m.der3" placeholder="0" type="number" class="val-inp xs" />
-                <span class="computed-lbl">{{ calcProm(m.der1,m.der2,m.der3) | number:'1.1-2' }}</span>
+                <span class="computed-lbl">{{ calcMax(m.der1,m.der2,m.der3) | number:'1.1-2' }}</span>
               </div>
               @if (m.izq1 || m.der1) {
                 <span class="computed-lbl asim-form">Asim: {{ calcAsimBT(m) | number:'1.1-1' }}%</span>
@@ -283,14 +288,14 @@ const EMPTY_F = (): EvalForm => ({
                       @if (m.tipo === 'bilateral') {
                         <div class="vals-block">
                           <div class="side-row">
-                            <span class="dot blue-dot"></span><span class="side-name">Izq</span>
+                            <span class="dot blue-dot"></span><span class="side-name">{{ m.nombre_izq || 'A' }}</span>
                             <span class="side-num">{{ m.valor_izq }}</span>
                             @if (badgeForVal(pn(m.valor_izq), m.rango) !== null) {
                               <span class="badge sm" [class.badge-good]="badgeForVal(pn(m.valor_izq), m.rango)!" [class.badge-bad]="badgeForVal(pn(m.valor_izq), m.rango) === false">{{ badgeForVal(pn(m.valor_izq), m.rango) ? '✓' : '✗' }}</span>
                             }
                           </div>
                           <div class="side-row">
-                            <span class="dot orange-dot"></span><span class="side-name">Der</span>
+                            <span class="dot orange-dot"></span><span class="side-name">{{ m.nombre_der || 'B' }}</span>
                             <span class="side-num">{{ m.valor_der }}</span>
                             @if (badgeForVal(pn(m.valor_der), m.rango) !== null) {
                               <span class="badge sm" [class.badge-good]="badgeForVal(pn(m.valor_der), m.rango)!" [class.badge-bad]="badgeForVal(pn(m.valor_der), m.rango) === false">{{ badgeForVal(pn(m.valor_der), m.rango) ? '✓' : '✗' }}</span>
@@ -309,13 +314,13 @@ const EMPTY_F = (): EvalForm => ({
                       @if (m.tipo === 'bilateral_triple') {
                         <div class="vals-block">
                           <div class="bt-view-grid">
-                            <div></div><span class="bvh">T1</span><span class="bvh">T2</span><span class="bvh">T3</span><span class="bvh">Prom</span>
-                            <span class="dot blue-dot" style="margin:auto"></span>
+                            <div></div><span class="bvh">T1</span><span class="bvh">T2</span><span class="bvh">T3</span><span class="bvh">Mejor</span>
+                            <div class="bv-side"><span class="dot blue-dot"></span><span class="bv-name">{{ m.nombre_izq || 'A' }}</span></div>
                             <span class="bvn">{{ m.izq1 }}</span><span class="bvn">{{ m.izq2 }}</span><span class="bvn">{{ m.izq3 }}</span>
-                            <span class="bvn fw">{{ calcProm(m.izq1,m.izq2,m.izq3)|number:'1.1-2' }}</span>
-                            <span class="dot orange-dot" style="margin:auto"></span>
+                            <span class="bvn fw">{{ calcMax(m.izq1,m.izq2,m.izq3)|number:'1.1-2' }}</span>
+                            <div class="bv-side"><span class="dot orange-dot"></span><span class="bv-name">{{ m.nombre_der || 'B' }}</span></div>
                             <span class="bvn">{{ m.der1 }}</span><span class="bvn">{{ m.der2 }}</span><span class="bvn">{{ m.der3 }}</span>
-                            <span class="bvn fw">{{ calcProm(m.der1,m.der2,m.der3)|number:'1.1-2' }}</span>
+                            <span class="bvn fw">{{ calcMax(m.der1,m.der2,m.der3)|number:'1.1-2' }}</span>
                           </div>
                           <div class="asim-row">
                             <span class="asim-lbl-v">Asim:</span>
@@ -387,6 +392,8 @@ const EMPTY_F = (): EvalForm => ({
     .btn-rm:hover { background:#ef4444; color:white; }
 
     .mrow-vals { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .side-names-row { gap:6px; }
+    .side-name-inp { width:120px; font-size:12px; padding:6px 8px; }
     .val-inp { width:100px; }
     .val-inp.sm { width:80px; }
     .val-inp.xs { width:60px; padding:8px; }
@@ -456,10 +463,12 @@ const EMPTY_F = (): EvalForm => ({
     .asim-num { font-size:13px; font-weight:600; color:#374151; }
 
     /* bilateral_triple view */
-    .bt-view-grid { display:grid; grid-template-columns:14px repeat(3,1fr) auto; gap:4px 8px; align-items:center; }
+    .bt-view-grid { display:grid; grid-template-columns:auto repeat(3,1fr) auto; gap:4px 8px; align-items:center; }
     .bvh { font-size:10px; color:#9ca3af; text-align:center; font-weight:600; }
     .bvn { font-size:12px; color:#374151; text-align:center; }
     .bvn.fw { font-weight:700; color:#111827; }
+    .bv-side { display:flex; align-items:center; gap:3px; }
+    .bv-name { font-size:10px; color:#374151; font-weight:600; max-width:40px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     .obs-box { background:#fffbeb; border-radius:10px; padding:12px 14px; margin-top:10px; }
     .obs-label { display:block; font-size:11px; font-weight:600; color:#92400e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
@@ -586,8 +595,8 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       const base: any = { nombre: m.nombre || '', unidad: m.unidad || '', tipo: m.tipo };
       if (m.tipo === 'simple')          { base.valor = m.valor ?? ''; }
       if (m.tipo === 'triple')          { base.v1 = m.v1 ?? ''; base.v2 = m.v2 ?? ''; base.v3 = m.v3 ?? ''; }
-      if (m.tipo === 'bilateral')       { base.valor_izq = m.valor_izq ?? ''; base.valor_der = m.valor_der ?? ''; }
-      if (m.tipo === 'bilateral_triple'){ base.izq1 = m.izq1 ?? ''; base.izq2 = m.izq2 ?? ''; base.izq3 = m.izq3 ?? ''; base.der1 = m.der1 ?? ''; base.der2 = m.der2 ?? ''; base.der3 = m.der3 ?? ''; }
+      if (m.tipo === 'bilateral')       { base.valor_izq = m.valor_izq ?? ''; base.valor_der = m.valor_der ?? ''; base.nombre_izq = m.nombre_izq ?? ''; base.nombre_der = m.nombre_der ?? ''; }
+      if (m.tipo === 'bilateral_triple'){ base.izq1 = m.izq1 ?? ''; base.izq2 = m.izq2 ?? ''; base.izq3 = m.izq3 ?? ''; base.der1 = m.der1 ?? ''; base.der2 = m.der2 ?? ''; base.der3 = m.der3 ?? ''; base.nombre_izq = m.nombre_izq ?? ''; base.nombre_der = m.nombre_der ?? ''; }
       if (m.rango?.limite != null) {
         base.rango = { limite: Number(m.rango.limite), mayor_es_mejor: m.rango.mayor_es_mejor !== false, asimetria_max: m.rango.asimetria_max != null ? Number(m.rango.asimetria_max) : null };
       }
@@ -609,13 +618,17 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     return vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : 0;
   }
 
+  calcMax(a?: string, b?: string, c?: string): number {
+    return Math.max(this.pn(a), this.pn(b), this.pn(c));
+  }
+
   calcAsim(izq?: string, der?: string): number {
     const l = this.pn(izq), r = this.pn(der);
     const mx = Math.max(l, r);
     return mx === 0 ? 0 : (1 - Math.min(l, r) / mx) * 100;
   }
   calcAsimBT(m: Medida): number {
-    const l = this.calcProm(m.izq1, m.izq2, m.izq3), r = this.calcProm(m.der1, m.der2, m.der3);
+    const l = this.calcMax(m.izq1, m.izq2, m.izq3), r = this.calcMax(m.der1, m.der2, m.der3);
     const mx = Math.max(l, r);
     return mx === 0 ? 0 : (1 - Math.min(l, r) / mx) * 100;
   }
@@ -639,7 +652,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
   }
 
   tipoLabel(t?: Tipo): string {
-    return ({ simple:'Simple', triple:'Triple', bilateral:'Bilateral', bilateral_triple:'Bil.+Triple' } as any)[t || 'simple'] ?? t ?? '';
+    return ({ simple:'Simple', triple:'Triple', bilateral:'Comparación', bilateral_triple:'Comp.+Triple' } as any)[t || 'simple'] ?? t ?? '';
   }
 
   // ── SVG chart ────────────────────────────────────────────────────────────────
@@ -721,14 +734,15 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       };
     }
 
-    // bilateral y bilateral_triple: 2 barras (izq/der o promedios)
+    // bilateral y bilateral_triple: 2 barras
     let izq: number, der: number;
     if (m.tipo === 'bilateral') {
       izq = pn(m.valor_izq); der = pn(m.valor_der);
     } else {
-      izq = this.calcProm(m.izq1, m.izq2, m.izq3);
-      der = this.calcProm(m.der1, m.der2, m.der3);
+      izq = this.calcMax(m.izq1, m.izq2, m.izq3);
+      der = this.calcMax(m.der1, m.der2, m.der3);
     }
+    const nA = m.nombre_izq || 'A', nB = m.nombre_der || 'B';
     const mxChart = Math.max(izq, der);
     const asimPct = mxChart === 0 ? 0 : (1 - Math.min(izq, der) / mxChart) * 100;
     const foot = `Asim: ${asimPct.toFixed(1)}%`;
@@ -736,8 +750,8 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     const bw2 = Math.floor(iW * 0.3), g = Math.floor((iW - 2*bw2) / 3);
     return {
       bars: [
-        { xPx: g, wPx: bw2, hPx: sc(izq), color: BLUE, topLabel: izq ? izq.toFixed(1) : undefined, botLabel: 'Izq' },
-        { xPx: 2*g+bw2, wPx: bw2, hPx: sc(der), color: ORG, topLabel: der ? der.toFixed(1) : undefined, botLabel: 'Der' }
+        { xPx: g, wPx: bw2, hPx: sc(izq), color: BLUE, topLabel: izq ? izq.toFixed(1) : undefined, botLabel: nA },
+        { xPx: 2*g+bw2, wPx: bw2, hPx: sc(der), color: ORG, topLabel: der ? der.toFixed(1) : undefined, botLabel: nB }
       ],
       refLines, footnote: foot + (asimOk === null ? '' : asimOk ? ' ✓' : ' ✗')
     };
@@ -774,8 +788,8 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       eRow.getCell(5).border=thin(grayBd);
       if (m.tipo==='simple'){vc.value=this.pn(m.valor);vd.value=m.unidad||'';ve.value=this._badgeText(this.badgeForVal(this.pn(m.valor),m.rango));}
       else if(m.tipo==='triple'){const p=this.calcProm(m.v1,m.v2,m.v3);vc.value=`T1:${m.v1} T2:${m.v2} T3:${m.v3}`;vd.value=`Prom: ${p.toFixed(2)} ${m.unidad||''}`;ve.value=this._badgeText(this.badgeForVal(p,m.rango));}
-      else if(m.tipo==='bilateral'){vc.value=`Izq: ${m.valor_izq}`;vd.value=`Der: ${m.valor_der}`;ve.value=`Asim: ${this.calcAsim(m.valor_izq,m.valor_der).toFixed(1)}%`;}
-      else{const pI=this.calcProm(m.izq1,m.izq2,m.izq3),pD=this.calcProm(m.der1,m.der2,m.der3);vc.value=`Izq: ${pI.toFixed(2)} (${m.izq1}/${m.izq2}/${m.izq3})`;vd.value=`Der: ${pD.toFixed(2)} (${m.der1}/${m.der2}/${m.der3})`;ve.value=`Asim: ${this.calcAsimBT(m).toFixed(1)}%`;}
+      else if(m.tipo==='bilateral'){const nA=m.nombre_izq||'A',nB=m.nombre_der||'B';vc.value=`${nA}: ${m.valor_izq}`;vd.value=`${nB}: ${m.valor_der}`;ve.value=`Asim: ${this.calcAsim(m.valor_izq,m.valor_der).toFixed(1)}%`;}
+      else{const nA=m.nombre_izq||'A',nB=m.nombre_der||'B';const mI=this.calcMax(m.izq1,m.izq2,m.izq3),mD=this.calcMax(m.der1,m.der2,m.der3);vc.value=`${nA}: ${mI.toFixed(2)} (${m.izq1}/${m.izq2}/${m.izq3})`;vd.value=`${nB}: ${mD.toFixed(2)} (${m.der1}/${m.der2}/${m.der3})`;ve.value=`Asim: ${this.calcAsimBT(m).toFixed(1)}%`;}
       try {
         const b64=this._chartPng(m as Medida,400,100);
         const iid=wb.addImage({base64:b64,extension:'png'});

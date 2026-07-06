@@ -134,7 +134,7 @@ const EMPTY_F = (): EvalForm => ({
                 <span class="side-lbl orange">Der</span>
                 <input [(ngModel)]="m.valor_der" placeholder="0" type="number" class="val-inp sm" />
                 @if (m.valor_izq || m.valor_der) {
-                  <span class="computed-lbl">Asim: {{ calcAsim(m.valor_izq, m.valor_der) | number:'1.1-2' }}</span>
+                  <span class="computed-lbl">Asim: {{ calcAsim(m.valor_izq, m.valor_der) | number:'1.1-1' }}%</span>
                 }
               </div>
             }
@@ -157,7 +157,7 @@ const EMPTY_F = (): EvalForm => ({
                 <span class="computed-lbl">{{ calcProm(m.der1,m.der2,m.der3) | number:'1.1-2' }}</span>
               </div>
               @if (m.izq1 || m.der1) {
-                <span class="computed-lbl asim-form">Asim: {{ calcAsimBT(m) | number:'1.1-2' }} {{ m.unidad }}</span>
+                <span class="computed-lbl asim-form">Asim: {{ calcAsimBT(m) | number:'1.1-1' }}%</span>
               }
             }
 
@@ -298,7 +298,7 @@ const EMPTY_F = (): EvalForm => ({
                           </div>
                           <div class="asim-row">
                             <span class="asim-lbl-v">Asim:</span>
-                            <span class="asim-num">{{ calcAsim(m.valor_izq, m.valor_der) | number:'1.1-2' }} {{ m.unidad }}</span>
+                            <span class="asim-num">{{ calcAsim(m.valor_izq, m.valor_der) | number:'1.1-1' }}%</span>
                             @if (badgeForAsim(calcAsim(m.valor_izq, m.valor_der), m.rango) !== null) {
                               <span class="badge sm" [class.badge-good]="badgeForAsim(calcAsim(m.valor_izq, m.valor_der), m.rango)!" [class.badge-bad]="badgeForAsim(calcAsim(m.valor_izq, m.valor_der), m.rango) === false">{{ badgeForAsim(calcAsim(m.valor_izq, m.valor_der), m.rango) ? '✓' : '✗' }}</span>
                             }
@@ -319,7 +319,7 @@ const EMPTY_F = (): EvalForm => ({
                           </div>
                           <div class="asim-row">
                             <span class="asim-lbl-v">Asim:</span>
-                            <span class="asim-num">{{ calcAsimBT(m) | number:'1.1-2' }} {{ m.unidad }}</span>
+                            <span class="asim-num">{{ calcAsimBT(m) | number:'1.1-1' }}%</span>
                             @if (badgeForAsim(calcAsimBT(m), m.rango) !== null) {
                               <span class="badge sm" [class.badge-good]="badgeForAsim(calcAsimBT(m), m.rango)!" [class.badge-bad]="badgeForAsim(calcAsimBT(m), m.rango) === false">{{ badgeForAsim(calcAsimBT(m), m.rango) ? '✓' : '✗' }}</span>
                             }
@@ -609,8 +609,14 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     return vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : 0;
   }
 
-  calcAsim(izq?: string, der?: string): number { return Math.abs(this.pn(izq) - this.pn(der)); }
-  calcAsimBT(m: Medida): number { return Math.abs(this.calcProm(m.izq1, m.izq2, m.izq3) - this.calcProm(m.der1, m.der2, m.der3)); }
+  calcAsim(izq?: string, der?: string): number {
+    const l = this.pn(izq), r = this.pn(der);
+    return (l + r) === 0 ? 0 : (Math.abs(l - r) / ((l + r) / 2)) * 100;
+  }
+  calcAsimBT(m: Medida): number {
+    const l = this.calcProm(m.izq1, m.izq2, m.izq3), r = this.calcProm(m.der1, m.der2, m.der3);
+    return (l + r) === 0 ? 0 : (Math.abs(l - r) / ((l + r) / 2)) * 100;
+  }
 
   badgeForVal(v: number, r?: any): boolean | null {
     if (!r) return null;
@@ -714,16 +720,16 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     }
 
     // bilateral y bilateral_triple: 2 barras (izq/der o promedios)
-    let izq: number, der: number, foot: string;
+    let izq: number, der: number;
     if (m.tipo === 'bilateral') {
       izq = pn(m.valor_izq); der = pn(m.valor_der);
-      foot = `Asim: ${Math.abs(izq-der).toFixed(1)}`;
     } else {
       izq = this.calcProm(m.izq1, m.izq2, m.izq3);
       der = this.calcProm(m.der1, m.der2, m.der3);
-      foot = `Asim: ${Math.abs(izq-der).toFixed(1)}`;
     }
-    const asimOk = r?.asimetria_max != null ? Math.abs(izq-der) <= r.asimetria_max : null;
+    const asimPct = (izq + der) > 0 ? Math.abs(izq - der) / ((izq + der) / 2) * 100 : 0;
+    const foot = `Asim: ${asimPct.toFixed(1)}%`;
+    const asimOk = r?.asimetria_max != null ? asimPct <= r.asimetria_max : null;
     const bw2 = Math.floor(iW * 0.3), g = Math.floor((iW - 2*bw2) / 3);
     return {
       bars: [
@@ -765,12 +771,12 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       eRow.getCell(5).border=thin(grayBd);
       if (m.tipo==='simple'){vc.value=this.pn(m.valor);vd.value=m.unidad||'';ve.value=this._badgeText(this.badgeForVal(this.pn(m.valor),m.rango));}
       else if(m.tipo==='triple'){const p=this.calcProm(m.v1,m.v2,m.v3);vc.value=`T1:${m.v1} T2:${m.v2} T3:${m.v3}`;vd.value=`Prom: ${p.toFixed(2)} ${m.unidad||''}`;ve.value=this._badgeText(this.badgeForVal(p,m.rango));}
-      else if(m.tipo==='bilateral'){vc.value=`Izq: ${m.valor_izq}`;vd.value=`Der: ${m.valor_der}`;ve.value=`Asim: ${this.calcAsim(m.valor_izq,m.valor_der).toFixed(2)}`;}
-      else{const pI=this.calcProm(m.izq1,m.izq2,m.izq3),pD=this.calcProm(m.der1,m.der2,m.der3);vc.value=`Izq: ${pI.toFixed(2)} (${m.izq1}/${m.izq2}/${m.izq3})`;vd.value=`Der: ${pD.toFixed(2)} (${m.der1}/${m.der2}/${m.der3})`;ve.value=`Asim: ${this.calcAsimBT(m).toFixed(2)}`;}
+      else if(m.tipo==='bilateral'){vc.value=`Izq: ${m.valor_izq}`;vd.value=`Der: ${m.valor_der}`;ve.value=`Asim: ${this.calcAsim(m.valor_izq,m.valor_der).toFixed(1)}%`;}
+      else{const pI=this.calcProm(m.izq1,m.izq2,m.izq3),pD=this.calcProm(m.der1,m.der2,m.der3);vc.value=`Izq: ${pI.toFixed(2)} (${m.izq1}/${m.izq2}/${m.izq3})`;vd.value=`Der: ${pD.toFixed(2)} (${m.der1}/${m.der2}/${m.der3})`;ve.value=`Asim: ${this.calcAsimBT(m).toFixed(1)}%`;}
       try {
-        const b64=this._chartPng(m as Medida,260,90);
+        const b64=this._chartPng(m as Medida,400,100);
         const iid=wb.addImage({base64:b64,extension:'png'});
-        ws.addImage(iid,{tl:{col:5,row:rowStart-1},ext:{width:260,height:90}} as any);
+        ws.addImage(iid,{tl:{col:5,row:rowStart-1},br:{col:6,row:rowStart},editAs:'twoCell'} as any);
       } catch {}
       row++;
     }

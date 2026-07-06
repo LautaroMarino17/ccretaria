@@ -12,6 +12,10 @@ _DNI_RE = re.compile(r'^\d{7,8}$')
 router = APIRouter()
 
 
+def _registry_key(email: str) -> str:
+    return email.strip().lower()
+
+
 class PatientCreate(BaseModel):
     nombre: str
     apellido: str

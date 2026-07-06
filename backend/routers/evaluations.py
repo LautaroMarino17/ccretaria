@@ -8,17 +8,12 @@ from google.cloud.firestore_v1 import SERVER_TIMESTAMP
 router = APIRouter()
 
 
-class Medida(BaseModel):
-    nombre: str
-    valor: str
-    unidad: Optional[str] = ""
-
-
 class EvaluationCreate(BaseModel):
-    patient_id: str
+    patient_id: Optional[str] = ""
+    patient_name: Optional[str] = ""
     nombre: str
     fecha: str
-    medidas: Optional[List[Medida]] = []
+    medidas: Optional[List[dict]] = []
     observaciones: Optional[str] = ""
     imagenes: Optional[List[str]] = []
 
@@ -26,9 +21,10 @@ class EvaluationCreate(BaseModel):
 class EvaluationUpdate(BaseModel):
     nombre: Optional[str] = None
     fecha: Optional[str] = None
-    medidas: Optional[List[Medida]] = None
+    medidas: Optional[List[dict]] = None
     observaciones: Optional[str] = None
     imagenes: Optional[List[str]] = None
+    patient_name: Optional[str] = None
 
 
 @router.get("/patient/{patient_id}")
@@ -87,11 +83,9 @@ def create_evaluation(body: EvaluationCreate, user: dict = Depends(get_current_u
     db = get_firestore()
 
     data = body.model_dump()
-    patient_id = data.pop("patient_id")
+    patient_id = data.pop("patient_id") or "_guest"
     data["professional_uid"] = user["uid"]
     data["created_at"] = SERVER_TIMESTAMP
-    if data.get("medidas"):
-        data["medidas"] = [m if isinstance(m, dict) else m.model_dump() for m in body.medidas]
 
     ref = db.collection("professionals").document(user["uid"]) \
         .collection("patients").document(patient_id) \

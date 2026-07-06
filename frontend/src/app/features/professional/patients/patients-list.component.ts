@@ -16,12 +16,18 @@ import { Patient } from '../../../core/models/patient.model';
           <h1>Pacientes</h1>
           <p class="subtitle">{{ patients().length }} paciente(s) registrado(s)</p>
         </div>
-        <a routerLink="/professional/patients/new" class="btn-primary">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Nuevo paciente
-        </a>
+        <div class="header-btns">
+          <a routerLink="/professional/patients/_guest/evaluations" class="btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Evaluaciones sin registrar
+          </a>
+          <a routerLink="/professional/patients/new" class="btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nuevo paciente
+          </a>
+        </div>
       </div>
 
       <div class="search-bar">
@@ -71,9 +77,17 @@ import { Patient } from '../../../core/models/patient.model';
     </div>
   `,
   styles: [`
-    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 12px; flex-wrap: wrap; }
     h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
     .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
+    .header-btns { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-secondary {
+      display: flex; align-items: center; gap: 6px;
+      padding: 10px 14px; background: white; color: #374151;
+      border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px; font-weight: 500;
+      cursor: pointer; text-decoration: none; white-space: nowrap;
+    }
+    .btn-secondary:hover { border-color: #16a34a; color: #16a34a; }
     .btn-primary {
       display: flex; align-items: center; gap: 8px;
       padding: 10px 18px; background: #16a34a; color: white;

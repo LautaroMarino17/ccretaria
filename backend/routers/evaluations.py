@@ -15,17 +15,17 @@ class EvaluationCreate(BaseModel):
     fecha: str
     medidas: Optional[List[Any]] = []
     observaciones: Optional[str] = ""
-    imagenes: Optional[List[str]] = []
+    imagenes: Optional[List[Any]] = []
 
 
 class EvaluationUpdate(BaseModel):
     model_config = ConfigDict(extra='ignore')
-    nombre: Optional[str] = None
-    fecha: Optional[str] = None
+    nombre: Optional[Any] = None
+    fecha: Optional[Any] = None
     medidas: Optional[List[Any]] = None
-    observaciones: Optional[str] = None
-    imagenes: Optional[List[str]] = None
-    patient_name: Optional[str] = None
+    observaciones: Optional[Any] = None
+    imagenes: Optional[List[Any]] = None
+    patient_name: Optional[Any] = None
 
 
 @router.get("/patient/{patient_id}")
@@ -112,13 +112,24 @@ def update_evaluation(
     if not ref.get().exists:
         raise HTTPException(status_code=404, detail="Evaluación no encontrada")
 
-    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    raw = body.model_dump()
+    updates = {}
+    for k, v in raw.items():
+        if v is None:
+            continue
+        if k in ("nombre", "fecha", "observaciones", "patient_name") and not isinstance(v, str):
+            v = str(v)
+        if k == "imagenes" and isinstance(v, list):
+            v = [str(i) for i in v if i is not None]
+        updates[k] = v
+
     if body.medidas is not None:
-        updates["medidas"] = [m if isinstance(m, dict) else m.model_dump() for m in body.medidas]
+        updates["medidas"] = [m if isinstance(m, dict) else vars(m) for m in body.medidas]
 
     if not updates:
         raise HTTPException(status_code=400, detail="No hay campos para actualizar")
 
+    print(f"[EvalUpdate] Saving fields: {list(updates.keys())}")
     ref.update(updates)
     return {"message": "Evaluación actualizada"}
 

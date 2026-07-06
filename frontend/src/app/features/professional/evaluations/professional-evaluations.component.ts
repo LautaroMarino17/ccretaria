@@ -562,8 +562,9 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
     const errMsg = (err: any) => {
       const d = err.error?.detail;
-      if (!d) return 'Error al guardar';
-      return Array.isArray(d) ? d.map((e: any) => e.msg || JSON.stringify(e)).join('; ') : String(d);
+      if (!d) return `Error ${err.status || ''}: ${err.message || 'al guardar'}`;
+      if (Array.isArray(d)) return d.map((e: any) => `[${(e.loc||[]).slice(1).join('.')}] ${e.msg||JSON.stringify(e)}`).join('; ');
+      return String(d);
     };
 
     if (id) {

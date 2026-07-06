@@ -248,7 +248,6 @@ const EMPTY_F = (): EvalForm => ({
                       <div class="mcard-title-row">
                         <span class="mcard-name">{{ m.nombre }}</span>
                         @if (m.unidad) { <span class="mcard-unit">{{ m.unidad }}</span> }
-                        <span class="tipo-chip">{{ tipoLabel(m.tipo) }}</span>
                       </div>
 
                       @if (m.tipo === 'simple') {
@@ -746,25 +745,24 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     const grayBg = { argb: 'FFf3f4f6' }, grayBd = { argb: 'FFd1d5db' };
     const amberBg= { argb: 'FFfffbeb' }, amberBd= { argb: 'FFd97706' }, amberT = { argb: 'FF78350f' };
     const thin = (c: any) => ({ top:{style:'thin' as const,color:c},bottom:{style:'thin' as const,color:c},left:{style:'thin' as const,color:c},right:{style:'thin' as const,color:c} });
-    ws.columns = [{width:26},{width:14},{width:22},{width:22},{width:16},{width:4},{width:38}];
-    ws.mergeCells('A1:G1');
+    ws.columns = [{width:28},{width:24},{width:24},{width:16},{width:4},{width:38}];
+    ws.mergeCells('A1:F1');
     Object.assign(ws.getCell('A1'), { value:ev.nombre, font:{bold:true,size:15,color:white}, fill:{type:'pattern',pattern:'solid',fgColor:green}, alignment:{vertical:'middle',horizontal:'center'} });
     ws.getRow(1).height = 32;
-    ws.mergeCells('A2:G2');
+    ws.mergeCells('A2:F2');
     Object.assign(ws.getCell('A2'), { value:this.formatDate(ev.fecha)+(ev.patient_name?` · ${ev.patient_name}`:''), font:{italic:true,size:11,color:{argb:'FF6b7280'}}, fill:{type:'pattern',pattern:'solid',fgColor:{argb:'FFf9fafb'}}, alignment:{horizontal:'center'} });
     ws.getRow(2).height = 18;
     let row = 4;
     const hRow = ws.getRow(row);
-    ['MEDIDA','TIPO','VALOR / IZQ','DER','CLASIF / ASIM','','GRÁFICO'].forEach((h,i)=>{
+    ['MEDIDA','VALOR / IZQ','DER','CLASIF / ASIM','','GRÁFICO'].forEach((h,i)=>{
       const c = hRow.getCell(i+1); c.value=h; c.font={bold:true,size:9,color:{argb:'FF374151'}}; c.fill={type:'pattern',pattern:'solid',fgColor:grayBg}; c.alignment={horizontal:'center',vertical:'middle'}; c.border=thin(grayBd);
     }); hRow.height=22; row++;
     for (const m of (ev.medidas||[]) as Medida[]) {
       const rowStart = row; const eRow = ws.getRow(row); eRow.height=70;
       const ca=eRow.getCell(1); ca.value=m.nombre||''; ca.font={bold:true,size:11,color:{argb:'FF166534'}}; ca.alignment={vertical:'middle',wrapText:true}; ca.border=thin(grayBd);
-      const cb=eRow.getCell(2); cb.value=this.tipoLabel(m.tipo as Tipo); cb.font={size:10,color:{argb:'FF6d28d9'}}; cb.alignment={vertical:'middle',horizontal:'center'}; cb.border=thin(grayBd);
-      const [vc,vd,ve]=[eRow.getCell(3),eRow.getCell(4),eRow.getCell(5)];
+      const [vc,vd,ve]=[eRow.getCell(2),eRow.getCell(3),eRow.getCell(4)];
       [vc,vd,ve].forEach(c=>{c.font={size:11};c.alignment={vertical:'middle',horizontal:'center'};c.border=thin(grayBd);});
-      eRow.getCell(6).border=thin(grayBd);
+      eRow.getCell(5).border=thin(grayBd);
       if (m.tipo==='simple'){vc.value=this.pn(m.valor);vd.value=m.unidad||'';ve.value=this._badgeText(this.badgeForVal(this.pn(m.valor),m.rango));}
       else if(m.tipo==='triple'){const p=this.calcProm(m.v1,m.v2,m.v3);vc.value=`T1:${m.v1} T2:${m.v2} T3:${m.v3}`;vd.value=`Prom: ${p.toFixed(2)} ${m.unidad||''}`;ve.value=this._badgeText(this.badgeForVal(p,m.rango));}
       else if(m.tipo==='bilateral'){vc.value=`Izq: ${m.valor_izq}`;vd.value=`Der: ${m.valor_der}`;ve.value=`Asim: ${this.calcAsim(m.valor_izq,m.valor_der).toFixed(2)}`;}
@@ -772,12 +770,12 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       try {
         const b64=this._chartPng(m as Medida,260,90);
         const iid=wb.addImage({base64:b64,extension:'png'});
-        ws.addImage(iid,{tl:{col:6,row:rowStart-1},ext:{width:260,height:90}} as any);
+        ws.addImage(iid,{tl:{col:5,row:rowStart-1},ext:{width:260,height:90}} as any);
       } catch {}
       row++;
     }
-    if (ev.observaciones){row++;ws.mergeCells(`A${row}:G${row}`);const oc=ws.getCell(`A${row}`);oc.value=`Observaciones: ${ev.observaciones}`;oc.font={italic:true,size:11,color:amberT};oc.fill={type:'pattern',pattern:'solid',fgColor:amberBg};oc.border=thin(amberBd);oc.alignment={wrapText:true,vertical:'middle',indent:1};ws.getRow(row).height=28;row++;}
-    if (ev.imagenes?.length){row++;ws.mergeCells(`A${row}:G${row}`);ws.getCell(`A${row}`).value='IMÁGENES';ws.getCell(`A${row}`).font={bold:true,size:9,color:{argb:'FF374151'}};ws.getCell(`A${row}`).fill={type:'pattern',pattern:'solid',fgColor:grayBg};ws.getRow(row).height=18;row++;
+    if (ev.observaciones){row++;ws.mergeCells(`A${row}:F${row}`);const oc=ws.getCell(`A${row}`);oc.value=`Observaciones: ${ev.observaciones}`;oc.font={italic:true,size:11,color:amberT};oc.fill={type:'pattern',pattern:'solid',fgColor:amberBg};oc.border=thin(amberBd);oc.alignment={wrapText:true,vertical:'middle',indent:1};ws.getRow(row).height=28;row++;}
+    if (ev.imagenes?.length){row++;ws.mergeCells(`A${row}:F${row}`);ws.getCell(`A${row}`).value='IMÁGENES';ws.getCell(`A${row}`).font={bold:true,size:9,color:{argb:'FF374151'}};ws.getCell(`A${row}`).fill={type:'pattern',pattern:'solid',fgColor:grayBg};ws.getRow(row).height=18;row++;
       for(const imgUrl of ev.imagenes){try{const b64=await this._tryLoadImageBase64(imgUrl);if(b64){const ext=imgUrl.toLowerCase().includes('.png')?'png':'jpeg';const iid=wb.addImage({base64:b64,extension:ext});ws.getRow(row).height=150;ws.addImage(iid,{tl:{col:0,row:row-1},ext:{width:300,height:200}}as any);row+=12;}}catch{}}
     }
     const buf=await wb.xlsx.writeBuffer();

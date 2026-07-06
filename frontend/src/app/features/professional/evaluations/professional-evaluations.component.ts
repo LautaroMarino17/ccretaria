@@ -611,11 +611,13 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
   calcAsim(izq?: string, der?: string): number {
     const l = this.pn(izq), r = this.pn(der);
-    return (l + r) === 0 ? 0 : (Math.abs(l - r) / ((l + r) / 2)) * 100;
+    const mx = Math.max(l, r);
+    return mx === 0 ? 0 : (1 - Math.min(l, r) / mx) * 100;
   }
   calcAsimBT(m: Medida): number {
     const l = this.calcProm(m.izq1, m.izq2, m.izq3), r = this.calcProm(m.der1, m.der2, m.der3);
-    return (l + r) === 0 ? 0 : (Math.abs(l - r) / ((l + r) / 2)) * 100;
+    const mx = Math.max(l, r);
+    return mx === 0 ? 0 : (1 - Math.min(l, r) / mx) * 100;
   }
 
   badgeForVal(v: number, r?: any): boolean | null {
@@ -727,7 +729,8 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       izq = this.calcProm(m.izq1, m.izq2, m.izq3);
       der = this.calcProm(m.der1, m.der2, m.der3);
     }
-    const asimPct = (izq + der) > 0 ? Math.abs(izq - der) / ((izq + der) / 2) * 100 : 0;
+    const mxChart = Math.max(izq, der);
+    const asimPct = mxChart === 0 ? 0 : (1 - Math.min(izq, der) / mxChart) * 100;
     const foot = `Asim: ${asimPct.toFixed(1)}%`;
     const asimOk = r?.asimetria_max != null ? asimPct <= r.asimetria_max : null;
     const bw2 = Math.floor(iW * 0.3), g = Math.floor((iW - 2*bw2) / 3);

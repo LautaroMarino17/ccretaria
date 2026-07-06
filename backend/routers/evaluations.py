@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, List, Any
 from dependencies import get_current_user, require_professional
 from services.firebase_service import get_firestore, get_user, get_all_patient_links
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
@@ -13,15 +13,16 @@ class EvaluationCreate(BaseModel):
     patient_name: Optional[str] = ""
     nombre: str
     fecha: str
-    medidas: Optional[List[dict]] = []
+    medidas: Optional[List[Any]] = []
     observaciones: Optional[str] = ""
     imagenes: Optional[List[str]] = []
 
 
 class EvaluationUpdate(BaseModel):
+    model_config = ConfigDict(extra='ignore')
     nombre: Optional[str] = None
     fecha: Optional[str] = None
-    medidas: Optional[List[dict]] = None
+    medidas: Optional[List[Any]] = None
     observaciones: Optional[str] = None
     imagenes: Optional[List[str]] = None
     patient_name: Optional[str] = None

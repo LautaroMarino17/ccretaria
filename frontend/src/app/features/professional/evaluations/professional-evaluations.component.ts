@@ -896,7 +896,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     ${obsSection}
     <div class="footer">Reporte generado por SecretarIA</div>
   </div>
-  <script>window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 600); });<\/script>
+  <script><\/script>
 </body></html>`;
   }
 

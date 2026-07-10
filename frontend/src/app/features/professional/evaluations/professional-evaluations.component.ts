@@ -896,6 +896,10 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     ${obsSection}
     <div class="footer">Reporte generado por SecretarIA</div>
   </div>
+  <div class="print-bar">
+    <span>Vista previa del reporte</span>
+    <button class="print-btn" onclick="window.print()">Imprimir / Guardar PDF</button>
+  </div>
   <script><\/script>
 </body></html>`;
   }
@@ -1002,8 +1006,14 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       .analysis-list li { padding: 4px 0; font-size: 12px; line-height: 1.5; color: #374151; }
       .obs-block { background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 12px 14px; margin-top: 16px; font-size: 12px; color: #78350f; }
       .footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #9ca3af; text-align: center; font-style: italic; }
+      .print-bar { position: fixed; top: 0; left: 0; right: 0; background: #16a34a; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 999; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+      .print-bar span { color: white; font-size: 14px; font-weight: 500; }
+      .print-btn { background: white; color: #16a34a; border: none; border-radius: 8px; padding: 8px 20px; font-size: 14px; font-weight: 700; cursor: pointer; }
+      .print-btn:hover { background: #f0fdf4; }
+      body { padding-top: 52px; }
       @media print {
-        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .print-bar { display: none; }
+        body { padding-top: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .meas-block { break-inside: avoid; }
         .page { padding: 20px; }
       }

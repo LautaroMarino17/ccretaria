@@ -68,6 +68,10 @@ export const routes: Routes = [
           .then(m => m.ProfessionalEvaluationsComponent)
       },
       {
+        path: 'evaluations',
+        redirectTo: 'patients/_guest/evaluations'
+      },
+      {
         path: 'patients/:patientId/histories',
         loadComponent: () => import('./features/professional/patients/patient-clinical-histories.component')
           .then(m => m.PatientClinicalHistoriesComponent)

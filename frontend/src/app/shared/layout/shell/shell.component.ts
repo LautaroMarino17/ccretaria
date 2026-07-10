@@ -312,7 +312,7 @@ export class ShellComponent implements OnInit {
     return [
       { path: '/professional/dashboard', label: 'Inicio', icon: this.icon('home') },
       { path: '/professional/patients', label: 'Pacientes', icon: this.icon('users') },
-      { path: '/professional/patients/_guest/evaluations', label: 'Evaluaciones', icon: this.icon('check') },
+      { path: '/professional/evaluations', label: 'Evaluaciones', icon: this.icon('check') },
       { path: '/professional/histories', label: 'Historias clínicas', icon: this.icon('file') },
       { path: '/professional/appointments', label: 'Turnos', icon: this.icon('calendar') },
       { path: '/profile', label: 'Mi perfil', icon: this.icon('user') },

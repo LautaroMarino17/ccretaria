@@ -839,10 +839,14 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
   exportPdf(ev: any) {
     const html = this._buildPdfHtml(ev);
-    const win = window.open('', '_blank', 'width=960,height=720');
-    if (!win) { alert('Habilitá las ventanas emergentes para exportar el PDF.'); return; }
-    win.document.write(html);
-    win.document.close();
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeName = (ev.nombre || 'evaluacion').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    a.href = url;
+    a.download = `${safeName}_${ev.fecha || 'sin_fecha'}.html`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   private _buildPdfHtml(ev: any): string {

@@ -854,16 +854,125 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
   // ── PDF Export ───────────────────────────────────────────────────────────────
 
-  exportPdf(ev: any) {
-    const html = this._buildPdfHtml(ev);
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const safeName = (ev.nombre || 'evaluacion').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    a.href = url;
-    a.download = `${safeName}_${ev.fecha || 'sin_fecha'}.html`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  async exportPdf(ev: any) {
+    const { jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, M = 14, CW = 182;
+
+    // Header
+    doc.setFillColor(22, 163, 74);
+    doc.rect(0, 0, W, 22, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text(ev.nombre || 'Evaluación', W / 2, 10, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(this.formatDate(ev.fecha), W / 2, 17, { align: 'center' });
+
+    let y = 26;
+
+    // Info
+    autoTable(doc, {
+      startY: y, body: [
+        ['Paciente', ev.patient_name || 'Sin identificar'],
+        ['Profesional', ev.professional_name || '—'],
+      ],
+      margin: { left: M, right: M },
+      styles: { fontSize: 10, cellPadding: 2 },
+      columnStyles: { 0: { fontStyle: 'bold', textColor: [107, 114, 128] as any, cellWidth: 40 }, 1: { textColor: [5, 46, 22] as any } },
+      theme: 'plain', tableLineColor: [229, 231, 235] as any, tableLineWidth: 0.2,
+    });
+    y = (doc as any).lastAutoTable.finalY + 6;
+
+    // Medidas
+    const medidas = (ev.medidas || []) as Medida[];
+    for (let idx = 0; idx < medidas.length; idx++) {
+      const m = medidas[idx];
+      if (y > 260) { doc.addPage(); y = 14; }
+
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(5, 46, 22);
+      doc.text(`${idx + 1}. ${m.nombre}${m.unidad ? ` (${m.unidad})` : ''}`, M, y + 5);
+      y += 9;
+
+      const rows: any[][] = [];
+      if (this.isSimpleTipo(m.tipo)) {
+        const att = this.allAttempts(m);
+        if (att.length > 1) rows.push([{ content: 'Intentos', styles: { textColor: [107, 114, 128] } }, att.map((v, i) => `T${i + 1}: ${v}`).join('  ')]);
+        const best = this.bestSimple(m);
+        const badge = this.badgeForVal(best, m.rango);
+        rows.push([{ content: 'Mejor', styles: { fontStyle: 'bold', textColor: [5, 46, 22] } }, { content: `${best.toFixed(2)}${m.unidad ? ' ' + m.unidad : ''}`, styles: { fontStyle: 'bold', textColor: [5, 46, 22] } }]);
+        if (badge !== null) rows.push([{ content: 'Clasificación', styles: { textColor: [107, 114, 128] } }, { content: badge ? 'Bueno ✓' : 'Malo ✗', styles: { textColor: badge ? [22, 163, 74] : [220, 38, 38] } }]);
+      } else {
+        const nA = this.nameA(m), nB = this.nameB(m);
+        rows.push([{ content: nA, styles: { textColor: [59, 130, 246] } }, this.bestA(m).toFixed(2)]);
+        rows.push([{ content: nB, styles: { textColor: [249, 115, 22] } }, this.bestB(m).toFixed(2)]);
+        if (this.isBilateralTipo(m.tipo)) {
+          const asim = this.calcAsim(m); const ok = this.badgeForAsim(asim, m.rango);
+          rows.push([{ content: 'Asimetría', styles: { fontStyle: 'italic', textColor: [107, 114, 128] } }, { content: `${asim.toFixed(1)}%${ok === null ? '' : ok ? ' ✓' : ' ✗'}`, styles: { fontStyle: 'bold', textColor: ok === null ? [5, 46, 22] : ok ? [22, 163, 74] : [220, 38, 38] } }]);
+        } else {
+          const rel = this.calcRelacion(m); const ok = this.badgeForVal(rel, m.rango);
+          rows.push([{ content: `Relación ${nB}/${nA}`, styles: { fontStyle: 'italic', textColor: [107, 114, 128] } }, { content: `${rel.toFixed(1)}%${ok === null ? '' : ok ? ' ✓' : ' ✗'}`, styles: { fontStyle: 'bold', textColor: ok === null ? [5, 46, 22] : ok ? [22, 163, 74] : [220, 38, 38] } }]);
+        }
+      }
+
+      const tableW = 90; const chartMmW = CW - tableW - 4;
+      const chartMmH = Math.max(rows.length * 8 + 6, 36);
+
+      autoTable(doc, {
+        startY: y, body: rows,
+        margin: { left: M, right: M + chartMmW + 4 },
+        styles: { fontSize: 10, cellPadding: 2.5 },
+        columnStyles: { 0: { textColor: [107, 114, 128] as any, cellWidth: 44 }, 1: { textColor: [5, 46, 22] as any, cellWidth: 44 } },
+        theme: 'plain', tableLineColor: [229, 231, 235] as any, tableLineWidth: 0.2,
+      });
+      const tableEndY = (doc as any).lastAutoTable.finalY;
+      const chartH = Math.max(tableEndY - y, chartMmH);
+
+      const svgStr = this._buildSvg(m, Math.round(chartMmW * 3.78), Math.round(chartH * 3.78));
+      const dataUrl = await this._svgToDataUrl(svgStr, Math.round(chartMmW * 3.78), Math.round(chartH * 3.78));
+      if (dataUrl) doc.addImage(dataUrl, 'PNG', M + tableW + 4, y, chartMmW, chartH);
+
+      y = Math.max(tableEndY, y + chartMmH) + 6;
+    }
+
+    if (ev.observaciones) {
+      if (y > 265) { doc.addPage(); y = 14; }
+      const lines = doc.splitTextToSize(`Observaciones: ${ev.observaciones}`, CW - 6) as string[];
+      const boxH = lines.length * 5 + 6;
+      doc.setFillColor(255, 251, 235); doc.setDrawColor(217, 119, 6);
+      doc.roundedRect(M, y, CW, boxH, 2, 2, 'FD');
+      doc.setTextColor(120, 53, 15); doc.setFontSize(10); doc.setFont('helvetica', 'italic');
+      doc.text(lines, M + 3, y + 5);
+    }
+
+    const pages = (doc.internal as any).getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setTextColor(156, 163, 175); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      doc.text(`Reporte generado por SecretarIA  ·  Pág. ${i}/${pages}`, W / 2, 292, { align: 'center' });
+    }
+
+    const safe = (ev.nombre || 'evaluacion').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    doc.save(`${safe}_${ev.fecha || ''}.pdf`);
+  }
+
+  private _svgToDataUrl(svgStr: string, w: number, h: number): Promise<string> {
+    return new Promise(resolve => {
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { resolve(''); return; }
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
+      const img = new Image();
+      const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      img.onload = () => { ctx.drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url); resolve(canvas.toDataURL('image/png', 0.9)); };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
+      img.src = url;
+    });
   }
 
   private _buildPdfHtml(ev: any): string {

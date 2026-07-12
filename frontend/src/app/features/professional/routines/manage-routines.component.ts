@@ -83,7 +83,10 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
                     <button class="btn-icon" (click)="openEdit(r)" title="Editar">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
-                    <button class="btn-icon download" (click)="downloadRoutine(r)" title="Descargar como planilla">
+                    <button class="btn-icon download" (click)="downloadPdf(r)" title="Descargar PDF">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="18" x2="13" y2="18"/></svg>
+                    </button>
+                    <button class="btn-icon download" (click)="downloadRoutine(r)" title="Descargar Excel">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     </button>
                     <button class="btn-icon danger" (click)="confirmDelete(r)" title="Eliminar">
@@ -608,6 +611,74 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
       next: () => { this.saving.set(false); this.closeForm(); this.load(); },
       error: (err) => { this.formError.set(err.error?.detail || 'Error al guardar'); this.saving.set(false); }
     });
+  }
+
+  async downloadPdf(r: any) {
+    const { jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, M = 14, CW = 182;
+
+    // Header
+    doc.setFillColor(22, 163, 74);
+    doc.rect(0, 0, W, 22, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text(r.titulo || 'Rutina', W / 2, 10, { align: 'center' });
+    if (r.descripcion) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.text(r.descripcion, W / 2, 17, { align: 'center', maxWidth: CW });
+    }
+
+    let y = 26;
+
+    for (const circ of r.circuitos || []) {
+      if (y > 265) { doc.addPage(); y = 14; }
+
+      // Block header
+      doc.setFillColor(240, 253, 244); doc.setDrawColor(22, 163, 74);
+      doc.roundedRect(M, y, CW, 8, 1, 1, 'FD');
+      doc.setTextColor(22, 101, 52); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text((circ.nombre || 'Bloque') + (circ.rondas ? `   ·   ${circ.rondas} rondas` : ''), M + 3, y + 5.5);
+      y += 11;
+
+      const rows = (circ.ejercicios || []).map((ex: any) => [ex.nombre || '', ex.reps_seg_mts || '', ex.carga || '']);
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Ejercicio', 'Rep / Seg / Mts', 'Carga']],
+        body: rows,
+        margin: { left: M, right: M },
+        styles: { fontSize: 10, cellPadding: 3 },
+        headStyles: { fillColor: [243, 244, 246] as any, textColor: [55, 65, 81] as any, fontStyle: 'bold' },
+        bodyStyles: { textColor: [5, 46, 22] as any },
+        columnStyles: { 0: { cellWidth: 100 }, 1: { cellWidth: 55 }, 2: { cellWidth: 27 } },
+        theme: 'plain', tableLineColor: [229, 231, 235] as any, tableLineWidth: 0.3,
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    if (r.observaciones) {
+      if (y > 265) { doc.addPage(); y = 14; }
+      const lines = doc.splitTextToSize(`Observaciones: ${r.observaciones}`, CW - 6) as string[];
+      const boxH = lines.length * 5 + 6;
+      doc.setFillColor(255, 251, 235); doc.setDrawColor(217, 119, 6);
+      doc.roundedRect(M, y, CW, boxH, 2, 2, 'FD');
+      doc.setTextColor(120, 53, 15); doc.setFontSize(10); doc.setFont('helvetica', 'italic');
+      doc.text(lines, M + 3, y + 5);
+    }
+
+    const pages = (doc.internal as any).getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setTextColor(156, 163, 175); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      doc.text(`Generado por SecretarIA  ·  Pág. ${i}/${pages}`, W / 2, 292, { align: 'center' });
+    }
+
+    doc.save(`${(r.titulo || 'rutina').replace(/[^a-z0-9áéíóúñ ]/gi, '_')}.pdf`);
   }
 
   async downloadRoutine(r: any) {

@@ -613,9 +613,22 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
     });
   }
 
+  private _loadLogo(): Promise<string> {
+    return fetch('/assets/logo.png')
+      .then(r => r.blob())
+      .then(blob => new Promise<string>(res => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result as string);
+        reader.onerror = () => res('');
+        reader.readAsDataURL(blob);
+      }))
+      .catch(() => '');
+  }
+
   async downloadPdf(r: any) {
     const { jsPDF } = await import('jspdf');
     const { default: autoTable } = await import('jspdf-autotable');
+    const logo = await this._loadLogo();
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const W = 210, M = 14, CW = 182;
@@ -623,13 +636,14 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
     // Header
     doc.setFillColor(22, 163, 74);
     doc.rect(0, 0, W, 22, 'F');
+    if (logo) doc.addImage(logo, 'PNG', W - 26, 1, 20, 20);
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
-    doc.text(r.titulo || 'Rutina', W / 2, 10, { align: 'center' });
+    doc.text(r.titulo || 'Rutina', M, 10);
     if (r.descripcion) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-      doc.text(r.descripcion, W / 2, 17, { align: 'center', maxWidth: CW });
+      doc.text(r.descripcion, M, 17, { maxWidth: CW - 28 });
     }
 
     let y = 26;

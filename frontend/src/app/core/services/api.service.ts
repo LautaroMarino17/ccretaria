@@ -61,7 +61,7 @@ export class ApiService {
     return this.withAuth(h => this.http.patch<any>(`${this.base}/patients/${id}`, { email }, { headers: h }));
   }
 
-  updatePatient(id: string, data: { nombre?: string; apellido?: string; dni?: string; telefono?: string; email?: string }) {
+  updatePatient(id: string, data: { nombre?: string; apellido?: string; dni?: string; telefono?: string; email?: string; obra_social?: string; nro_afiliado?: string }) {
     return this.withAuth(h => this.http.patch<any>(`${this.base}/patients/${id}`, data, { headers: h }));
   }
 

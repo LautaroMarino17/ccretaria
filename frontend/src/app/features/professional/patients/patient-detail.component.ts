@@ -82,6 +82,14 @@ import { ApiService } from '../../../core/services/api.service';
                   <label>DNI</label>
                   <input [(ngModel)]="editInfoForm.dni" placeholder="Ej: 12345678" maxlength="8" />
                 </div>
+                <div class="info-edit-field">
+                  <label>Obra social</label>
+                  <input [(ngModel)]="editInfoForm.obra_social" placeholder="Ej: OSDE" />
+                </div>
+                <div class="info-edit-field">
+                  <label>Nro. afiliado</label>
+                  <input [(ngModel)]="editInfoForm.nro_afiliado" placeholder="Nro. de afiliado" />
+                </div>
               </div>
               @if (infoError()) { <div class="error-banner-sm">{{ infoError() }}</div> }
               <div class="info-edit-actions">
@@ -401,7 +409,7 @@ export class PatientDetailComponent implements OnInit {
   editingInfo = signal(false);
   savingInfo = signal(false);
   infoError = signal('');
-  editInfoForm = { nombre: '', apellido: '', dni: '' };
+  editInfoForm = { nombre: '', apellido: '', dni: '', obra_social: '', nro_afiliado: '' };
   confirmDelete = signal(false);
   deleting = signal(false);
   expanded = signal<string | null>(null);
@@ -453,7 +461,7 @@ export class PatientDetailComponent implements OnInit {
   toggleEditInfo() {
     const p = this.patient();
     if (!this.editingInfo()) {
-      this.editInfoForm = { nombre: p?.nombre || '', apellido: p?.apellido || '', dni: p?.dni || '' };
+      this.editInfoForm = { nombre: p?.nombre || '', apellido: p?.apellido || '', dni: p?.dni || '', obra_social: p?.obra_social || '', nro_afiliado: p?.nro_afiliado || '' };
       this.infoError.set('');
       this.editingPhone.set(false);
       this.editingEmail.set(false);

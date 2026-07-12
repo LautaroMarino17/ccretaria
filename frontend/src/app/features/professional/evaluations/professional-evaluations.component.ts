@@ -132,7 +132,7 @@ const EMPTY_F = (): EvalForm => ({
                 <div class="bi-side">
                   <span class="dot blue-dot"></span>
                   <input [(ngModel)]="m.nombre_a"
-                    [placeholder]="m.tipo === 'asimetria' ? 'Nombre lado A' : 'Variable A'"
+                    [placeholder]="m.tipo === 'asimetria' ? 'Nombre lado A' : 'Agonista (denominador)'"
                     class="side-name-inp" />
                   <div class="attempts-wrap compact">
                     @for (v of (m.intentos_a ?? ['']); track $index) {
@@ -154,7 +154,7 @@ const EMPTY_F = (): EvalForm => ({
                 <div class="bi-side">
                   <span class="dot orange-dot"></span>
                   <input [(ngModel)]="m.nombre_b"
-                    [placeholder]="m.tipo === 'asimetria' ? 'Nombre lado B' : 'Variable B'"
+                    [placeholder]="m.tipo === 'asimetria' ? 'Nombre lado B' : 'Antagonista (numerador)'"
                     class="side-name-inp" />
                   <div class="attempts-wrap compact">
                     @for (v of (m.intentos_b ?? ['']); track $index) {
@@ -179,7 +179,7 @@ const EMPTY_F = (): EvalForm => ({
                       <span class="result-chip">Asimetría: {{ calcAsim(m) | number:'1.1-1' }}%</span>
                     } @else {
                       <span class="result-chip">
-                        {{ m.nombre_a || 'A' }}/{{ m.nombre_b || 'B' }} = {{ calcRelacion(m) | number:'1.1-1' }}%
+                        {{ m.nombre_b || 'Antagonista' }}/{{ m.nombre_a || 'Agonista' }} = {{ calcRelacion(m) | number:'1.1-1' }}%
                       </span>
                     }
                   </div>
@@ -194,17 +194,31 @@ const EMPTY_F = (): EvalForm => ({
             </button>
 
             @if (m.mostrar_rango) {
-              <div class="range-row">
+              <div class="range-block">
                 @if (m.tipo === 'asimetria') {
-                  <span class="rlbl">Asim. máx</span>
-                  <input [(ngModel)]="m.rango!.asimetria_max" type="number" placeholder="10" class="rinp" />
-                  <span class="rlbl">%</span>
+                  <div class="range-row">
+                    <span class="rlbl">Asimetría máxima aceptable</span>
+                    <input [(ngModel)]="m.rango!.asimetria_max" type="number" placeholder="10" class="rinp" />
+                    <span class="rlbl">%</span>
+                  </div>
                 } @else {
-                  <span class="rlbl">{{ m.tipo === 'relacion' ? 'Ratio límite %' : 'Límite' }}</span>
-                  <input [(ngModel)]="m.rango!.limite" type="number" placeholder="—" class="rinp" />
-                  <button class="dir-btn" (click)="toggleDir(m)" type="button">
-                    {{ m.rango?.mayor_es_mejor !== false ? 'Bueno si ≥' : 'Bueno si ≤' }}
-                  </button>
+                  <div class="range-row">
+                    <span class="rlbl">Valor límite{{ m.tipo === 'relacion' ? ' (%)' : (m.unidad ? ' (' + m.unidad + ')' : '') }}</span>
+                    <input [(ngModel)]="m.rango!.limite" type="number" placeholder="—" class="rinp" />
+                  </div>
+                  <div class="range-row">
+                    <span class="rlbl">Resultado bueno cuando</span>
+                    <div class="dir-pills">
+                      <button class="dir-pill" [class.active]="m.rango?.mayor_es_mejor !== false"
+                        (click)="m.rango!.mayor_es_mejor = true" type="button">
+                        ↑ Mayor es mejor
+                      </button>
+                      <button class="dir-pill" [class.active]="m.rango?.mayor_es_mejor === false"
+                        (click)="m.rango!.mayor_es_mejor = false" type="button">
+                        ↓ Menor es mejor
+                      </button>
+                    </div>
+                  </div>
                 }
               </div>
             }
@@ -416,11 +430,14 @@ const EMPTY_F = (): EvalForm => ({
     /* Rango */
     .range-toggle { display:inline-flex; align-items:center; gap:5px; font-size:12px; color:#6366f1; cursor:pointer; border:none; background:none; padding:0; font-family:inherit; }
     .range-toggle:hover { color:#4f46e5; }
-    .range-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:white; border:1px solid #e5e7eb; border-radius:8px; padding:10px; }
-    .rlbl { font-size:12px; color:#6b7280; white-space:nowrap; }
+    .range-block { display:flex; flex-direction:column; gap:6px; }
+    .range-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:white; border:1px solid #e5e7eb; border-radius:8px; padding:8px 12px; }
+    .rlbl { font-size:12px; color:#6b7280; white-space:nowrap; min-width:140px; }
     .rinp { width:72px; padding:6px 8px; font-size:13px; }
-    .dir-btn { padding:6px 12px; border:1.5px solid #6366f1; border-radius:6px; background:white; color:#6366f1; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
-    .dir-btn:hover { background:#ede9fe; }
+    .dir-pills { display:flex; gap:6px; }
+    .dir-pill { padding:5px 14px; border:1.5px solid #e5e7eb; border-radius:20px; background:white; color:#6b7280; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+    .dir-pill:hover { border-color:#16a34a; color:#16a34a; }
+    .dir-pill.active { background:#f0fdf4; border-color:#16a34a; color:#16a34a; font-weight:700; }
 
     .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
     .error-banner { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:8px; padding:10px 14px; font-size:14px; }
@@ -717,13 +734,13 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
   calcAsim(m: Medida): number {
     const a = this.bestA(m), b = this.bestB(m);
-    const mx = Math.max(a, b);
-    return mx === 0 ? 0 : (1 - Math.min(a, b) / mx) * 100;
+    const mn = Math.min(a, b), mx = Math.max(a, b);
+    return mn === 0 ? 0 : (mx - mn) / mn * 100;
   }
 
   calcRelacion(m: Medida): number {
-    const b = this.bestB(m);
-    return b === 0 ? 0 : (this.bestA(m) / b) * 100;
+    const agonista = this.bestA(m);
+    return agonista === 0 ? 0 : (this.bestB(m) / agonista) * 100;
   }
 
   badgeForVal(v: number, r?: any): boolean | null {

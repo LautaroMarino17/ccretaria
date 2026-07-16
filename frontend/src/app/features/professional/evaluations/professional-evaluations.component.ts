@@ -532,6 +532,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
   evals = signal<any[]>([]);
   patients = signal<any[]>([]);
+  patientData = signal<any>(null);
   loading = signal(true);
   showForm = signal(false);
   saving = signal(false);
@@ -546,6 +547,8 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     this.load();
     if (this.isGuest) {
       this.api.getPatients().subscribe({ next: p => this.patients.set(p) });
+    } else {
+      this.api.getPatient(this.patientId).subscribe({ next: p => this.patientData.set(p) });
     }
   }
 
@@ -662,29 +665,45 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     if (!f.fecha) { this.formError.set('La fecha es obligatoria'); return; }
     this.saving.set(true); this.formError.set('');
 
+    const isExistingPatient = this.isGuest && this.selectedPatientId && this.selectedPatientId !== '__custom__';
+    const isNewPatient = this.isGuest && this.selectedPatientId === '__custom__' && this.guestName.trim();
+
+    if (isNewPatient) {
+      const parts = this.guestName.trim().split(' ');
+      const nombre = parts[0];
+      const apellido = parts.slice(1).join(' ') || '-';
+      this.api.createPatient({ nombre, apellido, fecha_nacimiento: '', sexo: '', dni: '' }).subscribe({
+        next: (p: any) => this._doSaveEval(p.id, `${apellido}, ${nombre}`),
+        error: (err: any) => { this.formError.set(this._errMsg(err)); this.saving.set(false); }
+      });
+    } else {
+      const pid = isExistingPatient ? this.selectedPatientId : this.patientId;
+      const pname = isExistingPatient ? this.guestName : (this.isGuest ? this.guestName : (this.patientData() ? `${this.patientData().apellido}, ${this.patientData().nombre}` : ''));
+      this._doSaveEval(pid, pname);
+    }
+  }
+
+  private _errMsg(err: any): string {
+    const d = err.error?.detail;
+    if (!d) return `Error ${err.status || ''}: ${err.message || 'al guardar'}`;
+    if (Array.isArray(d)) return d.map((e: any) => `[${(e.loc || []).slice(1).join('.')}] ${e.msg || JSON.stringify(e)}`).join('; ');
+    return String(d);
+  }
+
+  private _doSaveEval(targetPatientId: string, patientName: string) {
+    const f = this.form();
     const imagenes = this.imagenesText.split('\n').map(s => s.trim()).filter(Boolean);
     const medidas = this._sanitizeMedidas(f.medidas);
     const id = this.editingId();
-
-    const errMsg = (err: any) => {
-      const d = err.error?.detail;
-      if (!d) return `Error ${err.status || ''}: ${err.message || 'al guardar'}`;
-      if (Array.isArray(d)) return d.map((e: any) => `[${(e.loc || []).slice(1).join('.')}] ${e.msg || JSON.stringify(e)}`).join('; ');
-      return String(d);
-    };
+    const done = () => { this.saving.set(false); this.closeForm(); this.load(); };
+    const fail = (err: any) => { this.formError.set(this._errMsg(err)); this.saving.set(false); };
 
     if (id) {
-      const update = { nombre: f.nombre, fecha: f.fecha, observaciones: f.observaciones || '', medidas, imagenes, patient_name: this.isGuest ? this.guestName : '' };
-      this.api.updateEvaluation(id, this.patientId, update).subscribe({
-        next: () => { this.saving.set(false); this.closeForm(); this.load(); },
-        error: (err) => { this.formError.set(errMsg(err)); this.saving.set(false); }
-      });
+      const update = { nombre: f.nombre, fecha: f.fecha, observaciones: f.observaciones || '', medidas, imagenes, patient_name: patientName };
+      this.api.updateEvaluation(id, this.patientId, update).subscribe({ next: done, error: fail });
     } else {
-      const payload = { patient_id: this.patientId, patient_name: this.isGuest ? this.guestName : '', nombre: f.nombre, fecha: f.fecha, observaciones: f.observaciones || '', medidas, imagenes };
-      this.api.createEvaluation(payload).subscribe({
-        next: () => { this.saving.set(false); this.closeForm(); this.load(); },
-        error: (err) => { this.formError.set(errMsg(err)); this.saving.set(false); }
-      });
+      const payload = { patient_id: targetPatientId, patient_name: patientName, nombre: f.nombre, fecha: f.fecha, observaciones: f.observaciones || '', medidas, imagenes };
+      this.api.createEvaluation(payload).subscribe({ next: done, error: fail });
     }
   }
 

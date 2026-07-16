@@ -20,8 +20,8 @@ class PatientCreate(BaseModel):
     nombre: str
     apellido: str
     dni: Optional[str] = ""
-    fecha_nacimiento: str
-    sexo: str
+    fecha_nacimiento: Optional[str] = ""
+    sexo: Optional[str] = ""
     telefono: Optional[str] = None
     email: Optional[str] = None
     obra_social: Optional[str] = None

@@ -52,7 +52,7 @@ const EMPTY_F = (): EvalForm => ({
       </a>
       <div>
         <h1>Evaluaciones</h1>
-        <p class="subtitle">{{ isGuest ? 'Paciente sin registrar' : 'Testeos y mediciones del paciente' }}</p>
+        <p class="subtitle">Testeos y mediciones</p>
       </div>
     </div>
     <button class="btn-primary" (click)="openForm()">
@@ -67,8 +67,17 @@ const EMPTY_F = (): EvalForm => ({
 
       @if (isGuest) {
         <div class="field mb14">
-          <label>Nombre del paciente (sin registrar)</label>
-          <input [(ngModel)]="guestName" placeholder="Ej: Juan P." />
+          <label>Paciente</label>
+          <select [(ngModel)]="selectedPatientId" (ngModelChange)="onPatientSelect($event)" class="patient-sel">
+            <option value="">— Sin identificar —</option>
+            @for (p of patients(); track p.id) {
+              <option [value]="p.id">{{ p.apellido }}, {{ p.nombre }}</option>
+            }
+            <option value="__custom__">✏ Escribir nombre...</option>
+          </select>
+          @if (selectedPatientId === '__custom__') {
+            <input [(ngModel)]="guestName" placeholder="Nombre del paciente" class="mt6" />
+          }
         </div>
       }
 
@@ -451,6 +460,9 @@ const EMPTY_F = (): EvalForm => ({
     .eval-date { font-size:12px; color:#9ca3af; }
     .prof-badge { padding:2px 8px; background:#f0fdf4; color:#16a34a; border-radius:20px; font-size:11px; font-weight:600; }
     .guest-badge { padding:2px 8px; background:#fef3c7; color:#92400e; border-radius:20px; font-size:11px; font-weight:600; }
+    .patient-sel { width:100%; padding:8px 10px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:14px; font-family:inherit; outline:none; background:white; cursor:pointer; }
+    .patient-sel:focus { border-color:#16a34a; }
+    .mt6 { margin-top:6px; }
     .eval-actions { display:flex; gap:8px; flex-shrink:0; }
     .btn-icon { width:32px; height:32px; border-radius:8px; border:1.5px solid #e5e7eb; background:white; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6b7280; }
     .btn-icon:hover { border-color:#16a34a; color:#16a34a; }
@@ -519,6 +531,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
   get backLink(): string[] { return this.isGuest ? ['/professional/patients'] : ['/professional/patients', this.patientId]; }
 
   evals = signal<any[]>([]);
+  patients = signal<any[]>([]);
   loading = signal(true);
   showForm = signal(false);
   saving = signal(false);
@@ -527,8 +540,23 @@ export class ProfessionalEvaluationsComponent implements OnInit {
   form = signal<EvalForm>(EMPTY_F());
   imagenesText = '';
   guestName = '';
+  selectedPatientId = '';
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+    if (this.isGuest) {
+      this.api.getPatients().subscribe({ next: p => this.patients.set(p) });
+    }
+  }
+
+  onPatientSelect(id: string) {
+    if (id === '' || id === '__custom__') {
+      if (id === '') this.guestName = '';
+      return;
+    }
+    const p = this.patients().find(x => x.id === id);
+    if (p) this.guestName = `${p.apellido}, ${p.nombre}`;
+  }
 
   load() {
     this.loading.set(true);
@@ -539,7 +567,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
   }
 
   openForm() {
-    this.form.set(EMPTY_F()); this.imagenesText = ''; this.guestName = '';
+    this.form.set(EMPTY_F()); this.imagenesText = ''; this.guestName = ''; this.selectedPatientId = '';
     this.editingId.set(null); this.formError.set(''); this.showForm.set(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -557,6 +585,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       imagenes: ev.imagenes || [], patient_name: ev.patient_name || ''
     });
     this.guestName = ev.patient_name || '';
+    this.selectedPatientId = ev.patient_name ? '__custom__' : '';
     this.imagenesText = (ev.imagenes || []).join('\n');
     this.formError.set(''); this.showForm.set(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -879,7 +908,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     // Info
     autoTable(doc, {
       startY: y, body: [
-        ['Paciente', ev.patient_name || 'Sin identificar'],
+        ...(ev.patient_name ? [['Paciente', ev.patient_name]] : []),
         ['Profesional', ev.professional_name || '—'],
       ],
       margin: { left: M, right: M },

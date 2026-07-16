@@ -1061,12 +1061,14 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
     if (ev.observaciones) {
       if (y > 265) { doc.addPage(); y = 14; }
-      const lines = doc.splitTextToSize(`Observaciones: ${ev.observaciones}`, CW - 6) as string[];
-      const boxH = lines.length * 5 + 6;
+      const obsText = this._sanitizePdfText(`Observaciones: ${ev.observaciones}`);
+      const lines = doc.splitTextToSize(obsText, CW - 10) as string[];
+      const lineH = 5.2;
+      const boxH = lines.length * lineH + 8;
       doc.setFillColor(255, 251, 235); doc.setDrawColor(217, 119, 6);
       doc.roundedRect(M, y, CW, boxH, 2, 2, 'FD');
       doc.setTextColor(120, 53, 15); doc.setFontSize(10); doc.setFont('helvetica', 'italic');
-      doc.text(lines, M + 3, y + 5);
+      doc.text(lines, M + 4, y + 6, { maxWidth: CW - 10 });
     }
 
     const pages = (doc.internal as any).getNumberOfPages();
@@ -1078,6 +1080,15 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
     const safe = (ev.nombre || 'evaluacion').replace(/[^a-z0-9]/gi, '_').toLowerCase();
     doc.save(`${safe}_${ev.fecha || ''}.pdf`);
+  }
+
+  private _sanitizePdfText(text: string): string {
+    return text
+      .replace(/•/g, '-').replace(/·/g, '-')
+      .replace(/–/g, '-').replace(/—/g, '--')
+      .replace(/[""]/g, '"').replace(/['']/g, "'")
+      .replace(/­/g, '')
+      .replace(/[^\x00-\xFF]/g, '?');
   }
 
   private _patientName(ev: any): string {

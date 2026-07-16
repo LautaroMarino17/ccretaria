@@ -28,6 +28,29 @@ class EvaluationUpdate(BaseModel):
     patient_name: Optional[Any] = None
 
 
+@router.get("/")
+def list_all_evaluations(user: dict = Depends(get_current_user)):
+    """Profesional: lista todas las evaluaciones de todos sus pacientes."""
+    require_professional(user)
+    db = get_firestore()
+    results = []
+    for patient_doc in db.collection("professionals").document(user["uid"]).collection("patients").stream():
+        patient_data = patient_doc.to_dict()
+        patient_id = patient_doc.id
+        for ev in patient_doc.reference.collection("evaluations").stream():
+            ev_data = ev.to_dict()
+            ev_data["id"] = ev.id
+            ev_data["patient_id"] = patient_id
+            if not ev_data.get("patient_name"):
+                nombre = patient_data.get("nombre", "")
+                apellido = patient_data.get("apellido", "")
+                if nombre or apellido:
+                    ev_data["patient_name"] = f"{apellido}, {nombre}".strip(", ")
+            results.append(ev_data)
+    results.sort(key=lambda x: x.get("fecha", ""), reverse=True)
+    return results
+
+
 @router.get("/patient/{patient_id}")
 def list_evaluations(patient_id: str, user: dict = Depends(get_current_user)):
     """Lista las evaluaciones de un paciente. Accesible por profesional y paciente."""

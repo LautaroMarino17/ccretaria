@@ -124,6 +124,10 @@ export class ApiService {
   }
 
   // ── Evaluaciones ────────────────────────────────────────────────
+  getAllEvaluations() {
+    return this.withAuth(h => this.http.get<any[]>(`${this.base}/evaluations/`, { headers: h }));
+  }
+
   getEvaluations(patientId: string) {
     return this.withAuth(h =>
       this.http.get<any[]>(`${this.base}/evaluations/patient/${patientId}`, { headers: h })

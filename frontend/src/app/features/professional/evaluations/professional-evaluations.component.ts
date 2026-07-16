@@ -337,7 +337,7 @@ const EMPTY_F = (): EvalForm => ({
               <button class="btn-icon" (click)="editEval(ev)" title="Editar">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
-              <button class="btn-icon danger" (click)="deleteEval(ev.id)" title="Eliminar">
+              <button class="btn-icon danger" (click)="deleteEval(ev)" title="Eliminar">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
               </button>
             </div>
@@ -622,6 +622,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
   imagenesText = '';
   guestName = '';
   selectedPatientId = '';
+  private _editingPatientId = '';
 
   ngOnInit() {
     this.load();
@@ -643,7 +644,8 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.api.getEvaluations(this.patientId).subscribe({
+    const req = this.isGuest ? this.api.getAllEvaluations() : this.api.getEvaluations(this.patientId);
+    req.subscribe({
       next: (data) => { this.evals.set(data); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
@@ -658,6 +660,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
   closeForm() { this.showForm.set(false); this.editingId.set(null); this.formError.set(''); }
 
   editEval(ev: any) {
+    this._editingPatientId = ev.patient_id || this.patientId;
     this.editingId.set(ev.id);
     this.form.set({
       nombre: ev.nombre || '', fecha: ev.fecha || new Date().toISOString().split('T')[0],
@@ -780,7 +783,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
     if (id) {
       const update = { nombre: f.nombre, fecha: f.fecha, observaciones: f.observaciones || '', medidas, imagenes, patient_name: patientName };
-      this.api.updateEvaluation(id, this.patientId, update).subscribe({ next: done, error: fail });
+      this.api.updateEvaluation(id, this._editingPatientId || this.patientId, update).subscribe({ next: done, error: fail });
     } else {
       const payload = { patient_id: targetPatientId, patient_name: patientName, nombre: f.nombre, fecha: f.fecha, observaciones: f.observaciones || '', medidas, imagenes };
       this.api.createEvaluation(payload).subscribe({ next: done, error: fail });
@@ -809,9 +812,10 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     });
   }
 
-  deleteEval(id: string) {
+  deleteEval(ev: any) {
     if (!confirm('¿Eliminar esta evaluación?')) return;
-    this.api.deleteEvaluation(id, this.patientId).subscribe({ next: () => this.evals.update(ev => ev.filter(e => e.id !== id)) });
+    const pid = ev.patient_id || this.patientId;
+    this.api.deleteEvaluation(ev.id, pid).subscribe({ next: () => this.evals.update(list => list.filter(e => e.id !== ev.id)) });
   }
 
   // ── Tipo helpers ─────────────────────────────────────────────────────────────

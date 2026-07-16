@@ -256,6 +256,25 @@ const EMPTY_F = (): EvalForm => ({
     </div>
   }
 
+  @if (!loading() && !showForm() && evals().length > 0) {
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-num">{{ statsTotal }}</span>
+        <span class="stat-lbl">Evaluaciones totales</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">{{ statsThisMonth }}</span>
+        <span class="stat-lbl">Realizadas este mes</span>
+      </div>
+      @if (isGuest) {
+        <div class="stat-card">
+          <span class="stat-num">{{ statsPatientsEvaluated }}</span>
+          <span class="stat-lbl">Pacientes evaluados</span>
+        </div>
+      }
+    </div>
+  }
+
   @if (loading()) {
     <div class="loading-text">Cargando evaluaciones...</div>
   } @else if (evals().length === 0 && !showForm()) {

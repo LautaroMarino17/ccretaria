@@ -1061,14 +1061,21 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
     if (ev.observaciones) {
       if (y > 265) { doc.addPage(); y = 14; }
-      const obsText = this._sanitizePdfText(`Observaciones: ${ev.observaciones}`);
-      const lines = doc.splitTextToSize(obsText, CW - 10) as string[];
+      doc.setFontSize(10); doc.setFont('helvetica', 'italic');
+      const maxW = CW - 10;
+      const rawLines = `Observaciones:\n${ev.observaciones}`.split('\n');
+      const lines: string[] = [];
+      for (const rl of rawLines) {
+        const wrapped = doc.splitTextToSize(this._sanitizePdfText(rl.trim()), maxW) as string[];
+        lines.push(...wrapped);
+      }
       const lineH = 5.2;
       const boxH = lines.length * lineH + 8;
+      if (y + boxH > 282) { doc.addPage(); y = 14; }
       doc.setFillColor(255, 251, 235); doc.setDrawColor(217, 119, 6);
       doc.roundedRect(M, y, CW, boxH, 2, 2, 'FD');
-      doc.setTextColor(120, 53, 15); doc.setFontSize(10); doc.setFont('helvetica', 'italic');
-      doc.text(lines, M + 4, y + 6, { maxWidth: CW - 10 });
+      doc.setTextColor(120, 53, 15);
+      doc.text(lines, M + 4, y + 6);
     }
 
     const pages = (doc.internal as any).getNumberOfPages();

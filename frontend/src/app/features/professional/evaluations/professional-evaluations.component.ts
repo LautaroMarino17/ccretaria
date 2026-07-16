@@ -438,10 +438,10 @@ const EMPTY_F = (): EvalForm => ({
   styles: [`
     .page { max-width: 900px; }
     .page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; gap:12px; flex-wrap:wrap; }
-    .header-left { display:flex; align-items:flex-start; gap:14px; }
+    .header-left { display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; }
     .btn-back { display:inline-flex; align-items:center; gap:6px; padding:8px 12px; background:white; border:1px solid #e5e7eb; border-radius:8px; font-size:14px; color:#374151; text-decoration:none; white-space:nowrap; margin-top:2px; }
-    h1 { font-size:22px; font-weight:700; color:#111827; margin:0 0 4px; }
-    .subtitle { color:#6b7280; font-size:14px; margin:0; }
+    h1 { font-size:22px; font-weight:700; color:#111827; margin:0 0 4px; word-break:break-word; }
+    .subtitle { color:#6b7280; font-size:14px; margin:0; word-break:break-word; }
 
     .form-card { background:white; border-radius:16px; padding:28px; margin-bottom:20px; box-shadow:0 1px 6px rgba(0,0,0,0.07); }
     .form-card h3 { font-size:17px; font-weight:700; color:#111827; margin:0 0 20px; }
@@ -470,7 +470,7 @@ const EMPTY_F = (): EvalForm => ({
 
     /* Attempts */
     .attempts-wrap { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-    .attempts-wrap.compact { flex-wrap:nowrap; }
+    .attempts-wrap.compact { flex-wrap:wrap; }
     .attempt-cell { display:flex; align-items:center; gap:3px; }
     .attempt-num { font-size:11px; font-weight:700; color:#9ca3af; min-width:12px; text-align:center; }
     .val-inp { width:100px; }
@@ -503,9 +503,10 @@ const EMPTY_F = (): EvalForm => ({
 
     /* Eval list */
     .evals-list { display:flex; flex-direction:column; gap:16px; }
-    .eval-card { background:white; border-radius:16px; padding:22px; box-shadow:0 1px 6px rgba(0,0,0,0.06); }
+    .eval-card { background:white; border-radius:16px; padding:22px; box-shadow:0 1px 6px rgba(0,0,0,0.06); overflow:hidden; }
     .eval-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px; gap:10px; }
-    .eval-card h3 { font-size:16px; font-weight:700; color:#111827; margin:0 0 6px; }
+    .eval-header > div:first-child { min-width:0; flex:1; }
+    .eval-card h3 { font-size:16px; font-weight:700; color:#111827; margin:0 0 6px; word-break:break-word; overflow-wrap:break-word; }
     .eval-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .eval-date { font-size:12px; color:#9ca3af; }
     .prof-badge { padding:2px 8px; background:#f0fdf4; color:#16a34a; border-radius:20px; font-size:11px; font-weight:600; }
@@ -524,7 +525,7 @@ const EMPTY_F = (): EvalForm => ({
     .mcard-top { display:flex; min-height:100px; }
     .mcard-info { flex:1; padding:14px; display:flex; flex-direction:column; gap:8px; min-width:0; overflow:hidden; }
     .mcard-title-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-    .mcard-name { font-size:14px; font-weight:700; color:#111827; }
+    .mcard-name { font-size:14px; font-weight:700; color:#111827; word-break:break-word; overflow-wrap:break-word; }
     .mcard-unit { font-size:12px; color:#9ca3af; }
     .mcard-chart { width:190px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:#f3f4f6; padding:6px 4px; }
 
@@ -547,9 +548,9 @@ const EMPTY_F = (): EvalForm => ({
     .asim-lbl-v { font-size:11px; color:#6b7280; }
     .asim-num { font-size:13px; font-weight:600; color:#374151; }
 
-    .obs-box { background:#fffbeb; border-radius:10px; padding:12px 14px; margin-top:10px; }
+    .obs-box { background:#fffbeb; border-radius:10px; padding:12px 14px; margin-top:10px; overflow:hidden; }
     .obs-label { display:block; font-size:11px; font-weight:600; color:#92400e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
-    .obs-box p { font-size:14px; color:#78350f; margin:0; line-height:1.5; }
+    .obs-box p { font-size:14px; color:#78350f; margin:0; line-height:1.5; word-break:break-word; overflow-wrap:break-word; white-space:pre-wrap; }
 
     .images-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
     .img-link { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; background:#f3f4f6; border-radius:8px; font-size:12px; color:#6366f1; text-decoration:none; }
@@ -584,9 +585,14 @@ const EMPTY_F = (): EvalForm => ({
       .meds-grid { grid-template-columns:1fr; }
       .mcard-top { flex-direction:column; }
       .mcard-chart { width:100%; min-height:110px; }
+      .eval-header { flex-direction:column; gap:8px; }
       .eval-actions { flex-wrap:wrap; }
+      .form-card { padding:18px; }
+      .eval-card { padding:16px; }
       .stats-row { grid-template-columns:1fr 1fr; }
       .info-grid { grid-template-columns:1fr; }
+      .header-left { flex-direction:column; gap:8px; }
+      .rlbl { min-width:unset; }
     }
   `]
 })

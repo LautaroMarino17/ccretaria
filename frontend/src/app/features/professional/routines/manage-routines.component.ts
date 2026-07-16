@@ -285,7 +285,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
   `,
   styles: [`
     .page { max-width: 960px; }
-    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 12px; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 12px; flex-wrap: wrap; }
     .header-left { display: flex; align-items: flex-start; gap: 14px; }
     .btn-back { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; color: #374151; text-decoration: none; white-space: nowrap; }
     h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
@@ -348,7 +348,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .btn-blk-ctrl.invisible { visibility: hidden; }
 
     /* ── Exercise table ── */
-    .ex-table { border: 1px solid #e9eaec; border-radius: 10px; overflow: hidden; margin-bottom: 2px; }
+    .ex-table { border: 1px solid #e9eaec; border-radius: 10px; overflow-x: auto; margin-bottom: 2px; }
     .ex-head { display: grid; background: #f8f9fa; padding: 8px 12px; gap: 8px; }
     .ex-head.read  { grid-template-columns: 2fr 2fr 1.5fr 1.5fr; }
     .ex-head.edit  { grid-template-columns: 18px 2fr 2fr 1.5fr 1.5fr auto; }
@@ -399,7 +399,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .obs-edit textarea:focus { border-color: #16a34a; }
     .obs-box { background: #fffbeb; border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
     .obs-label { display: block; font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .obs-box p { font-size: 13px; color: #78350f; margin: 0; line-height: 1.6; }
+    .obs-box p { font-size: 13px; color: #78350f; margin: 0; line-height: 1.6; word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
 
     /* Buttons */
     .header-btns { display: flex; align-items: center; gap: 8px; }
@@ -490,6 +490,9 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
       .ex-row-read   { grid-template-columns: 1.5fr 1.5fr; }
       .ex-row-read span:nth-child(n+3) { display: none; }
       .header-left { flex-direction: column; gap: 10px; }
+      .routine-card { padding: 16px; }
+      .header-btns { flex-wrap: wrap; }
+      .card-title { word-break: break-word; overflow-wrap: break-word; }
     }
   `]
 })

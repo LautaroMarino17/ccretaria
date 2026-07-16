@@ -266,8 +266,8 @@ import { ApiService } from '../../../core/services/api.service';
     .btn-back { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; font-size: 14px; color: #374151; text-decoration: none; margin-bottom: 20px; }
     .header-info { display: flex; align-items: center; gap: 16px; }
     .patient-avatar-lg { width: 56px; height: 56px; background: #f0fdf4; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; flex-shrink: 0; }
-    h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
-    .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
+    h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; word-break: break-word; overflow-wrap: break-word; }
+    .subtitle { color: #6b7280; font-size: 14px; margin: 0; word-break: break-word; }
 
     .quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
     .action-card { display: flex; align-items: center; gap: 12px; padding: 16px; background: white; border-radius: 14px; text-decoration: none; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1.5px solid #e5e7eb; transition: all 0.15s; }
@@ -335,7 +335,7 @@ import { ApiService } from '../../../core/services/api.service';
     .history-detail { padding: 0 16px 16px; border-top: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 12px; padding-top: 14px; animation: slideDown 0.15s ease; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     .detail-section label { display: block; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .detail-section p { font-size: 14px; color: #374151; margin: 0; line-height: 1.6; }
+    .detail-section p { font-size: 14px; color: #374151; margin: 0; line-height: 1.6; word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
     .signos-row { display: flex; flex-wrap: wrap; gap: 6px; }
     .signo-tag { background: white; border: 1px solid #e5e7eb; color: #374151; padding: 3px 8px; border-radius: 6px; font-size: 12px; }
     .history-img { max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 4px; }
@@ -384,12 +384,15 @@ import { ApiService } from '../../../core/services/api.service';
     @media (max-width: 768px) {
       .quick-actions { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
       .data-grid { grid-template-columns: 1fr 1fr; }
+      .info-edit-row { grid-template-columns: 1fr 1fr; }
       .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
       .edit-field-row { grid-template-columns: 1fr; }
+      .header-info { flex-wrap: wrap; }
     }
     @media (max-width: 480px) {
       .quick-actions { grid-template-columns: 1fr; }
       .data-grid { grid-template-columns: 1fr; }
+      .info-edit-row { grid-template-columns: 1fr; }
     }
   `]
 })

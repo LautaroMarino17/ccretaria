@@ -52,7 +52,7 @@ const EMPTY_F = (): EvalForm => ({
       </a>
       <div>
         <h1>Evaluaciones</h1>
-        <p class="subtitle">Testeos y mediciones</p>
+        <p class="subtitle">{{ !isGuest && patientData() ? patientData().apellido + ', ' + patientData().nombre : 'Testeos y mediciones' }}</p>
       </div>
     </div>
     <button class="btn-primary" (click)="openForm()">
@@ -256,13 +256,63 @@ const EMPTY_F = (): EvalForm => ({
     </div>
   }
 
+  @if (!loading() && !showForm()) {
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-num">{{ statsTotal }}</span>
+        <span class="stat-lbl">Evaluaciones totales</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">{{ statsThisMonth }}</span>
+        <span class="stat-lbl">Realizadas este mes</span>
+      </div>
+      @if (isGuest) {
+        <div class="stat-card">
+          <span class="stat-num">{{ statsPatientsEvaluated }}</span>
+          <span class="stat-lbl">Pacientes evaluados</span>
+        </div>
+      }
+    </div>
+  }
+
   @if (loading()) {
     <div class="loading-text">Cargando evaluaciones...</div>
   } @else if (evals().length === 0 && !showForm()) {
-    <div class="empty-state">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      <p>No hay evaluaciones registradas aún</p>
-      <button class="btn-primary" (click)="openForm()">Crear primera evaluación</button>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-icon-wrap green">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <h4>¿Qué es una evaluación?</h4>
+        <p>Un registro estructurado de mediciones: fuerza, asimetrías, relaciones musculares y más. Cada dato queda guardado con fecha y paciente.</p>
+      </div>
+      <div class="info-card">
+        <div class="info-icon-wrap blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h4>¿A dónde van?</h4>
+        <p>Se guardan en el perfil de cada paciente. Podés acceder a ellas desde su ficha para ver la evolución en el tiempo.</p>
+      </div>
+      <div class="info-card">
+        <div class="info-icon-wrap amber">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </div>
+        <h4>Tipos de medición</h4>
+        <p><strong>Simple</strong> — un valor con intentos.<br><strong>Asimetría</strong> — compara izquierdo y derecho.<br><strong>Relación</strong> — agonista / antagonista.</p>
+      </div>
+      <div class="info-card">
+        <div class="info-icon-wrap purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        </div>
+        <h4>Exportación</h4>
+        <p>Cada evaluación se puede descargar como <strong>PDF profesional</strong> con gráficos o como <strong>Excel</strong> con todos los datos.</p>
+      </div>
+    </div>
+    <div class="empty-cta">
+      <button class="btn-primary btn-lg" (click)="openForm()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Crear primera evaluación
+      </button>
     </div>
   } @else {
     <div class="evals-list">
@@ -509,8 +559,25 @@ const EMPTY_F = (): EvalForm => ({
     .btn-primary:disabled { opacity:0.6; cursor:not-allowed; }
     .btn-secondary { padding:10px 18px; background:#f3f4f6; color:#374151; border:none; border-radius:10px; font-size:14px; cursor:pointer; }
     .loading-text { padding:32px; text-align:center; color:#9ca3af; }
-    .empty-state { text-align:center; padding:56px; display:flex; flex-direction:column; align-items:center; gap:12px; color:#9ca3af; }
-    .empty-state p { font-size:15px; margin:0; }
+
+    /* Stats row */
+    .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+    .stat-card { background:white; border-radius:14px; padding:18px 20px; box-shadow:0 1px 5px rgba(0,0,0,0.06); display:flex; flex-direction:column; gap:4px; }
+    .stat-num { font-size:28px; font-weight:800; color:#111827; line-height:1.1; }
+    .stat-lbl { font-size:12px; color:#6b7280; font-weight:500; }
+
+    /* Info cards empty state */
+    .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; margin-bottom:24px; }
+    .info-card { background:white; border-radius:14px; padding:20px; box-shadow:0 1px 5px rgba(0,0,0,0.06); display:flex; flex-direction:column; gap:10px; }
+    .info-icon-wrap { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .info-icon-wrap.green { background:#f0fdf4; color:#16a34a; }
+    .info-icon-wrap.blue { background:#eff6ff; color:#2563eb; }
+    .info-icon-wrap.amber { background:#fffbeb; color:#d97706; }
+    .info-icon-wrap.purple { background:#f5f3ff; color:#7c3aed; }
+    .info-card h4 { font-size:14px; font-weight:700; color:#111827; margin:0; }
+    .info-card p { font-size:13px; color:#6b7280; margin:0; line-height:1.55; }
+    .empty-cta { display:flex; justify-content:center; padding:8px 0 32px; }
+    .btn-lg { padding:14px 28px !important; font-size:15px !important; border-radius:12px !important; }
 
     @media (max-width:640px) {
       .fields-row-2 { grid-template-columns:1fr; }
@@ -518,6 +585,8 @@ const EMPTY_F = (): EvalForm => ({
       .mcard-top { flex-direction:column; }
       .mcard-chart { width:100%; min-height:110px; }
       .eval-actions { flex-wrap:wrap; }
+      .stats-row { grid-template-columns:1fr 1fr; }
+      .info-grid { grid-template-columns:1fr; }
     }
   `]
 })
@@ -529,6 +598,17 @@ export class ProfessionalEvaluationsComponent implements OnInit {
   patientId = this.route.snapshot.params['patientId'] || '_guest';
   get isGuest(): boolean { return this.patientId === '_guest'; }
   get backLink(): string[] { return this.isGuest ? ['/professional/patients'] : ['/professional/patients', this.patientId]; }
+
+  get statsTotal(): number { return this.evals().length; }
+  get statsThisMonth(): number {
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return this.evals().filter(e => (e.fecha || '').startsWith(ym)).length;
+  }
+  get statsPatientsEvaluated(): number {
+    const keys = new Set(this.evals().map(e => e.patient_id || e.patient_name || '_anon'));
+    return keys.size;
+  }
 
   evals = signal<any[]>([]);
   patients = signal<any[]>([]);

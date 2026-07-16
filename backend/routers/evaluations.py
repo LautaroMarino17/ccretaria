@@ -33,6 +33,10 @@ def list_all_evaluations(user: dict = Depends(get_current_user)):
     """Profesional: lista todas las evaluaciones de todos sus pacientes."""
     require_professional(user)
     db = get_firestore()
+    try:
+        prof_name = get_user(user["uid"]).get("display_name") or ""
+    except Exception:
+        prof_name = ""
     results = []
     for patient_doc in db.collection("professionals").document(user["uid"]).collection("patients").stream():
         patient_data = patient_doc.to_dict()
@@ -41,6 +45,7 @@ def list_all_evaluations(user: dict = Depends(get_current_user)):
             ev_data = ev.to_dict()
             ev_data["id"] = ev.id
             ev_data["patient_id"] = patient_id
+            ev_data["professional_name"] = ev_data.get("professional_name") or prof_name
             if not ev_data.get("patient_name"):
                 nombre = patient_data.get("nombre", "")
                 apellido = patient_data.get("apellido", "")

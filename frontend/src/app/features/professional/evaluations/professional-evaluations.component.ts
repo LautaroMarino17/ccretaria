@@ -1088,7 +1088,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       .replace(/–/g, '-').replace(/—/g, '--')
       .replace(/[""]/g, '"').replace(/['']/g, "'")
       .replace(/­/g, '')
-      .replace(/[^\x00-\xFF]/g, '?');
+      .replace(/[^\x00-\xFF]/g, '-');
   }
 
   private _patientName(ev: any): string {

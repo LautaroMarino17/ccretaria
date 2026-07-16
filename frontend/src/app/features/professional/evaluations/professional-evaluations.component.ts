@@ -927,7 +927,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     // Info
     autoTable(doc, {
       startY: y, body: [
-        ...(ev.patient_name ? [['Paciente', ev.patient_name]] : []),
+        ...(this._patientName(ev) ? [['Paciente', this._patientName(ev)]] : []),
         ['Profesional', ev.professional_name || '—'],
       ],
       margin: { left: M, right: M },
@@ -1007,6 +1007,12 @@ export class ProfessionalEvaluationsComponent implements OnInit {
 
     const safe = (ev.nombre || 'evaluacion').replace(/[^a-z0-9]/gi, '_').toLowerCase();
     doc.save(`${safe}_${ev.fecha || ''}.pdf`);
+  }
+
+  private _patientName(ev: any): string {
+    if (ev.patient_name) return ev.patient_name;
+    const p = this.patientData();
+    return p ? `${p.apellido}, ${p.nombre}` : '';
   }
 
   private _loadLogo(): Promise<string> {
@@ -1229,7 +1235,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     Object.assign(ws.getCell('A1'), { value: ev.nombre, font: { bold: true, size: 15, color: white }, fill: { type: 'pattern', pattern: 'solid', fgColor: green }, alignment: { vertical: 'middle', horizontal: 'center' } });
     ws.getRow(1).height = 32;
     ws.mergeCells('A2:F2');
-    Object.assign(ws.getCell('A2'), { value: this.formatDate(ev.fecha) + (ev.patient_name ? ` · ${ev.patient_name}` : ''), font: { italic: true, size: 11, color: { argb: 'FF6b7280' } }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFf9fafb' } }, alignment: { horizontal: 'center' } });
+    Object.assign(ws.getCell('A2'), { value: this.formatDate(ev.fecha) + (this._patientName(ev) ? ` · ${this._patientName(ev)}` : ''), font: { italic: true, size: 11, color: { argb: 'FF6b7280' } }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFf9fafb' } }, alignment: { horizontal: 'center' } });
     ws.getRow(2).height = 18;
     let row = 4;
     const hRow = ws.getRow(row);

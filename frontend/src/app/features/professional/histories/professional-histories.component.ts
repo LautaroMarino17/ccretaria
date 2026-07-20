@@ -419,17 +419,103 @@ export class ProfessionalHistoriesComponent implements OnInit {
       </body></html>`;
   }
 
-  downloadHistory(h: any) {
-    const html = this.buildHistoryHtml(h);
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+  async downloadHistory(h: any) {
+    const { jsPDF } = await import('jspdf');
+    const logo = await this._loadLogo();
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, M = 14, CW = 182;
+
+    // Header
+    doc.setFillColor(140, 198, 63);
+    doc.rect(0, 0, W, 28, 'F');
+    if (logo) doc.addImage(logo, 'PNG', W - 28, 2, 22, 24);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text(h.motivo_consulta || 'Historia Clínica', M, 9, { maxWidth: CW - 32 });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    if (h.patient_name) doc.text(`Paciente: ${h.patient_name}`, M, 16);
+    const metaLine = [h.professional_name, this.formatDate(h.fecha)].filter(Boolean).join('  ·  ');
+    if (metaLine) doc.text(metaLine, M, 22);
+
+    let y = 33;
+
+    const section = (label: string, value: string) => {
+      if (!value?.trim()) return;
+      if (y > 265) { doc.addPage(); y = 14; }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(140, 198, 63);
+      doc.text(label.toUpperCase(), M, y); y += 5;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(30, 30, 30);
+      const lines = doc.splitTextToSize(value, CW) as string[];
+      const blockH = lines.length * 5.5;
+      if (y + blockH > 282) { doc.addPage(); y = 14; }
+      doc.text(lines, M, y); y += blockH + 5;
+    };
+
+    section('Motivo de consulta', h.motivo_consulta);
+    section('Antecedentes y síntomas', h.antecedentes_sintomas);
+    section('Examen físico', h.examen_fisico);
+    section('Exploración estática', h.exploracion_estatica);
+    section('Exploración dinámica', h.exploracion_dinamica);
+
+    // Signos vitales
+    const sv = h.signos_vitales;
+    if (sv) {
+      const svParts = [
+        sv.tension_arterial ? `TA: ${sv.tension_arterial}` : '',
+        sv.frecuencia_cardiaca ? `FC: ${sv.frecuencia_cardiaca}` : '',
+        sv.temperatura ? `Temp: ${sv.temperatura}` : '',
+        sv.peso ? `Peso: ${sv.peso}` : '',
+        sv.talla ? `Talla: ${sv.talla}` : '',
+        sv.saturacion ? `SatO₂: ${sv.saturacion}` : '',
+      ].filter(Boolean).join('   ·   ');
+      section('Signos vitales', svParts);
+    }
+
+    section('Diagnóstico', h.diagnostico);
+    section('Plan terapéutico', h.plan_terapeutico);
+    section('Estudios complementarios', h.estudios_complementarios);
+    section('Laboratorio', h.laboratorio);
+    section('Medicación', h.medicacion);
+
+    if (h.observaciones?.trim()) {
+      if (y > 265) { doc.addPage(); y = 14; }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(140, 198, 63);
+      doc.text('OBSERVACIONES', M, y); y += 5;
+      const lines = doc.splitTextToSize(h.observaciones, CW - 6) as string[];
+      const boxH = lines.length * 5.5 + 6;
+      if (y + boxH > 282) { doc.addPage(); y = 14; }
+      doc.setFillColor(255, 251, 235); doc.setDrawColor(217, 119, 6);
+      doc.roundedRect(M, y, CW, boxH, 2, 2, 'FD');
+      doc.setTextColor(120, 53, 15); doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+      doc.text(lines, M + 3, y + 6); y += boxH + 5;
+    }
+
+    if (h.plantillas) section('Plantillas', `Sí${h.descripcion_pedografia ? ` — ${h.descripcion_pedografia}` : ''}`);
+
+    const pages = (doc.internal as any).getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setTextColor(156, 163, 175); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      doc.text(`Reporte generado por SecretarIA  ·  Pág. ${i}/${pages}`, W / 2, 292, { align: 'center' });
+    }
+
     const safeName = (h.patient_name || 'paciente').replace(/\s+/g, '_').toLowerCase();
-    const date = this.formatDate(h.fecha).replace(/\s/g, '-');
-    a.href = url;
-    a.download = `historia_${safeName}_${date}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+    doc.save(`historia_${safeName}_${this.formatDate(h.fecha).replace(/\s/g, '-')}.pdf`);
+  }
+
+  private _loadLogo(): Promise<string> {
+    return fetch('/assets/logo.png')
+      .then(r => r.blob())
+      .then(blob => new Promise<string>(res => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result as string);
+        reader.onerror = () => res('');
+        reader.readAsDataURL(blob);
+      }))
+      .catch(() => '');
   }
 
   printHistory(h: any) {

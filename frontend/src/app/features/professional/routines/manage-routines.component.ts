@@ -501,6 +501,7 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
 
   patientId       = this.route.snapshot.params['patientId'];
+  patientName     = signal('');
   routines        = signal<any[]>([]);
   loading         = signal(true);
   showForm        = signal(false);
@@ -527,6 +528,10 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.load();
+    this.api.getPatient(this.patientId).subscribe({
+      next: (p) => this.patientName.set(`${p.apellido || ''}, ${p.nombre || ''}`.replace(/^,\s*/, '')),
+      error: () => {}
+    });
     if (this.route.snapshot.queryParams['voice'] === '1') {
       setTimeout(() => this.openVoice(), 600);
     }
@@ -642,27 +647,28 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
     const W = 210, M = 14, CW = 182;
 
     // Header
-    doc.setFillColor(22, 163, 74);
-    doc.rect(0, 0, W, 22, 'F');
-    if (logo) doc.addImage(logo, 'PNG', W - 26, 1, 20, 20);
+    doc.setFillColor(140, 198, 63);
+    doc.rect(0, 0, W, 28, 'F');
+    if (logo) doc.addImage(logo, 'PNG', W - 28, 2, 22, 24);
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text(r.titulo || 'Rutina', M, 10);
-    if (r.descripcion) {
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-      doc.text(r.descripcion, M, 17, { maxWidth: CW - 28 });
-    }
+    doc.setFontSize(13);
+    doc.text(r.titulo || 'Rutina', M, 9);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    const pName = this.patientName();
+    if (pName) doc.text(`Paciente: ${pName}`, M, 16);
+    if (r.descripcion) doc.text(r.descripcion, M, 22, { maxWidth: CW - 30 });
 
-    let y = 26;
+    let y = 33;
 
     for (const circ of r.circuitos || []) {
       if (y > 265) { doc.addPage(); y = 14; }
 
       // Block header
-      doc.setFillColor(240, 253, 244); doc.setDrawColor(22, 163, 74);
+      doc.setFillColor(241, 252, 220); doc.setDrawColor(140, 198, 63);
       doc.roundedRect(M, y, CW, 8, 1, 1, 'FD');
-      doc.setTextColor(22, 101, 52); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.setTextColor(85, 125, 25); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
       doc.text((circ.nombre || 'Bloque') + (circ.rondas ? `   ·   ${circ.rondas} rondas` : ''), M + 3, y + 5.5);
       y += 11;
 
@@ -675,7 +681,7 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
         margin: { left: M, right: M },
         styles: { fontSize: 10, cellPadding: 3 },
         headStyles: { fillColor: [243, 244, 246] as any, textColor: [55, 65, 81] as any, fontStyle: 'bold' },
-        bodyStyles: { textColor: [5, 46, 22] as any },
+        bodyStyles: { textColor: [85, 125, 25] as any },
         columnStyles: { 0: { cellWidth: 100 }, 1: { cellWidth: 55 }, 2: { cellWidth: 27 } },
         theme: 'plain', tableLineColor: [229, 231, 235] as any, tableLineWidth: 0.3,
       });

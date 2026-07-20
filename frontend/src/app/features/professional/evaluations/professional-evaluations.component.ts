@@ -1001,31 +1001,21 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     const W = 210, M = 14, CW = 182;
 
     // Header
-    doc.setFillColor(22, 163, 74);
-    doc.rect(0, 0, W, 22, 'F');
-    if (logo) doc.addImage(logo, 'PNG', W - 26, 1, 20, 20);
+    doc.setFillColor(140, 198, 63);
+    doc.rect(0, 0, W, 28, 'F');
+    if (logo) doc.addImage(logo, 'PNG', W - 28, 2, 22, 24);
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(15);
-    doc.text(ev.nombre || 'Evaluación', M, 10);
+    doc.setFontSize(13);
+    doc.text(ev.nombre || 'Evaluación', M, 9);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(this.formatDate(ev.fecha), M, 17);
+    doc.setFontSize(8.5);
+    const patName = this._patientName(ev);
+    if (patName) doc.text(`Paciente: ${patName}`, M, 16);
+    const metaLine = [ev.professional_name, this.formatDate(ev.fecha)].filter(Boolean).join('  ·  ');
+    if (metaLine) doc.text(metaLine, M, 22);
 
-    let y = 26;
-
-    // Info
-    autoTable(doc, {
-      startY: y, body: [
-        ...(this._patientName(ev) ? [['Paciente', this._patientName(ev)]] : []),
-        ['Profesional', ev.professional_name || '—'],
-      ],
-      margin: { left: M, right: M },
-      styles: { fontSize: 10, cellPadding: 2 },
-      columnStyles: { 0: { fontStyle: 'bold', textColor: [107, 114, 128] as any, cellWidth: 40 }, 1: { textColor: [5, 46, 22] as any } },
-      theme: 'plain', tableLineColor: [229, 231, 235] as any, tableLineWidth: 0.2,
-    });
-    y = (doc as any).lastAutoTable.finalY + 6;
+    let y = 33;
 
     // Medidas
     const medidas = (ev.medidas || []) as Medida[];
@@ -1033,7 +1023,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       const m = medidas[idx];
       if (y > 260) { doc.addPage(); y = 14; }
 
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(5, 46, 22);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(85, 125, 25);
       doc.text(`${idx + 1}. ${m.nombre}${m.unidad ? ` (${m.unidad})` : ''}`, M, y + 5);
       y += 9;
 

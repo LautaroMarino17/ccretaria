@@ -167,14 +167,25 @@ export class VoiceCommandService {
         }
 
         case 'crear_rutina_voz': {
-          const patient = await this._findPatient(a.params?.nombre || '');
-          if (patient) {
-            this.router.navigate(
-              ['/professional/patients', patient.id, 'routines'],
-              { queryParams: { voice: '1' } }
-            );
-          }
-          resolve();
+          const params = a.params || {};
+          const patient = await this._findPatient(params.patient_name || '');
+          if (!patient) { resolve(); break; }
+
+          const payload = {
+            patient_id: patient.id,
+            titulo: params.titulo || 'Nueva rutina',
+            descripcion: params.descripcion || '',
+            circuitos: params.circuitos || [],
+            observaciones: params.observaciones || '',
+          };
+
+          this.api.createRoutine(payload).subscribe({
+            next: () => {
+              this.router.navigate(['/professional/patients', patient.id, 'routines']);
+              resolve();
+            },
+            error: () => resolve()
+          });
           break;
         }
 

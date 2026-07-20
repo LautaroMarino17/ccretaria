@@ -211,9 +211,31 @@ Acciones disponibles:
 - buscar_y_abrir_paciente: abrir perfil de un paciente (params: { "nombre": "texto a buscar" })
 - crear_paciente: crear paciente nuevo (params: { "nombre": "...", "apellido": "..." })
 - iniciar_consulta: ir a grabar una nueva consulta/historia clínica de un paciente (params: { "nombre": "texto a buscar" })
-- crear_rutina_voz: ir a rutinas de un paciente para crear una con voz (params: { "nombre": "texto a buscar" })
+- crear_rutina_voz: crear y guardar una rutina completa directamente desde lo dictado (params: ver estructura abajo)
 - crear_evaluacion: crear una evaluación completa con todos sus datos (params: ver estructura abajo)
 - ninguna: sin acción, solo responder
+
+Estructura de params para crear_rutina_voz:
+{
+  "patient_name": "Apellido o nombre del paciente mencionado",
+  "titulo": "nombre o título de la rutina",
+  "descripcion": "descripción general si la mencionan",
+  "circuitos": [
+    {
+      "nombre": "nombre del bloque o circuito",
+      "rondas": "número de rondas como string, ej: '3'",
+      "ejercicios": [
+        {
+          "nombre": "nombre del ejercicio",
+          "enlace": "",
+          "reps_seg_mts": "repeticiones o duración, ej: '3x10', '30 seg'",
+          "carga": "peso u otra carga si se menciona, si no vacío"
+        }
+      ]
+    }
+  ],
+  "observaciones": "observaciones si las mencionan"
+}
 
 Estructura de params para crear_evaluacion:
 {
@@ -254,7 +276,7 @@ def interpret_voice_command(text: str) -> dict:
         model=GROQ_MODEL,
         messages=[{"role": "user", "content": prompt + f"\nComando: {text}"}],
         temperature=0.1,
-        max_tokens=1024,
+        max_tokens=2048,
     )
     raw = response.choices[0].message.content
     print("[Groq LLM] OK")

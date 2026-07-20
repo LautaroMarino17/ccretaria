@@ -69,7 +69,7 @@ export class VoiceCommandService {
         clearTimeout(this.silenceTimer);
         this.silenceTimer = setTimeout(() => {
           if (this.mediaRecorder?.state === 'recording') this.mediaRecorder.stop();
-        }, 1600);
+        }, 5000);
       }
       this.rafId = requestAnimationFrame(tick);
     };
@@ -110,37 +110,98 @@ export class VoiceCommandService {
     for (const a of acciones) await this._runOne(a);
   }
 
-  private _runOne(a: any): Promise<void> {
+  private _findPatient(nombre: string): Promise<any | null> {
     return new Promise(resolve => {
+      this.api.getPatients().subscribe({
+        next: (patients) => {
+          const q = nombre.toLowerCase();
+          const found = patients.find((p: any) =>
+            `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
+            p.apellido.toLowerCase().includes(q) ||
+            p.nombre.toLowerCase().includes(q)
+          );
+          resolve(found || null);
+        },
+        error: () => resolve(null)
+      });
+    });
+  }
+
+  private _runOne(a: any): Promise<void> {
+    return new Promise(async resolve => {
       switch (a.tipo) {
+
         case 'navegar_pacientes':
           this.router.navigate(['/professional/patients']); resolve(); break;
+
         case 'navegar_evaluaciones':
           this.router.navigate(['/professional/evaluations']); resolve(); break;
+
         case 'navegar_turnos':
           this.router.navigate(['/professional/appointments']); resolve(); break;
+
         case 'navegar_inicio':
           this.router.navigate(['/professional']); resolve(); break;
-        case 'buscar_y_abrir_paciente':
-          this.api.getPatients().subscribe({
-            next: (patients) => {
-              const q = (a.params?.nombre || '').toLowerCase();
-              const found = patients.find((p: any) =>
-                `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
-                p.apellido.toLowerCase().includes(q)
-              );
-              if (found) this.router.navigate(['/professional/patients', found.id]);
-              resolve();
-            },
-            error: () => resolve()
-          });
+
+        case 'buscar_y_abrir_paciente': {
+          const patient = await this._findPatient(a.params?.nombre || '');
+          if (patient) this.router.navigate(['/professional/patients', patient.id]);
+          resolve();
           break;
+        }
+
         case 'crear_paciente':
           this.api.createPatient(a.params || {}).subscribe({
             next: (p: any) => { this.router.navigate(['/professional/patients', p.id]); resolve(); },
             error: () => resolve()
           });
           break;
+
+        case 'iniciar_consulta': {
+          const patient = await this._findPatient(a.params?.nombre || '');
+          if (patient) {
+            this.router.navigate(['/professional/record', patient.id]);
+          }
+          resolve();
+          break;
+        }
+
+        case 'crear_rutina_voz': {
+          const patient = await this._findPatient(a.params?.nombre || '');
+          if (patient) {
+            this.router.navigate(
+              ['/professional/patients', patient.id, 'routines'],
+              { queryParams: { voice: '1' } }
+            );
+          }
+          resolve();
+          break;
+        }
+
+        case 'crear_evaluacion': {
+          const params = a.params || {};
+          const patient = await this._findPatient(params.patient_name || '');
+          if (!patient) { resolve(); break; }
+
+          const today = new Date().toISOString().split('T')[0];
+          const payload = {
+            patient_id: patient.id,
+            nombre: params.nombre || 'Evaluación',
+            fecha: params.fecha === 'hoy' ? today : (params.fecha || today),
+            observaciones: params.observaciones || '',
+            medidas: params.medidas || [],
+          };
+
+          this.api.createEvaluation(payload).subscribe({
+            next: () => {
+              this.router.navigate(['/professional/patients', patient.id, 'evaluations']);
+              resolve();
+            },
+            error: () => resolve()
+          });
+          break;
+        }
+
         default:
           resolve();
       }
@@ -148,14 +209,14 @@ export class VoiceCommandService {
   }
 
   private _speak(text: string) {
-    if (!text) { if (this.active()) this._record(); return; }
+    if (!text) { this.stop(); return; }
     speechSynthesis.cancel();
     this.status.set('speaking');
     const utt = new SpeechSynthesisUtterance(text);
     utt.lang = 'es-AR';
     utt.rate = 1.05;
-    utt.onend = () => { if (this.active()) this._record(); };
-    utt.onerror = () => { if (this.active()) this._record(); };
+    utt.onend = () => this.stop();
+    utt.onerror = () => this.stop();
     speechSynthesis.speak(utt);
   }
 

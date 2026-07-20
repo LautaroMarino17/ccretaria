@@ -525,7 +525,12 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
   _dExOver: { ci: number; ei: number } | null = null;
   _dCiOver: number | null = null;
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+    if (this.route.snapshot.queryParams['voice'] === '1') {
+      setTimeout(() => this.openVoice(), 600);
+    }
+  }
 
   load() {
     this.loading.set(true);

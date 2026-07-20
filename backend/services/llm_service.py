@@ -205,12 +205,28 @@ Interpretá comandos de voz del profesional y convertílos en acciones de la app
 
 Acciones disponibles:
 - navegar_pacientes: ir a la lista de pacientes
-- navegar_evaluaciones: ir a evaluaciones
+- navegar_evaluaciones: ir a evaluaciones globales
 - navegar_turnos: ir a turnos
 - navegar_inicio: ir al inicio
 - buscar_y_abrir_paciente: abrir perfil de un paciente (params: { "nombre": "texto a buscar" })
-- crear_paciente: crear paciente (params: { "nombre": "...", "apellido": "..." })
+- crear_paciente: crear paciente nuevo (params: { "nombre": "...", "apellido": "..." })
+- iniciar_consulta: ir a grabar una nueva consulta/historia clínica de un paciente (params: { "nombre": "texto a buscar" })
+- crear_rutina_voz: ir a rutinas de un paciente para crear una con voz (params: { "nombre": "texto a buscar" })
+- crear_evaluacion: crear una evaluación completa con todos sus datos (params: ver estructura abajo)
 - ninguna: sin acción, solo responder
+
+Estructura de params para crear_evaluacion:
+{
+  "patient_name": "Apellido, Nombre del paciente mencionado",
+  "nombre": "nombre de la evaluación",
+  "fecha": "fecha en formato YYYY-MM-DD, si dicen hoy usar fecha actual",
+  "observaciones": "observaciones si las mencionan",
+  "medidas": [
+    Para tipo simple: { "nombre": "", "unidad": "", "tipo": "simple", "intentos": ["valor1", "valor2"] }
+    Para tipo asimetría: { "nombre": "", "unidad": "", "tipo": "asimetria", "nombre_a": "lado A", "nombre_b": "lado B", "intentos_a": ["valor1"], "intentos_b": ["valor1"] }
+    Para tipo relación: { "nombre": "", "unidad": "", "tipo": "relacion", "nombre_a": "agonista", "nombre_b": "antagonista", "intentos_a": ["valor1"], "intentos_b": ["valor1"] }
+  ]
+}
 
 Respondé ÚNICAMENTE con un JSON válido (sin markdown):
 {
@@ -225,17 +241,20 @@ Reglas:
 - Si no entendés el comando, acción "ninguna" y pedí que repitan
 - Podés devolver múltiples acciones en orden
 - Preservá nombres propios tal como los escuchaste
+- En crear_evaluacion, la fecha de hoy es: {TODAY}
 - Si el comando es ambiguo, ejecutá la acción más probable y aclaralo en "respuesta"
 """
 
 
 def interpret_voice_command(text: str) -> dict:
+    from datetime import date
     print(f"[Groq LLM] Interpretando comando de voz: {text}")
+    prompt = VOICE_COMMAND_PROMPT.replace("{TODAY}", date.today().isoformat())
     response = _get_client().chat.completions.create(
         model=GROQ_MODEL,
-        messages=[{"role": "user", "content": VOICE_COMMAND_PROMPT + f"\nComando: {text}"}],
+        messages=[{"role": "user", "content": prompt + f"\nComando: {text}"}],
         temperature=0.1,
-        max_tokens=512,
+        max_tokens=1024,
     )
     raw = response.choices[0].message.content
     print("[Groq LLM] OK")

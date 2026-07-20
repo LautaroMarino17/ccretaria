@@ -152,6 +152,11 @@ export class ApiService {
     );
   }
 
+  // ── Comandos de voz ─────────────────────────────────────────────────────────
+  interpretVoiceCommand(text: string) {
+    return this.withAuth(h => this.http.post<any>(`${this.base}/voice-command/interpret`, { text }, { headers: h }));
+  }
+
   // ── Grabación / Transcripción ────────────────────────────────────
   transcribeChunk(audioBlob: Blob): Observable<{ text: string }> {
     return from(this.auth.getIdToken()).pipe(

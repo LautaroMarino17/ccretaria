@@ -200,6 +200,54 @@ def structure_routine_from_voice(transcription: str) -> dict:
         }
 
 
+VOICE_COMMAND_PROMPT = """Sos un asistente de voz para una app médica llamada SecretarIA.
+Interpretá comandos de voz del profesional y convertílos en acciones de la app.
+
+Acciones disponibles:
+- navegar_pacientes: ir a la lista de pacientes
+- navegar_evaluaciones: ir a evaluaciones
+- navegar_turnos: ir a turnos
+- navegar_inicio: ir al inicio
+- buscar_y_abrir_paciente: abrir perfil de un paciente (params: { "nombre": "texto a buscar" })
+- crear_paciente: crear paciente (params: { "nombre": "...", "apellido": "..." })
+- ninguna: sin acción, solo responder
+
+Respondé ÚNICAMENTE con un JSON válido (sin markdown):
+{
+  "acciones": [
+    { "tipo": "...", "params": {} }
+  ],
+  "respuesta": "texto breve en español que se leerá en voz alta"
+}
+
+Reglas:
+- "respuesta" siempre en español rioplatense, primera persona, máximo 2 oraciones
+- Si no entendés el comando, acción "ninguna" y pedí que repitan
+- Podés devolver múltiples acciones en orden
+- Preservá nombres propios tal como los escuchaste
+- Si el comando es ambiguo, ejecutá la acción más probable y aclaralo en "respuesta"
+"""
+
+
+def interpret_voice_command(text: str) -> dict:
+    print(f"[Groq LLM] Interpretando comando de voz: {text}")
+    response = _get_client().chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[{"role": "user", "content": VOICE_COMMAND_PROMPT + f"\nComando: {text}"}],
+        temperature=0.1,
+        max_tokens=512,
+    )
+    raw = response.choices[0].message.content
+    print("[Groq LLM] OK")
+    try:
+        return _parse_json(raw)
+    except Exception:
+        return {
+            "acciones": [{"tipo": "ninguna", "params": {}}],
+            "respuesta": "No pude interpretar el comando, ¿podés repetirlo?"
+        }
+
+
 def generate_routine(patient_info: dict) -> dict:
     print("[Groq LLM] Generando rutina...")
     info_str = json.dumps(patient_info, ensure_ascii=False, indent=2)

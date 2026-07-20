@@ -5,11 +5,12 @@ import { Messaging, getToken } from '@angular/fire/messaging';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
 import { environment } from '../../../../environments/environment';
+import { VoiceButtonComponent } from '../../components/voice-button/voice-button.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, VoiceButtonComponent],
   template: `
     <div class="shell" [class.sidebar-open]="sidebarOpen()">
       <!-- Sidebar -->
@@ -75,6 +76,10 @@ import { environment } from '../../../../environments/environment';
         </div>
       </main>
     </div>
+
+    @if (isProfessional()) {
+      <app-voice-button />
+    }
   `,
   styles: [`
     .shell {
@@ -300,6 +305,10 @@ export class ShellComponent implements OnInit {
 
   roleLabel() {
     return this.authService.currentUser?.role === 'professional' ? 'Profesional' : 'Paciente';
+  }
+
+  isProfessional() {
+    return this.authService.currentUser?.role === 'professional';
   }
 
   private buildNavItems() {

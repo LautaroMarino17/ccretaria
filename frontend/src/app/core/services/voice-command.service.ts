@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, NgZone, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
 
@@ -8,6 +8,7 @@ export type VoiceStatus = 'idle' | 'listening' | 'processing' | 'speaking';
 export class VoiceCommandService {
   private api = inject(ApiService);
   private router = inject(Router);
+  private zone = inject(NgZone);
 
   active = signal(false);
   status = signal<VoiceStatus>('idle');
@@ -21,6 +22,7 @@ export class VoiceCommandService {
   private chunks: Blob[] = [];
   private silenceTimer?: ReturnType<typeof setTimeout>;
   private bubbleTimer?: ReturnType<typeof setTimeout>;
+  private processingTimer?: ReturnType<typeof setTimeout>;
   private hasSpeech = false;
   private rafId?: number;
 
@@ -87,6 +89,11 @@ export class VoiceCommandService {
     this.status.set('processing');
     const blob = new Blob(this.chunks, { type: 'audio/webm' });
 
+    // Timeout de seguridad: si algo cuelga, salir igual
+    this.processingTimer = setTimeout(() => {
+      if (this.status() === 'processing') this._finalize('');
+    }, 30000);
+
     this.api.transcribeChunk(blob).subscribe({
       next: (res) => {
         const text = res.text?.trim();
@@ -96,9 +103,11 @@ export class VoiceCommandService {
           next: async (interpreted) => {
             this.lastResponse.set(interpreted.respuesta || '');
             await this._runActions(interpreted.acciones || []);
-            this._finalize(interpreted.respuesta || '');
+            // zone.run garantiza que los signals actualicen la vista
+            // aunque venga de una cadena async/subscribe fuera de zona
+            this.zone.run(() => this._finalize(interpreted.respuesta || ''));
           },
-          error: () => this._finalize('Ocurrió un error al procesar el comando.')
+          error: () => this.zone.run(() => this._finalize('Ocurrió un error al procesar el comando.'))
         });
       },
       error: () => { if (this.active()) this._record(); }
@@ -106,7 +115,7 @@ export class VoiceCommandService {
   }
 
   private _finalize(response: string) {
-    // Detiene el hardware inmediatamente, sin esperar al TTS
+    clearTimeout(this.processingTimer);
     this._stopHardware();
     this.active.set(false);
     this.status.set('idle');
@@ -269,6 +278,7 @@ export class VoiceCommandService {
 
   stop() {
     clearTimeout(this.bubbleTimer);
+    clearTimeout(this.processingTimer);
     this._stopHardware();
     this.active.set(false);
     this.status.set('idle');

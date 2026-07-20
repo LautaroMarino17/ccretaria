@@ -627,15 +627,23 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
   }
 
   private _loadLogo(): Promise<string> {
-    return fetch('/assets/logo.png')
-      .then(r => r.blob())
-      .then(blob => new Promise<string>(res => {
-        const reader = new FileReader();
-        reader.onload = () => res(reader.result as string);
-        reader.onerror = () => res('');
-        reader.readAsDataURL(blob);
-      }))
-      .catch(() => '');
+    return new Promise<string>(res => {
+      const img = new Image();
+      img.onload = () => {
+        const size = Math.min(img.width, img.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, size, size);
+        res(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => res('');
+      img.src = '/assets/logo.png';
+    });
   }
 
   async downloadPdf(r: any) {
@@ -666,9 +674,9 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
       if (y > 265) { doc.addPage(); y = 14; }
 
       // Block header
-      doc.setFillColor(241, 252, 220); doc.setDrawColor(140, 198, 63);
+      doc.setFillColor(240, 253, 244); doc.setDrawColor(22, 163, 74);
       doc.roundedRect(M, y, CW, 8, 1, 1, 'FD');
-      doc.setTextColor(85, 125, 25); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.setTextColor(22, 101, 52); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
       doc.text((circ.nombre || 'Bloque') + (circ.rondas ? `   ·   ${circ.rondas} rondas` : ''), M + 3, y + 5.5);
       y += 11;
 
@@ -681,7 +689,7 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
         margin: { left: M, right: M },
         styles: { fontSize: 10, cellPadding: 3 },
         headStyles: { fillColor: [243, 244, 246] as any, textColor: [55, 65, 81] as any, fontStyle: 'bold' },
-        bodyStyles: { textColor: [85, 125, 25] as any },
+        bodyStyles: { textColor: [5, 46, 22] as any },
         columnStyles: { 0: { cellWidth: 100 }, 1: { cellWidth: 55 }, 2: { cellWidth: 27 } },
         theme: 'plain', tableLineColor: [229, 231, 235] as any, tableLineWidth: 0.3,
       });

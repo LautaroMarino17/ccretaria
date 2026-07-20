@@ -445,7 +445,7 @@ export class ProfessionalHistoriesComponent implements OnInit {
     const section = (label: string, value: string) => {
       if (!value?.trim()) return;
       if (y > 265) { doc.addPage(); y = 14; }
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(140, 198, 63);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(107, 114, 128);
       doc.text(label.toUpperCase(), M, y); y += 5;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(30, 30, 30);
       const lines = doc.splitTextToSize(value, CW) as string[];
@@ -482,7 +482,7 @@ export class ProfessionalHistoriesComponent implements OnInit {
 
     if (h.observaciones?.trim()) {
       if (y > 265) { doc.addPage(); y = 14; }
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(140, 198, 63);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(107, 114, 128);
       doc.text('OBSERVACIONES', M, y); y += 5;
       const lines = doc.splitTextToSize(h.observaciones, CW - 6) as string[];
       const boxH = lines.length * 5.5 + 6;
@@ -507,15 +507,23 @@ export class ProfessionalHistoriesComponent implements OnInit {
   }
 
   private _loadLogo(): Promise<string> {
-    return fetch('/assets/logo.png')
-      .then(r => r.blob())
-      .then(blob => new Promise<string>(res => {
-        const reader = new FileReader();
-        reader.onload = () => res(reader.result as string);
-        reader.onerror = () => res('');
-        reader.readAsDataURL(blob);
-      }))
-      .catch(() => '');
+    return new Promise<string>(res => {
+      const img = new Image();
+      img.onload = () => {
+        const size = Math.min(img.width, img.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, size, size);
+        res(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => res('');
+      img.src = '/assets/logo.png';
+    });
   }
 
   printHistory(h: any) {

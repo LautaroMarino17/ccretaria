@@ -1023,7 +1023,7 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       const m = medidas[idx];
       if (y > 260) { doc.addPage(); y = 14; }
 
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(85, 125, 25);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(5, 46, 22);
       doc.text(`${idx + 1}. ${m.nombre}${m.unidad ? ` (${m.unidad})` : ''}`, M, y + 5);
       y += 9;
 
@@ -1114,15 +1114,23 @@ export class ProfessionalEvaluationsComponent implements OnInit {
   }
 
   private _loadLogo(): Promise<string> {
-    return fetch('/assets/logo.png')
-      .then(r => r.blob())
-      .then(blob => new Promise<string>(res => {
-        const reader = new FileReader();
-        reader.onload = () => res(reader.result as string);
-        reader.onerror = () => res('');
-        reader.readAsDataURL(blob);
-      }))
-      .catch(() => '');
+    return new Promise<string>(res => {
+      const img = new Image();
+      img.onload = () => {
+        const size = Math.min(img.width, img.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, size, size);
+        res(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => res('');
+      img.src = '/assets/logo.png';
+    });
   }
 
   private _svgToDataUrl(svgStr: string, w: number, h: number): Promise<string> {

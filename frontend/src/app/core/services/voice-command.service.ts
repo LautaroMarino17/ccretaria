@@ -157,12 +157,25 @@ export class VoiceCommandService {
           });
           break;
 
-        case 'iniciar_consulta': {
-          const patient = await this._findPatient(a.params?.nombre || '');
-          if (patient) {
-            this.router.navigate(['/professional/record', patient.id]);
-          }
-          resolve();
+        case 'crear_historia_voz': {
+          const params = a.params || {};
+          const patient = await this._findPatient(params.patient_name || '');
+          if (!patient) { resolve(); break; }
+
+          this.api.structureText(params.transcription || '').subscribe({
+            next: (res) => {
+              const historia = res.clinical_history || res;
+              historia.patient_id = patient.id;
+              this.api.saveClinicalHistory(historia).subscribe({
+                next: () => {
+                  this.router.navigate(['/professional/patients', patient.id, 'histories']);
+                  resolve();
+                },
+                error: () => resolve()
+              });
+            },
+            error: () => resolve()
+          });
           break;
         }
 

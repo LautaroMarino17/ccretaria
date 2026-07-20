@@ -210,7 +210,7 @@ Acciones disponibles:
 - navegar_inicio: ir al inicio
 - buscar_y_abrir_paciente: abrir perfil de un paciente (params: { "nombre": "texto a buscar" })
 - crear_paciente: crear paciente nuevo (params: { "nombre": "...", "apellido": "..." })
-- iniciar_consulta: ir a grabar una nueva consulta/historia clínica de un paciente (params: { "nombre": "texto a buscar" })
+- crear_historia_voz: crear y guardar una historia clínica completa desde lo dictado (params: { "patient_name": "apellido o nombre del paciente", "transcription": "todo el contenido clínico dictado tal como se escuchó, sin resumir" })
 - crear_rutina_voz: crear y guardar una rutina completa directamente desde lo dictado (params: ver estructura abajo)
 - crear_evaluacion: crear una evaluación completa con todos sus datos (params: ver estructura abajo)
 - ninguna: sin acción, solo responder

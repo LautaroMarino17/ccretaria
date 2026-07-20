@@ -9,7 +9,7 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
   template: `
     <div class="voice-fab-wrap">
 
-      @if (vc.active()) {
+      @if (vc.active() || vc.lastResponse()) {
         <div class="voice-bubble" [class.processing]="vc.status() === 'processing'" [class.speaking]="vc.status() === 'speaking'">
           @if (vc.status() === 'listening') {
             <span class="vb-dot"></span>

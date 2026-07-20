@@ -20,6 +20,7 @@ export class VoiceCommandService {
   private mediaRecorder?: MediaRecorder;
   private chunks: Blob[] = [];
   private silenceTimer?: ReturnType<typeof setTimeout>;
+  private bubbleTimer?: ReturnType<typeof setTimeout>;
   private hasSpeech = false;
   private rafId?: number;
 
@@ -95,15 +96,36 @@ export class VoiceCommandService {
           next: async (interpreted) => {
             this.lastResponse.set(interpreted.respuesta || '');
             await this._runActions(interpreted.acciones || []);
-            this._speak(interpreted.respuesta || '');
+            this._finalize(interpreted.respuesta || '');
           },
-          error: () => {
-            this._speak('Ocurrió un error al procesar el comando.');
-          }
+          error: () => this._finalize('Ocurrió un error al procesar el comando.')
         });
       },
       error: () => { if (this.active()) this._record(); }
     });
+  }
+
+  private _finalize(response: string) {
+    // Detiene el hardware inmediatamente, sin esperar al TTS
+    this._stopHardware();
+    this.active.set(false);
+    this.status.set('idle');
+
+    // Mantiene el globo visible 5 segundos para que el usuario vea qué pasó
+    clearTimeout(this.bubbleTimer);
+    this.bubbleTimer = setTimeout(() => {
+      this.lastText.set('');
+      this.lastResponse.set('');
+    }, 5000);
+
+    // TTS como bonus (no bloquea nada)
+    if (response && 'speechSynthesis' in window) {
+      speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(response);
+      utt.lang = 'es-AR';
+      utt.rate = 1.05;
+      speechSynthesis.speak(utt);
+    }
   }
 
   private async _runActions(acciones: any[]) {
@@ -232,28 +254,25 @@ export class VoiceCommandService {
     });
   }
 
-  private _speak(text: string) {
-    if (!text) { this.stop(); return; }
-    speechSynthesis.cancel();
-    this.status.set('speaking');
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = 'es-AR';
-    utt.rate = 1.05;
-    utt.onend = () => this.stop();
-    utt.onerror = () => this.stop();
-    speechSynthesis.speak(utt);
-  }
-
-  stop() {
-    this.active.set(false);
-    this.status.set('idle');
-    this.lastText.set('');
-    this.lastResponse.set('');
+  private _stopHardware() {
     clearTimeout(this.silenceTimer);
     cancelAnimationFrame(this.rafId!);
     speechSynthesis.cancel();
     try { this.mediaRecorder?.stop(); } catch {}
     this.stream?.getTracks().forEach(t => t.stop());
     this.audioCtx?.close();
+    this.stream = undefined;
+    this.audioCtx = undefined;
+    this.analyser = undefined;
+    this.mediaRecorder = undefined;
+  }
+
+  stop() {
+    clearTimeout(this.bubbleTimer);
+    this._stopHardware();
+    this.active.set(false);
+    this.status.set('idle');
+    this.lastText.set('');
+    this.lastResponse.set('');
   }
 }

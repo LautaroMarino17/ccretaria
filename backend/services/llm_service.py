@@ -203,6 +203,11 @@ def structure_routine_from_voice(transcription: str) -> dict:
 VOICE_COMMAND_PROMPT = """Sos un asistente de voz para una app médica llamada SecretarIA.
 Interpretá comandos de voz del profesional y convertílos en acciones de la app.
 
+Contexto actual del profesional:
+{CONTEXT_BLOCK}
+
+Fecha y hora actual: {TODAY}
+
 Acciones disponibles:
 - navegar_pacientes: ir a la lista de pacientes
 - navegar_evaluaciones: ir a evaluaciones globales
@@ -211,6 +216,7 @@ Acciones disponibles:
 - buscar_y_abrir_paciente: abrir perfil de un paciente (params: { "nombre": "texto a buscar" })
 - crear_paciente: crear paciente nuevo (params: { "nombre": "...", "apellido": "..." })
 - crear_historia_voz: crear y guardar una historia clínica completa desde lo dictado (params: { "patient_name": "apellido o nombre del paciente", "transcription": "todo el contenido clínico dictado tal como se escuchó, sin resumir" })
+- crear_turno: agendar un turno para un paciente (params: { "patient_name": "apellido o nombre", "datetime_iso": "YYYY-MM-DDTHH:MM:00", "duration_minutes": 30, "notes": "", "lugar": "", "tipo": "consulta" })
 - crear_rutina_voz: crear y guardar una rutina completa directamente desde lo dictado (params: ver estructura abajo)
 - crear_evaluacion: crear una evaluación completa con todos sus datos (params: ver estructura abajo)
 - ninguna: sin acción, solo responder
@@ -255,23 +261,45 @@ Respondé ÚNICAMENTE con un JSON válido (sin markdown):
   "acciones": [
     { "tipo": "...", "params": {} }
   ],
-  "respuesta": "texto breve en español que se leerá en voz alta"
+  "respuesta": "texto breve en español que se leerá en voz alta",
+  "requiere_confirmacion": false,
+  "confirmacion_texto": ""
 }
 
-Reglas:
+Reglas generales:
 - "respuesta" siempre en español rioplatense, primera persona, máximo 2 oraciones
 - Si no entendés el comando, acción "ninguna" y pedí que repitan
 - Podés devolver múltiples acciones en orden
 - Preservá nombres propios tal como los escuchaste
-- En crear_evaluacion, la fecha de hoy es: {TODAY}
-- Si el comando es ambiguo, ejecutá la acción más probable y aclaralo en "respuesta"
+- En crear_turno, el campo datetime_iso debe ser una fecha futura en formato ISO completo
+
+Memoria y contexto:
+- Si el contexto indica un "último paciente" y el comando usa "él", "ella", "el paciente", "el mismo" sin nombrar a nadie, usá ese paciente
+- Si el contexto no tiene paciente y el comando no nombra a nadie, pedí que especifiquen el nombre
+
+Cuándo usar requiere_confirmacion: true:
+- El horario o fecha del turno no está completamente claro (ej: solo dicen "mañana" sin hora)
+- El nombre del paciente es muy corto o ambiguo y podrías confundirte
+- La acción implica crear datos importantes y querés confirmar antes de ejecutar
+- En esos casos: "confirmacion_texto" debe ser una pregunta concisa al profesional (ej: "¿Creo un turno para García el lunes 21 a las 10:00?")
+- Si el comando es claro y completo: requiere_confirmacion: false, confirmacion_texto: ""
 """
 
 
-def interpret_voice_command(text: str) -> dict:
-    from datetime import date
+def interpret_voice_command(text: str, context: dict = None) -> dict:
+    from datetime import datetime
     print(f"[Groq LLM] Interpretando comando de voz: {text}")
-    prompt = VOICE_COMMAND_PROMPT.replace("{TODAY}", date.today().isoformat())
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M (%A)")
+
+    context_lines = []
+    if context:
+        lp = context.get("last_patient")
+        if lp:
+            context_lines.append(f"- Último paciente mencionado: {lp.get('name', '')} (ID: {lp.get('id', '')})")
+    context_block = "\n".join(context_lines) if context_lines else "- Sin contexto previo"
+
+    prompt = VOICE_COMMAND_PROMPT.replace("{TODAY}", now_str).replace("{CONTEXT_BLOCK}", context_block)
+
     response = _get_client().chat.completions.create(
         model=GROQ_MODEL,
         messages=[{"role": "user", "content": prompt + f"\nComando: {text}"}],
@@ -281,11 +309,18 @@ def interpret_voice_command(text: str) -> dict:
     raw = response.choices[0].message.content
     print("[Groq LLM] OK")
     try:
-        return _parse_json(raw)
+        result = _parse_json(raw)
+        if "requiere_confirmacion" not in result:
+            result["requiere_confirmacion"] = False
+        if "confirmacion_texto" not in result:
+            result["confirmacion_texto"] = ""
+        return result
     except Exception:
         return {
             "acciones": [{"tipo": "ninguna", "params": {}}],
-            "respuesta": "No pude interpretar el comando, ¿podés repetirlo?"
+            "respuesta": "No pude interpretar el comando, ¿podés repetirlo?",
+            "requiere_confirmacion": False,
+            "confirmacion_texto": ""
         }
 
 

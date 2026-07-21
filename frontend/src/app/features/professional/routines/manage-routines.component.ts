@@ -671,7 +671,10 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
     let y = 33;
 
     for (const circ of r.circuitos || []) {
-      if (y > 265) { doc.addPage(); y = 14; }
+      // Si el bloque estimado no cabe en la página → nueva página (evita header huérfano)
+      const exCount = (circ.ejercicios || []).length;
+      const estimatedH = 11 + 10 + exCount * 10 + 8;
+      if (y + Math.min(estimatedH, 50) > 278) { doc.addPage(); y = 14; }
 
       // Block header
       doc.setFillColor(240, 253, 244); doc.setDrawColor(22, 163, 74);

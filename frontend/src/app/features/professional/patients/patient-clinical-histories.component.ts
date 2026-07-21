@@ -63,6 +63,9 @@ function emptyForm() {
                   @if (h.professional_name) { <p class="history-prof">{{ h.professional_name }}</p> }
                 </div>
                 <div class="history-actions" (click)="$event.stopPropagation()">
+                  <button class="btn-icon-sm" (click)="downloadHistory(h)" title="Descargar PDF">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </button>
                   <button class="btn-icon-sm" (click)="printHistory(h)" title="Imprimir">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   </button>
@@ -542,5 +545,119 @@ export class PatientClinicalHistoriesComponent implements OnInit {
     if (!date) return '—';
     try { return new Date(date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }); }
     catch { return '—'; }
+  }
+
+  async downloadHistory(h: any) {
+    const { jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+    const logo = await this._loadLogo();
+
+    const patientLabel = h.nombre_paciente || this.patientName();
+    const dateLabel = this.formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha);
+    const prof = h.professional_name || '';
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, M = 14;
+
+    doc.setFillColor(140, 198, 63);
+    doc.rect(0, 0, W, 28, 'F');
+    if (logo) doc.addImage(logo, 'PNG', W - 28, 2, 22, 24);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+    doc.text(patientLabel, M, 11);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.text(`Historia clínica · ${dateLabel}`, M, 18);
+    if (prof) doc.text(prof, M, 24);
+
+    let y = 34;
+
+    const addSection = (label: string, text: string) => {
+      if (!text) return;
+      const lines = doc.splitTextToSize(text, 182);
+      const blockH = 7 + lines.length * 5.5 + 5;
+      if (y + blockH > 278) { doc.addPage(); y = 14; }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      doc.setTextColor(107, 114, 128);
+      doc.text(label.toUpperCase(), M, y); y += 5;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      doc.setTextColor(17, 24, 39);
+      doc.text(lines, M, y); y += lines.length * 5.5 + 5;
+    };
+
+    // Signos vitales
+    const sv = h.signos_vitales;
+    if (sv) {
+      const svParts = [
+        sv.tension_arterial ? `TA: ${sv.tension_arterial}` : '',
+        sv.frecuencia_cardiaca ? `FC: ${sv.frecuencia_cardiaca}` : '',
+        sv.temperatura ? `Temp: ${sv.temperatura}` : '',
+        sv.peso ? `Peso: ${sv.peso}` : '',
+        sv.talla ? `Talla: ${sv.talla}` : '',
+        sv.saturacion ? `SatO2: ${sv.saturacion}` : '',
+      ].filter(Boolean);
+      if (svParts.length) addSection('Signos vitales', svParts.join('   ·   '));
+    }
+
+    addSection('Motivo de consulta', h.motivo_consulta || '');
+    addSection('Antecedentes y síntomas', h.antecedentes_sintomas || '');
+    addSection('Examen físico', h.examen_fisico || '');
+    addSection('Exploración estática', h.exploracion_estatica || '');
+    addSection('Inspección dinámica', h.exploracion_dinamica || '');
+    addSection('Diagnóstico', h.diagnostico || '');
+    addSection('Plan terapéutico', h.plan_terapeutico || '');
+    addSection('Estudios complementarios', h.estudios_complementarios || '');
+    addSection('Laboratorio', h.laboratorio || '');
+    addSection('Medicación', h.medicacion || '');
+
+    if (h.observaciones) {
+      const obsLines = doc.splitTextToSize(h.observaciones, 174);
+      const obsH = 10 + obsLines.length * 5.5 + 8;
+      if (y + obsH > 278) { doc.addPage(); y = 14; }
+      doc.setFillColor(255, 251, 235);
+      doc.setDrawColor(217, 119, 6);
+      doc.roundedRect(M, y, 182, obsH - 2, 3, 3, 'FD');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      doc.setTextColor(146, 64, 14);
+      doc.text('OBSERVACIONES', M + 4, y + 6);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      doc.setTextColor(120, 53, 15);
+      doc.text(obsLines, M + 4, y + 12);
+      y += obsH + 4;
+    }
+
+    const plantillasText = h.plantillas
+      ? `Indicadas${h.descripcion_pedografia ? ' — ' + h.descripcion_pedografia : ''}`
+      : 'No indicadas';
+    addSection('Plantillas', plantillasText);
+
+    const pages = (doc.internal as any).getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setTextColor(156, 163, 175); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      doc.text(`Reporte generado por SecretarIA  ·  Pág. ${i}/${pages}`, W / 2, 292, { align: 'center' });
+    }
+
+    const safeName = patientLabel.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    doc.save(`historia_${safeName}_${dateLabel.replace(/ /g,'_')}.pdf`);
+  }
+
+  private _loadLogo(): Promise<string> {
+    return new Promise<string>(res => {
+      const img = new Image();
+      img.onload = () => {
+        const size = Math.min(img.width, img.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, size, size);
+        res(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => res('');
+      img.src = '/assets/logo.png';
+    });
   }
 }

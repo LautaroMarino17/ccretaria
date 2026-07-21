@@ -153,8 +153,8 @@ export class ApiService {
   }
 
   // ── Comandos de voz ─────────────────────────────────────────────────────────
-  interpretVoiceCommand(text: string) {
-    return this.withAuth(h => this.http.post<any>(`${this.base}/voice-command/interpret`, { text }, { headers: h }));
+  interpretVoiceCommand(text: string, context?: any) {
+    return this.withAuth(h => this.http.post<any>(`${this.base}/voice-command/interpret`, { text, context }, { headers: h }));
   }
 
   // ── Grabación / Transcripción ────────────────────────────────────

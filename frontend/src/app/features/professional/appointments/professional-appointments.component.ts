@@ -18,9 +18,15 @@ interface HourRow { hour: number; appointments: any[]; }
           <h1>Turnos</h1>
           <p class="subtitle">{{ viewMode() === 'day' ? 'Agenda del día' : 'Agenda semanal' }}</p>
         </div>
-        <div class="view-toggle">
-          <button [class.active]="viewMode() === 'day'" (click)="switchView('day')">Día</button>
-          <button [class.active]="viewMode() === 'week'" (click)="switchView('week')">Semana</button>
+        <div class="header-right">
+          <div class="view-toggle">
+            <button [class.active]="viewMode() === 'day'" (click)="switchView('day')">Día</button>
+            <button [class.active]="viewMode() === 'week'" (click)="switchView('week')">Semana</button>
+          </div>
+          <button class="btn-download-pdf" (click)="downloadAgendaPdf()" title="Descargar agenda del día">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            PDF
+          </button>
         </div>
       </div>
 
@@ -263,6 +269,10 @@ interface HourRow { hour: number; appointments: any[]; }
     .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
     h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
     .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
+
+    .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .btn-download-pdf { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; background: white; color: #374151; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .btn-download-pdf:hover { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
 
     /* View toggle */
     .view-toggle { display: flex; background: #f3f4f6; border-radius: 8px; padding: 3px; gap: 2px; flex-shrink: 0; }
@@ -719,5 +729,82 @@ export class ProfessionalAppointmentsComponent implements OnInit {
 
   toDateStr(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  async downloadAgendaPdf() {
+    const { jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+    const logo = await this._loadLogo();
+
+    const appts = this.rawAppts().filter((a: any) => a.status !== 'cancelled');
+    const dateLabel = this.currentDate().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, M = 14, CW = 182;
+
+    doc.setFillColor(140, 198, 63);
+    doc.rect(0, 0, W, 28, 'F');
+    if (logo) doc.addImage(logo, 'PNG', W - 28, 2, 22, 24);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+    doc.text('Agenda del día', M, 10);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.text(dateLabel, M, 18);
+    doc.text(`${appts.length} turno${appts.length !== 1 ? 's' : ''}`, M, 24);
+
+    const rows = appts
+      .sort((a: any, b: any) => a.appointment_datetime.localeCompare(b.appointment_datetime))
+      .map((a: any) => {
+        const dt = new Date(a.appointment_datetime);
+        const hora = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+        return [
+          hora,
+          a.patient_name || '—',
+          `${a.duration_minutes || 30} min`,
+          a.tipo || 'consulta',
+          a.lugar || '',
+          a.notes || '',
+        ];
+      });
+
+    autoTable(doc, {
+      startY: 34,
+      head: [['Hora', 'Paciente', 'Duración', 'Tipo', 'Lugar', 'Notas']],
+      body: rows.length ? rows : [['—', 'Sin turnos para este día', '', '', '', '']],
+      margin: { left: M, right: M },
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [243, 244, 246] as any, textColor: [55, 65, 81] as any, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 18 }, 1: { cellWidth: 55 }, 2: { cellWidth: 22 }, 3: { cellWidth: 25 }, 4: { cellWidth: 25 } },
+      theme: 'plain', tableLineColor: [229, 231, 235] as any, tableLineWidth: 0.3,
+    });
+
+    const pages = (doc.internal as any).getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setTextColor(156, 163, 175); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      doc.text(`Reporte generado por SecretarIA  ·  Pág. ${i}/${pages}`, W / 2, 292, { align: 'center' });
+    }
+
+    doc.save(`agenda_${this.toDateStr(this.currentDate())}.pdf`);
+  }
+
+  private _loadLogo(): Promise<string> {
+    return new Promise<string>(res => {
+      const img = new Image();
+      img.onload = () => {
+        const size = Math.min(img.width, img.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, size, size);
+        res(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => res('');
+      img.src = '/assets/logo.png';
+    });
   }
 }

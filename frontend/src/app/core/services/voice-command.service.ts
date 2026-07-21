@@ -2,34 +2,45 @@ import { Injectable, NgZone, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
 
-export type VoiceStatus = 'idle' | 'listening' | 'processing' | 'speaking';
+export type VoiceStatus = 'idle' | 'listening' | 'processing';
 
 @Injectable({ providedIn: 'root' })
 export class VoiceCommandService {
-  private api = inject(ApiService);
+  private api    = inject(ApiService);
   private router = inject(Router);
-  private zone = inject(NgZone);
+  private zone   = inject(NgZone);
 
-  active = signal(false);
-  status = signal<VoiceStatus>('idle');
-  lastText = signal('');
-  lastResponse = signal('');
+  active               = signal(false);
+  status               = signal<VoiceStatus>('idle');
+  lastText             = signal('');
+  lastResponse         = signal('');
+  lastPatient          = signal<any | null>(null);
+  awaitingConfirmation = signal(false);
+  confirmationText     = signal('');
 
-  private stream?: MediaStream;
-  private audioCtx?: AudioContext;
-  private analyser?: AnalyserNode;
+  private stream?:        MediaStream;
+  private audioCtx?:      AudioContext;
+  private analyser?:      AnalyserNode;
   private mediaRecorder?: MediaRecorder;
-  private chunks: Blob[] = [];
-  private silenceTimer?: ReturnType<typeof setTimeout>;
-  private bubbleTimer?: ReturnType<typeof setTimeout>;
+  private chunks:         Blob[] = [];
+  private silenceTimer?:  ReturnType<typeof setTimeout>;
+  private bubbleTimer?:   ReturnType<typeof setTimeout>;
   private processingTimer?: ReturnType<typeof setTimeout>;
   private hasSpeech = false;
-  private rafId?: number;
+  private rafId?:    number;
+
+  private _pendingActions:  any[]  = [];
+  private _pendingResponse  = '';
+  private _runtimeError     = '';
+
+  getAnalyser(): AnalyserNode | undefined { return this.analyser; }
 
   async toggle() {
+    if (this.awaitingConfirmation()) return;
     this.active() ? this.stop() : await this.start();
   }
 
+  // ── Arranque ────────────────────────────────────────────────────────────────
   private async start() {
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -40,15 +51,14 @@ export class VoiceCommandService {
     this.audioCtx = new AudioContext();
     this.analyser = this.audioCtx.createAnalyser();
     this.analyser.fftSize = 512;
-    const src = this.audioCtx.createMediaStreamSource(this.stream);
-    src.connect(this.analyser);
+    this.audioCtx.createMediaStreamSource(this.stream).connect(this.analyser);
     this.active.set(true);
     this._record();
   }
 
   private _record() {
     if (!this.active() || !this.stream) return;
-    this.chunks = [];
+    this.chunks    = [];
     this.hasSpeech = false;
     this.mediaRecorder = new MediaRecorder(this.stream);
     this.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) this.chunks.push(e.data); };
@@ -61,24 +71,23 @@ export class VoiceCommandService {
   private _watchSilence() {
     if (!this.analyser) return;
     const data = new Uint8Array(this.analyser.frequencyBinCount);
-
     const tick = () => {
       if (!this.active() || this.status() !== 'listening') return;
       this.analyser!.getByteFrequencyData(data);
       const avg = data.reduce((a, b) => a + b, 0) / data.length;
-
       if (avg > 12) {
         this.hasSpeech = true;
         clearTimeout(this.silenceTimer);
         this.silenceTimer = setTimeout(() => {
           if (this.mediaRecorder?.state === 'recording') this.mediaRecorder.stop();
-        }, 5000);
+        }, 2000);
       }
       this.rafId = requestAnimationFrame(tick);
     };
     this.rafId = requestAnimationFrame(tick);
   }
 
+  // ── Proceso tras silencio ────────────────────────────────────────────────────
   private async _onStop() {
     cancelAnimationFrame(this.rafId!);
     if (!this.hasSpeech || this.chunks.length === 0) {
@@ -89,9 +98,8 @@ export class VoiceCommandService {
     this.status.set('processing');
     const blob = new Blob(this.chunks, { type: 'audio/webm' });
 
-    // Timeout de seguridad: si algo cuelga, salir igual
     this.processingTimer = setTimeout(() => {
-      if (this.status() === 'processing') this._finalize('');
+      if (this.status() === 'processing') this.zone.run(() => this._finalize(''));
     }, 30000);
 
     this.api.transcribeChunk(blob).subscribe({
@@ -99,13 +107,36 @@ export class VoiceCommandService {
         const text = res.text?.trim();
         if (!text) { if (this.active()) this._record(); return; }
         this.lastText.set(text);
-        this.api.interpretVoiceCommand(text).subscribe({
+
+        const ctx = this.lastPatient()
+          ? { last_patient: { id: this.lastPatient().id, name: `${this.lastPatient().apellido || ''} ${this.lastPatient().nombre || ''}`.trim() } }
+          : undefined;
+
+        this.api.interpretVoiceCommand(text, ctx).subscribe({
           next: async (interpreted) => {
             this.lastResponse.set(interpreted.respuesta || '');
+
+            // Caso: el LLM pide confirmación antes de ejecutar
+            if (interpreted.requiere_confirmacion) {
+              this._pendingActions  = interpreted.acciones || [];
+              this._pendingResponse = interpreted.respuesta || '';
+              this.zone.run(() => {
+                clearTimeout(this.processingTimer);
+                this._stopHardware();
+                this.active.set(false);
+                this.status.set('idle');
+                this.confirmationText.set(interpreted.confirmacion_texto || interpreted.respuesta || '');
+                this.awaitingConfirmation.set(true);
+                this._speak(interpreted.respuesta || '');
+              });
+              return;
+            }
+
             await this._runActions(interpreted.acciones || []);
-            // zone.run garantiza que los signals actualicen la vista
-            // aunque venga de una cadena async/subscribe fuera de zona
-            this.zone.run(() => this._finalize(interpreted.respuesta || ''));
+            this.zone.run(() => {
+              this._finalize(this._runtimeError || interpreted.respuesta || '');
+              this._runtimeError = '';
+            });
           },
           error: () => this.zone.run(() => this._finalize('Ocurrió un error al procesar el comando.'))
         });
@@ -114,48 +145,79 @@ export class VoiceCommandService {
     });
   }
 
+  // ── Confirmación ─────────────────────────────────────────────────────────────
+  async confirmAction(yes: boolean) {
+    this.awaitingConfirmation.set(false);
+    this.confirmationText.set('');
+
+    if (yes) {
+      await this._runActions(this._pendingActions);
+      this._finalize(this._runtimeError || this._pendingResponse || 'Listo.');
+      this._runtimeError = '';
+    } else {
+      this._speak('Cancelado.');
+      clearTimeout(this.bubbleTimer);
+      this.bubbleTimer = setTimeout(() => { this.lastText.set(''); this.lastResponse.set(''); }, 5000);
+    }
+    this._pendingActions  = [];
+    this._pendingResponse = '';
+  }
+
+  // ── Finalización ─────────────────────────────────────────────────────────────
   private _finalize(response: string) {
     clearTimeout(this.processingTimer);
     this._stopHardware();
     this.active.set(false);
     this.status.set('idle');
+    if (response) this.lastResponse.set(response);
 
-    // Mantiene el globo visible 5 segundos para que el usuario vea qué pasó
     clearTimeout(this.bubbleTimer);
     this.bubbleTimer = setTimeout(() => {
       this.lastText.set('');
       this.lastResponse.set('');
     }, 5000);
 
-    // TTS como bonus (no bloquea nada)
-    if (response && 'speechSynthesis' in window) {
-      speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(response);
-      utt.lang = 'es-AR';
-      utt.rate = 1.05;
-      speechSynthesis.speak(utt);
-    }
+    this._speak(response);
   }
 
+  private _speak(text: string) {
+    if (!text || !('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const utt  = new SpeechSynthesisUtterance(text);
+    utt.lang   = 'es-AR';
+    utt.rate   = 1.05;
+    speechSynthesis.speak(utt);
+  }
+
+  // ── Acciones ─────────────────────────────────────────────────────────────────
   private async _runActions(acciones: any[]) {
     for (const a of acciones) await this._runOne(a);
   }
 
   private _findPatient(nombre: string): Promise<any | null> {
     return new Promise(resolve => {
+      if (!nombre.trim() && this.lastPatient()) {
+        resolve(this.lastPatient());
+        return;
+      }
       this.api.getPatients().subscribe({
         next: (patients) => {
-          const q = nombre.toLowerCase();
+          const q = nombre.toLowerCase().trim();
           const found = patients.find((p: any) =>
             `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
-            p.apellido.toLowerCase().includes(q) ||
-            p.nombre.toLowerCase().includes(q)
-          );
-          resolve(found || null);
+            (p.apellido || '').toLowerCase().includes(q) ||
+            (p.nombre  || '').toLowerCase().includes(q)
+          ) || null;
+          if (found) this.lastPatient.set(found);
+          resolve(found);
         },
         error: () => resolve(null)
       });
     });
+  }
+
+  private _notFound(name: string) {
+    this._runtimeError = `No encontré al paciente "${name}". Revisá el nombre e intentá de nuevo.`;
   }
 
   private _runOne(a: any): Promise<void> {
@@ -176,9 +238,9 @@ export class VoiceCommandService {
 
         case 'buscar_y_abrir_paciente': {
           const patient = await this._findPatient(a.params?.nombre || '');
-          if (patient) this.router.navigate(['/professional/patients', patient.id]);
-          resolve();
-          break;
+          if (!patient) this._notFound(a.params?.nombre || '');
+          else this.router.navigate(['/professional/patients', patient.id]);
+          resolve(); break;
         }
 
         case 'crear_paciente':
@@ -188,20 +250,35 @@ export class VoiceCommandService {
           });
           break;
 
-        case 'crear_historia_voz': {
-          const params = a.params || {};
-          const patient = await this._findPatient(params.patient_name || '');
-          if (!patient) { resolve(); break; }
+        case 'crear_turno': {
+          const p = a.params || {};
+          const patient = await this._findPatient(p.patient_name || '');
+          if (!patient) { this._notFound(p.patient_name || ''); resolve(); break; }
+          this.api.assignAppointment({
+            patient_id:       patient.id,
+            patient_name:     `${patient.apellido || ''}, ${patient.nombre || ''}`.trim(),
+            datetime_iso:     p.datetime_iso,
+            duration_minutes: p.duration_minutes || 30,
+            notes:            p.notes  || '',
+            lugar:            p.lugar  || '',
+            tipo:             p.tipo   || 'consulta',
+          }).subscribe({
+            next: () => { this.router.navigate(['/professional/appointments']); resolve(); },
+            error: () => resolve()
+          });
+          break;
+        }
 
-          this.api.structureText(params.transcription || '').subscribe({
+        case 'crear_historia_voz': {
+          const p = a.params || {};
+          const patient = await this._findPatient(p.patient_name || '');
+          if (!patient) { this._notFound(p.patient_name || ''); resolve(); break; }
+          this.api.structureText(p.transcription || '').subscribe({
             next: (res) => {
               const historia = res.clinical_history || res;
               historia.patient_id = patient.id;
               this.api.saveClinicalHistory(historia).subscribe({
-                next: () => {
-                  this.router.navigate(['/professional/patients', patient.id, 'histories']);
-                  resolve();
-                },
+                next: () => { this.router.navigate(['/professional/patients', patient.id, 'histories']); resolve(); },
                 error: () => resolve()
               });
             },
@@ -211,58 +288,46 @@ export class VoiceCommandService {
         }
 
         case 'crear_rutina_voz': {
-          const params = a.params || {};
-          const patient = await this._findPatient(params.patient_name || '');
-          if (!patient) { resolve(); break; }
-
-          const payload = {
-            patient_id: patient.id,
-            titulo: params.titulo || 'Nueva rutina',
-            descripcion: params.descripcion || '',
-            circuitos: params.circuitos || [],
-            observaciones: params.observaciones || '',
-          };
-
-          this.api.createRoutine(payload).subscribe({
-            next: () => {
-              this.router.navigate(['/professional/patients', patient.id, 'routines']);
-              resolve();
-            },
+          const p = a.params || {};
+          const patient = await this._findPatient(p.patient_name || '');
+          if (!patient) { this._notFound(p.patient_name || ''); resolve(); break; }
+          this.api.createRoutine({
+            patient_id:   patient.id,
+            titulo:       p.titulo       || 'Nueva rutina',
+            descripcion:  p.descripcion  || '',
+            circuitos:    p.circuitos    || [],
+            observaciones: p.observaciones || '',
+          }).subscribe({
+            next: () => { this.router.navigate(['/professional/patients', patient.id, 'routines']); resolve(); },
             error: () => resolve()
           });
           break;
         }
 
         case 'crear_evaluacion': {
-          const params = a.params || {};
-          const patient = await this._findPatient(params.patient_name || '');
-          if (!patient) { resolve(); break; }
-
+          const p = a.params || {};
+          const patient = await this._findPatient(p.patient_name || '');
+          if (!patient) { this._notFound(p.patient_name || ''); resolve(); break; }
           const today = new Date().toISOString().split('T')[0];
-          const payload = {
-            patient_id: patient.id,
-            nombre: params.nombre || 'Evaluación',
-            fecha: params.fecha === 'hoy' ? today : (params.fecha || today),
-            observaciones: params.observaciones || '',
-            medidas: params.medidas || [],
-          };
-
-          this.api.createEvaluation(payload).subscribe({
-            next: () => {
-              this.router.navigate(['/professional/patients', patient.id, 'evaluations']);
-              resolve();
-            },
+          this.api.createEvaluation({
+            patient_id:   patient.id,
+            nombre:       p.nombre        || 'Evaluación',
+            fecha:        p.fecha === 'hoy' ? today : (p.fecha || today),
+            observaciones: p.observaciones || '',
+            medidas:      p.medidas        || [],
+          }).subscribe({
+            next: () => { this.router.navigate(['/professional/patients', patient.id, 'evaluations']); resolve(); },
             error: () => resolve()
           });
           break;
         }
 
-        default:
-          resolve();
+        default: resolve();
       }
     });
   }
 
+  // ── Hardware ─────────────────────────────────────────────────────────────────
   private _stopHardware() {
     clearTimeout(this.silenceTimer);
     cancelAnimationFrame(this.rafId!);
@@ -270,9 +335,9 @@ export class VoiceCommandService {
     try { this.mediaRecorder?.stop(); } catch {}
     this.stream?.getTracks().forEach(t => t.stop());
     this.audioCtx?.close();
-    this.stream = undefined;
-    this.audioCtx = undefined;
-    this.analyser = undefined;
+    this.stream        = undefined;
+    this.audioCtx      = undefined;
+    this.analyser      = undefined;
     this.mediaRecorder = undefined;
   }
 
@@ -284,5 +349,8 @@ export class VoiceCommandService {
     this.status.set('idle');
     this.lastText.set('');
     this.lastResponse.set('');
+    this.awaitingConfirmation.set(false);
+    this.confirmationText.set('');
+    this._pendingActions = [];
   }
 }

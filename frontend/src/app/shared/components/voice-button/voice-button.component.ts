@@ -398,6 +398,8 @@ export class VoiceButtonComponent implements OnDestroy {
         amp = 0.28 + 0.08 * Math.sin(this._t * 1.0);
       }
 
+      // Velocidad global aumenta con la voz
+      const speed = 1 + amp * 2.2;
       ctx.clearRect(0, 0, S, S);
 
       // ── Interior de la esfera ───────────────────────────────────────────────
@@ -414,48 +416,53 @@ export class VoiceButtonComponent implements OnDestroy {
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, S, S);
 
-      // Núcleo brillante
+      // Núcleo: crece con la voz
+      const nucR = R * (0.12 + 0.22 * amp);
       const pulse = 0.18 + 0.10 * Math.sin(this._t * 2.0);
-      const nucleus = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.16);
-      nucleus.addColorStop(0, `rgba(230,255,180,${0.85 + 0.15 * amp})`);
-      nucleus.addColorStop(0.5, `rgba(74,222,128,${0.6 + 0.2 * amp})`);
+      const nucleus = ctx.createRadialGradient(cx, cy, 0, cx, cy, nucR);
+      nucleus.addColorStop(0, `rgba(230,255,180,${0.7 + 0.3 * amp})`);
+      nucleus.addColorStop(0.5, `rgba(74,222,128,${0.5 + 0.4 * amp})`);
       nucleus.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = nucleus;
       ctx.fillRect(0, 0, S, S);
 
-      // Halo del núcleo
-      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.46);
-      cg.addColorStop(0, `rgba(74,222,128,${pulse})`);
-      cg.addColorStop(0.55, `rgba(34,197,94,${pulse * 0.35})`);
+      // Halo del núcleo: se expande con la voz
+      const haloR = R * (0.30 + 0.45 * amp);
+      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, haloR);
+      cg.addColorStop(0, `rgba(74,222,128,${pulse + 0.15 * amp})`);
+      cg.addColorStop(0.55, `rgba(34,197,94,${(pulse + 0.15 * amp) * 0.4})`);
       cg.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = cg;
       ctx.fillRect(0, 0, S, S);
 
-      // ── Anillo 1: rota en eje Y (rx oscila) ────────────────────────────────
+      // Tamaño de anillos: 40% en silencio → 100% hablando
+      const ringScale = 0.40 + 0.60 * amp;
+
+      // ── Anillo 1: rota en eje Y ─────────────────────────────────────────────
       {
-        const spin = this._t * 0.009;
-        const rxs  = R * 0.86 * Math.max(0.05, Math.abs(Math.cos(spin))) * (0.88 + 0.12 * amp);
-        const rys  = R * (0.20 + 0.10 * Math.abs(Math.sin(spin * 0.5))) * (0.88 + 0.12 * amp);
-        const rot  = this._t * 0.004;
-        drawRing(rxs, rys, rot, amp, 'rgba(74,222,128,', 'rgba(134,239,172,', this._t * 0.058);
+        const spin = this._t * 0.009 * speed;
+        const rxs  = R * 0.86 * Math.max(0.05, Math.abs(Math.cos(spin))) * ringScale;
+        const rys  = R * (0.20 + 0.10 * Math.abs(Math.sin(spin * 0.5))) * ringScale;
+        const rot  = this._t * 0.004 * speed;
+        drawRing(rxs, rys, rot, amp, 'rgba(74,222,128,', 'rgba(134,239,172,', this._t * 0.058 * speed);
       }
 
-      // ── Anillo 2: rota en eje X (ry oscila) ────────────────────────────────
+      // ── Anillo 2: rota en eje X ─────────────────────────────────────────────
       {
-        const spin = this._t * 0.012 + Math.PI * 0.45;
-        const rxs  = R * (0.20 + 0.10 * Math.abs(Math.cos(spin * 0.5))) * (0.88 + 0.12 * amp);
-        const rys  = R * 0.86 * Math.max(0.05, Math.abs(Math.sin(spin))) * (0.88 + 0.12 * amp);
-        const rot  = this._t * 0.006 + Math.PI * 0.5;
-        drawRing(rxs, rys, rot, amp, 'rgba(34,197,94,', 'rgba(74,222,128,', this._t * 0.071);
+        const spin = this._t * 0.012 * speed + Math.PI * 0.45;
+        const rxs  = R * (0.20 + 0.10 * Math.abs(Math.cos(spin * 0.5))) * ringScale;
+        const rys  = R * 0.86 * Math.max(0.05, Math.abs(Math.sin(spin))) * ringScale;
+        const rot  = this._t * 0.006 * speed + Math.PI * 0.5;
+        drawRing(rxs, rys, rot, amp, 'rgba(34,197,94,', 'rgba(74,222,128,', this._t * 0.071 * speed);
       }
 
       // ── Anillo 3: eje diagonal ──────────────────────────────────────────────
       {
-        const spin = this._t * 0.016 + Math.PI * 0.85;
-        const rxs  = R * 0.78 * Math.max(0.07, Math.abs(Math.cos(spin))) * (0.88 + 0.12 * amp);
-        const rys  = R * 0.78 * Math.max(0.13, Math.abs(Math.sin(spin + 0.8))) * (0.88 + 0.12 * amp);
-        const rot  = this._t * 0.008 + Math.PI * 0.25;
-        drawRing(rxs, rys, rot, amp, 'rgba(163,230,53,', 'rgba(217,249,157,', this._t * 0.086);
+        const spin = this._t * 0.016 * speed + Math.PI * 0.85;
+        const rxs  = R * 0.78 * Math.max(0.07, Math.abs(Math.cos(spin))) * ringScale;
+        const rys  = R * 0.78 * Math.max(0.13, Math.abs(Math.sin(spin + 0.8))) * ringScale;
+        const rot  = this._t * 0.008 * speed + Math.PI * 0.25;
+        drawRing(rxs, rys, rot, amp, 'rgba(163,230,53,', 'rgba(217,249,157,', this._t * 0.086 * speed);
       }
 
       // Reflejo glass
@@ -468,22 +475,23 @@ export class VoiceButtonComponent implements OnDestroy {
 
       ctx.restore();
 
-      // ── Halo exterior ───────────────────────────────────────────────────────
-      const halo = ctx.createRadialGradient(cx, cy, R * 0.84, cx, cy, R * 1.16);
+      // ── Halo exterior: explota con la voz ──────────────────────────────────
+      const outerR = R * (1.12 + 0.18 * amp);
+      const halo = ctx.createRadialGradient(cx, cy, R * 0.82, cx, cy, outerR);
       halo.addColorStop(0, 'rgba(0,0,0,0)');
-      halo.addColorStop(0.35, `rgba(74,222,128,${0.30 * amp})`);
-      halo.addColorStop(0.7,  `rgba(34,197,94,${0.10 * amp})`);
+      halo.addColorStop(0.30, `rgba(74,222,128,${0.18 + 0.55 * amp})`);
+      halo.addColorStop(0.65, `rgba(34,197,94,${0.06 + 0.22 * amp})`);
       halo.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = halo;
       ctx.beginPath();
-      ctx.arc(cx, cy, R * 1.16, 0, Math.PI * 2);
+      ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
       ctx.fill();
 
       // Borde de la esfera
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(74,222,128,${0.13 + 0.12 * amp})`;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(74,222,128,${0.10 + 0.30 * amp})`;
+      ctx.lineWidth = 1 + amp * 1.5;
       ctx.stroke();
     };
     draw();

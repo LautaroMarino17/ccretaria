@@ -331,7 +331,7 @@ export class VoiceButtonComponent implements OnDestroy {
     if (!this.vc.awaitingConfirmation()) this.vc.toggle();
   }
 
-  // ── Esfera con anillos orbitales ─────────────────────────────────────────────
+  // ── Átomo con anillos 3D + electrones ───────────────────────────────────────
   private _startSphere(canvas: HTMLCanvasElement) {
     this._stopAnim();
     this._t = 0;
@@ -341,19 +341,50 @@ export class VoiceButtonComponent implements OnDestroy {
     const ctx = canvas.getContext('2d')!;
     const cx = S / 2, cy = S / 2, R = S * 0.42;
 
-    // Tres anillos orbitales: rx/ry como fracción de R, velocidad de rotación
-    const rings = [
-      { rx: 0.90, ry: 0.32, spd: 0.007,  ca: 'rgba(74,222,128,',  cb: 'rgba(134,239,172,' },
-      { rx: 0.32, ry: 0.90, spd: 0.010,  ca: 'rgba(34,197,94,',   cb: 'rgba(74,222,128,'  },
-      { rx: 0.68, ry: 0.58, spd: 0.014,  ca: 'rgba(163,230,53,',  cb: 'rgba(217,249,157,' },
-    ];
+    // Dibuja un anillo elíptico con profundidad + electrón orbitando
+    const drawRing = (rx: number, ry: number, rot: number, amp: number,
+                      ca: string, cb: string, eAngle: number) => {
+      const srx = Math.max(1, rx), sry = Math.max(1, ry);
+
+      // Mitad trasera (π → 2π) opaca
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, srx, sry, rot, Math.PI, Math.PI * 2);
+      ctx.strokeStyle = `${ca}${0.14 + 0.07 * amp})`;
+      ctx.lineWidth = 0.9;
+      ctx.shadowBlur = 0;
+      ctx.stroke();
+
+      // Mitad delantera (0 → π) brillante
+      ctx.shadowBlur  = 8 + amp * 22;
+      ctx.shadowColor = `${cb}0.85)`;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, srx, sry, rot, 0, Math.PI);
+      ctx.strokeStyle = `${ca}${0.55 + 0.45 * amp})`;
+      ctx.lineWidth   = 1.3 + amp * 1.8;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Electrón: posición sobre la elipse
+      const ex = cx + srx * Math.cos(eAngle) * Math.cos(rot) - sry * Math.sin(eAngle) * Math.sin(rot);
+      const ey = cy + srx * Math.cos(eAngle) * Math.sin(rot) + sry * Math.sin(eAngle) * Math.cos(rot);
+      // Solo se ve si está en la mitad delantera
+      if (Math.sin(eAngle) > -0.15) {
+        ctx.beginPath();
+        ctx.arc(ex, ey, 2.8 + amp * 1.4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(220,255,160,${0.88 + 0.12 * amp})`;
+        ctx.shadowBlur  = 14 + amp * 10;
+        ctx.shadowColor = 'rgba(180,255,100,1)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    };
 
     const draw = () => {
       if (!this.vc.active() && !this.vc.awaitingConfirmation()) return;
       this._rafId = requestAnimationFrame(draw);
       this._t += 0.014;
 
-      // Amplitud de respuesta
+      // Amplitud según estado
       let amp = 0.30;
       const analyser = this.vc.getAnalyser();
       if (analyser && this.vc.status() === 'listening') {
@@ -375,7 +406,7 @@ export class VoiceButtonComponent implements OnDestroy {
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
       ctx.clip();
 
-      // Fondo oscuro degradado
+      // Fondo oscuro
       const bg = ctx.createRadialGradient(cx - R*0.2, cy - R*0.2, 0, cx, cy, R);
       bg.addColorStop(0, 'rgba(10,32,10,1)');
       bg.addColorStop(0.6, 'rgba(4,14,4,1)');
@@ -383,41 +414,51 @@ export class VoiceButtonComponent implements OnDestroy {
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, S, S);
 
-      // Glow central pulsante
-      const pulse = 0.16 + 0.08 * Math.sin(this._t * 1.8);
-      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.48);
-      cg.addColorStop(0, `rgba(74,222,128,${(pulse + 0.06 * amp)})`);
-      cg.addColorStop(0.5, `rgba(34,197,94,${pulse * 0.4})`);
+      // Núcleo brillante
+      const pulse = 0.18 + 0.10 * Math.sin(this._t * 2.0);
+      const nucleus = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.16);
+      nucleus.addColorStop(0, `rgba(230,255,180,${0.85 + 0.15 * amp})`);
+      nucleus.addColorStop(0.5, `rgba(74,222,128,${0.6 + 0.2 * amp})`);
+      nucleus.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = nucleus;
+      ctx.fillRect(0, 0, S, S);
+
+      // Halo del núcleo
+      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.46);
+      cg.addColorStop(0, `rgba(74,222,128,${pulse})`);
+      cg.addColorStop(0.55, `rgba(34,197,94,${pulse * 0.35})`);
       cg.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = cg;
       ctx.fillRect(0, 0, S, S);
 
-      // Anillos orbitales: mitad trasera (opaca) + mitad delantera (brillante)
-      for (const ring of rings) {
-        const rot = this._t * ring.spd;
-        const rxs = ring.rx * R * (0.82 + 0.18 * amp);
-        const rys = ring.ry * R * (0.82 + 0.18 * amp);
-
-        // Mitad trasera (arco de π a 2π) — sin glow, alpha bajo
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, rxs, rys, rot, Math.PI, Math.PI * 2);
-        ctx.strokeStyle = `${ring.ca}${0.18 + 0.08 * amp})`;
-        ctx.lineWidth = 1;
-        ctx.shadowBlur = 0;
-        ctx.stroke();
-
-        // Mitad delantera (arco de 0 a π) — con glow
-        ctx.shadowBlur  = 8 + amp * 20;
-        ctx.shadowColor = `${ring.cb}0.9)`;
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, rxs, rys, rot, 0, Math.PI);
-        ctx.strokeStyle = `${ring.ca}${0.65 + 0.35 * amp})`;
-        ctx.lineWidth   = 1.4 + amp * 1.6;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+      // ── Anillo 1: rota en eje Y (rx oscila) ────────────────────────────────
+      {
+        const spin = this._t * 0.009;
+        const rxs  = R * 0.86 * Math.max(0.05, Math.abs(Math.cos(spin))) * (0.88 + 0.12 * amp);
+        const rys  = R * (0.20 + 0.10 * Math.abs(Math.sin(spin * 0.5))) * (0.88 + 0.12 * amp);
+        const rot  = this._t * 0.004;
+        drawRing(rxs, rys, rot, amp, 'rgba(74,222,128,', 'rgba(134,239,172,', this._t * 0.058);
       }
 
-      // Reflejo glass (arriba izquierda)
+      // ── Anillo 2: rota en eje X (ry oscila) ────────────────────────────────
+      {
+        const spin = this._t * 0.012 + Math.PI * 0.45;
+        const rxs  = R * (0.20 + 0.10 * Math.abs(Math.cos(spin * 0.5))) * (0.88 + 0.12 * amp);
+        const rys  = R * 0.86 * Math.max(0.05, Math.abs(Math.sin(spin))) * (0.88 + 0.12 * amp);
+        const rot  = this._t * 0.006 + Math.PI * 0.5;
+        drawRing(rxs, rys, rot, amp, 'rgba(34,197,94,', 'rgba(74,222,128,', this._t * 0.071);
+      }
+
+      // ── Anillo 3: eje diagonal ──────────────────────────────────────────────
+      {
+        const spin = this._t * 0.016 + Math.PI * 0.85;
+        const rxs  = R * 0.78 * Math.max(0.07, Math.abs(Math.cos(spin))) * (0.88 + 0.12 * amp);
+        const rys  = R * 0.78 * Math.max(0.13, Math.abs(Math.sin(spin + 0.8))) * (0.88 + 0.12 * amp);
+        const rot  = this._t * 0.008 + Math.PI * 0.25;
+        drawRing(rxs, rys, rot, amp, 'rgba(163,230,53,', 'rgba(217,249,157,', this._t * 0.086);
+      }
+
+      // Reflejo glass
       const hl = ctx.createRadialGradient(cx - R*0.28, cy - R*0.32, 0, cx - R*0.06, cy - R*0.06, R*0.58);
       hl.addColorStop(0, 'rgba(255,255,255,0.09)');
       hl.addColorStop(0.5, 'rgba(200,255,160,0.02)');
@@ -430,7 +471,7 @@ export class VoiceButtonComponent implements OnDestroy {
       // ── Halo exterior ───────────────────────────────────────────────────────
       const halo = ctx.createRadialGradient(cx, cy, R * 0.84, cx, cy, R * 1.16);
       halo.addColorStop(0, 'rgba(0,0,0,0)');
-      halo.addColorStop(0.35, `rgba(74,222,128,${0.32 * amp})`);
+      halo.addColorStop(0.35, `rgba(74,222,128,${0.30 * amp})`);
       halo.addColorStop(0.7,  `rgba(34,197,94,${0.10 * amp})`);
       halo.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = halo;
@@ -441,7 +482,7 @@ export class VoiceButtonComponent implements OnDestroy {
       // Borde de la esfera
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(74,222,128,${0.14 + 0.12 * amp})`;
+      ctx.strokeStyle = `rgba(74,222,128,${0.13 + 0.12 * amp})`;
       ctx.lineWidth = 1;
       ctx.stroke();
     };

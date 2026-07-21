@@ -331,7 +331,7 @@ export class VoiceButtonComponent implements OnDestroy {
     if (!this.vc.awaitingConfirmation()) this.vc.toggle();
   }
 
-  // ── Átomo con anillos 3D + electrones ───────────────────────────────────────
+  // ── Átomo con anillos 3D + electrones + trails ──────────────────────────────
   private _startSphere(canvas: HTMLCanvasElement) {
     this._stopAnim();
     this._t = 0;
@@ -341,9 +341,12 @@ export class VoiceButtonComponent implements OnDestroy {
     const ctx = canvas.getContext('2d')!;
     const cx = S / 2, cy = S / 2, R = S * 0.42;
 
-    // Dibuja un anillo elíptico con profundidad + electrón orbitando
+    const MAX_TRAIL = 30;
+    const trails: { x: number; y: number; z: number }[][] = [[], [], []];
+
+    // Dibuja un anillo elíptico con profundidad + electrón orbitando + trail
     const drawRing = (rx: number, ry: number, rot: number, amp: number,
-                      ca: string, cb: string, eAngle: number) => {
+                      ca: string, cb: string, eAngle: number, trailIdx: number) => {
       const srx = Math.max(1, rx), sry = Math.max(1, ry);
 
       // Mitad trasera (π → 2π) opaca
@@ -364,25 +367,46 @@ export class VoiceButtonComponent implements OnDestroy {
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // Electrón: posición sobre la elipse
+      // Electrón: posición sobre la elipse (da la vuelta completa)
       const ex = cx + srx * Math.cos(eAngle) * Math.cos(rot) - sry * Math.sin(eAngle) * Math.sin(rot);
       const ey = cy + srx * Math.cos(eAngle) * Math.sin(rot) + sry * Math.sin(eAngle) * Math.cos(rot);
-      // Solo se ve si está en la mitad delantera
-      if (Math.sin(eAngle) > -0.15) {
+
+      // Profundidad Z: frente (1) ↔ atrás (0)
+      const z = Math.sin(eAngle);
+      const depth = 0.38 + 0.62 * ((z + 1) / 2);
+
+      // Trail: guardar posiciones anteriores
+      const trail = trails[trailIdx];
+      trail.push({ x: ex, y: ey, z });
+      if (trail.length > MAX_TRAIL) trail.shift();
+
+      // Dibujar trail con opacidad decreciente
+      for (let i = 0; i < trail.length; i++) {
+        const pt  = trail[i];
+        const pct = i / trail.length;
+        const pd  = 0.35 + 0.65 * ((pt.z + 1) / 2);
+        const pr  = (0.6 + amp * 2.0) * pct * pd;
+        if (pr < 0.1) continue;
         ctx.beginPath();
-        ctx.arc(ex, ey, 2.8 + amp * 1.4, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(220,255,160,${0.88 + 0.12 * amp})`;
-        ctx.shadowBlur  = 14 + amp * 10;
-        ctx.shadowColor = 'rgba(180,255,100,1)';
+        ctx.arc(pt.x, pt.y, pr, 0, Math.PI * 2);
+        ctx.fillStyle = `${ca}${pct * 0.80 * pd})`;
         ctx.fill();
-        ctx.shadowBlur = 0;
       }
+
+      // Electrón: más pequeño y tenue cuando está atrás
+      const eSize = (2.2 + amp * 2.8) * depth;
+      ctx.beginPath();
+      ctx.arc(ex, ey, Math.max(0.5, eSize), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(220,255,160,${0.40 + 0.60 * depth})`;
+      ctx.shadowBlur  = (10 + amp * 20) * depth;
+      ctx.shadowColor = 'rgba(180,255,100,1)';
+      ctx.fill();
+      ctx.shadowBlur = 0;
     };
 
     const draw = () => {
       if (!this.vc.active() && !this.vc.awaitingConfirmation()) return;
       this._rafId = requestAnimationFrame(draw);
-      this._t += 0.014;
 
       // Amplitud según estado
       let amp = 0.30;
@@ -398,8 +422,9 @@ export class VoiceButtonComponent implements OnDestroy {
         amp = 0.28 + 0.08 * Math.sin(this._t * 1.0);
       }
 
-      // Velocidad global aumenta con la voz
-      const speed = 1 + amp * 2.2;
+      // _t avanza más rápido cuando hablás (todo se acelera)
+      const speed = 1 + amp * 3.8;
+      this._t += 0.016 * speed;
       ctx.clearRect(0, 0, S, S);
 
       // ── Interior de la esfera ───────────────────────────────────────────────
@@ -444,7 +469,7 @@ export class VoiceButtonComponent implements OnDestroy {
         const rxs  = R * 0.86 * Math.max(0.05, Math.abs(Math.cos(spin))) * ringScale;
         const rys  = R * (0.20 + 0.10 * Math.abs(Math.sin(spin * 0.5))) * ringScale;
         const rot  = this._t * 0.004 * speed;
-        drawRing(rxs, rys, rot, amp, 'rgba(74,222,128,', 'rgba(134,239,172,', this._t * 0.058 * speed);
+        drawRing(rxs, rys, rot, amp, 'rgba(74,222,128,', 'rgba(134,239,172,', this._t * 0.058 * speed, 0);
       }
 
       // ── Anillo 2: rota en eje X ─────────────────────────────────────────────
@@ -453,7 +478,7 @@ export class VoiceButtonComponent implements OnDestroy {
         const rxs  = R * (0.20 + 0.10 * Math.abs(Math.cos(spin * 0.5))) * ringScale;
         const rys  = R * 0.86 * Math.max(0.05, Math.abs(Math.sin(spin))) * ringScale;
         const rot  = this._t * 0.006 * speed + Math.PI * 0.5;
-        drawRing(rxs, rys, rot, amp, 'rgba(34,197,94,', 'rgba(74,222,128,', this._t * 0.071 * speed);
+        drawRing(rxs, rys, rot, amp, 'rgba(34,197,94,', 'rgba(74,222,128,', this._t * 0.071 * speed, 1);
       }
 
       // ── Anillo 3: eje diagonal ──────────────────────────────────────────────
@@ -462,7 +487,7 @@ export class VoiceButtonComponent implements OnDestroy {
         const rxs  = R * 0.78 * Math.max(0.07, Math.abs(Math.cos(spin))) * ringScale;
         const rys  = R * 0.78 * Math.max(0.13, Math.abs(Math.sin(spin + 0.8))) * ringScale;
         const rot  = this._t * 0.008 * speed + Math.PI * 0.25;
-        drawRing(rxs, rys, rot, amp, 'rgba(163,230,53,', 'rgba(217,249,157,', this._t * 0.086 * speed);
+        drawRing(rxs, rys, rot, amp, 'rgba(163,230,53,', 'rgba(217,249,157,', this._t * 0.086 * speed, 2);
       }
 
       // Reflejo glass

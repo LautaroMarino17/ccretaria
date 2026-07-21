@@ -13,6 +13,8 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
 
         <div class="ov-inner" (click)="$event.stopPropagation()">
 
+          <div class="ov-amalia-name">Amalia</div>
+
           @if (vc.status() === 'listening' && !vc.awaitingConfirmation()) {
             <div class="ov-status">
               <span class="status-dot"></span>
@@ -68,13 +70,15 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
         </div>
       }
 
+      <div class="amalia-label">Hablá con Amalia</div>
+
       <button
         class="voice-fab"
         [class.active]="vc.active() && vc.status() === 'listening'"
         [class.processing]="vc.status() === 'processing'"
         [class.confirming]="vc.awaitingConfirmation()"
         (click)="vc.toggle()"
-        [title]="vc.active() ? 'Detener' : 'Activar voz'">
+        [title]="vc.active() ? 'Detener a Amalia' : 'Hablá con Amalia'">
 
         @if (vc.status() === 'processing') {
           <span class="fab-spinner"></span>
@@ -125,6 +129,26 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
       max-width: 440px;
       width: 100%;
       text-align: center;
+    }
+
+    /* Nombre Amalia en overlay */
+    .ov-amalia-name {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: transparent;
+      background: linear-gradient(135deg, #8cc63f 0%, #c8e86a 50%, #8cc63f 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: shimmer 3s ease infinite;
+      background-size: 200% auto;
+      margin-bottom: 4px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 0% center; }
+      50%  { background-position: 100% center; }
+      100% { background-position: 0% center; }
     }
 
     /* Status */
@@ -262,6 +286,20 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
+
+    /* Etiqueta "Hablá con Amalia" junto al botón */
+    .amalia-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      letter-spacing: 0.5px;
+      text-align: right;
+      padding-right: 4px;
+      opacity: 0.85;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .voice-fab-wrap:hover .amalia-label { opacity: 1; color: #16a34a; }
 
     /* ─── Burbuja post-acción ────────────────────────────────────────────────── */
     .voice-bubble {

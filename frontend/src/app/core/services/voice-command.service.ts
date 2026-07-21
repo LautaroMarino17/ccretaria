@@ -186,7 +186,22 @@ export class VoiceCommandService {
     const utt  = new SpeechSynthesisUtterance(text);
     utt.lang   = 'es-AR';
     utt.rate   = 1.05;
-    speechSynthesis.speak(utt);
+    utt.pitch  = 1.1;
+
+    const trySpeak = () => {
+      const voices = speechSynthesis.getVoices();
+      const FEMALE_NAMES = ['paulina','monica','helena','laura','sabina','maría','maria','sofia','sofía','valentina','luciana','camila','google'];
+      const female = voices.find(v =>
+        v.lang.startsWith('es') && FEMALE_NAMES.some(n => v.name.toLowerCase().includes(n))
+      ) || voices.find(v => v.lang === 'es-AR')
+        || voices.find(v => v.lang.startsWith('es'));
+      if (female) utt.voice = female;
+      speechSynthesis.speak(utt);
+    };
+
+    const voices = speechSynthesis.getVoices();
+    if (voices.length) { trySpeak(); }
+    else { speechSynthesis.onvoiceschanged = () => { trySpeak(); speechSynthesis.onvoiceschanged = null; }; }
   }
 
   // ── Acciones ─────────────────────────────────────────────────────────────────

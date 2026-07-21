@@ -10,10 +10,12 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
     <!-- ── Overlay a pantalla completa ── -->
     @if (vc.active() || vc.awaitingConfirmation()) {
       <div class="voice-overlay" [class.confirming]="vc.awaitingConfirmation()" (click)="onOverlayClick()">
-
         <div class="ov-inner" (click)="$event.stopPropagation()">
 
           <div class="ov-amalia-name">Amalia</div>
+
+          <!-- Esfera de plasma -->
+          <canvas #waveCanvas class="sphere-canvas" width="280" height="280"></canvas>
 
           @if (vc.status() === 'listening' && !vc.awaitingConfirmation()) {
             <div class="ov-status">
@@ -33,11 +35,6 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
           }
 
           @if (vc.awaitingConfirmation()) {
-            <div class="ov-confirm-icon">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5">
-                <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
-              </svg>
-            </div>
             <div class="ov-confirm-text">{{ vc.confirmationText() }}</div>
             <div class="ov-confirm-btns">
               <button class="btn-yes" (click)="vc.confirmAction(true)">
@@ -50,19 +47,14 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
               </button>
             </div>
           }
-        </div>
 
-        <!-- Ondas tipo Siri en la parte inferior -->
-        @if (vc.status() === 'listening' && !vc.awaitingConfirmation()) {
-          <canvas #waveCanvas class="wave-canvas"></canvas>
-        }
+        </div>
       </div>
     }
 
     <!-- ── Botón flotante ── -->
     <div class="voice-fab-wrap">
 
-      <!-- Burbuja post-acción (fuera del overlay) -->
       @if (!vc.active() && !vc.awaitingConfirmation() && (vc.lastText() || vc.lastResponse())) {
         <div class="voice-bubble">
           @if (vc.lastText()) { <span class="vb-heard">"{{ vc.lastText() }}"</span> }
@@ -106,44 +98,41 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
     .voice-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(5, 10, 5, 0.72);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(2, 8, 2, 0.88);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       z-index: 9000;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      animation: fadeIn 0.18s ease;
+      animation: fadeIn 0.22s ease;
     }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    .voice-overlay.confirming { background: rgba(5, 10, 5, 0.82); }
 
     .ov-inner {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 22px;
-      padding: 0 28px 80px;
-      max-width: 440px;
+      gap: 18px;
+      padding: 0 28px;
+      max-width: 360px;
       width: 100%;
       text-align: center;
     }
 
-    /* Nombre Amalia en overlay */
+    /* Nombre Amalia */
     .ov-amalia-name {
-      font-size: 38px;
+      font-size: 36px;
       font-weight: 800;
-      letter-spacing: 6px;
+      letter-spacing: 8px;
       text-transform: uppercase;
       color: transparent;
-      background: linear-gradient(135deg, #8cc63f 0%, #c8e86a 50%, #8cc63f 100%);
+      background: linear-gradient(135deg, #6fcf30 0%, #c8f060 40%, #8cc63f 70%, #4a9e1a 100%);
       -webkit-background-clip: text;
       background-clip: text;
-      animation: shimmer 3s ease infinite;
       background-size: 200% auto;
-      margin-bottom: 4px;
+      animation: shimmer 3s ease infinite;
+      margin-bottom: -4px;
     }
     @keyframes shimmer {
       0%   { background-position: 0% center; }
@@ -151,31 +140,37 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
       100% { background-position: 0% center; }
     }
 
+    /* Esfera canvas */
+    .sphere-canvas {
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+    }
+
     /* Status */
     .ov-status {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 22px;
-      font-weight: 700;
-      color: white;
-      letter-spacing: 0.2px;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.75);
+      margin-top: -6px;
     }
-    .ov-status.processing { color: rgba(255,255,255,0.85); }
-
     .status-dot {
-      width: 13px; height: 13px;
-      background: #ef4444;
+      width: 10px; height: 10px;
+      background: #8cc63f;
       border-radius: 50%;
       flex-shrink: 0;
-      animation: blink 1s ease infinite;
+      animation: blink 1.2s ease infinite;
+      box-shadow: 0 0 8px #8cc63f;
     }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
 
     .ov-spinner {
-      width: 20px; height: 20px;
-      border: 2.5px solid rgba(255,255,255,0.2);
-      border-top-color: white;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-top-color: #8cc63f;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
       flex-shrink: 0;
@@ -183,25 +178,24 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .ov-heard {
-      font-size: 15px;
-      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      color: rgba(255,255,255,0.45);
       font-style: italic;
+      max-width: 300px;
+      margin-top: -6px;
     }
 
     /* Confirmación */
-    .ov-confirm-icon { opacity: 0.6; }
-
     .ov-confirm-text {
-      font-size: 19px;
+      font-size: 17px;
       font-weight: 500;
       color: white;
-      line-height: 1.55;
-      max-width: 360px;
+      line-height: 1.6;
+      max-width: 320px;
     }
-
     .ov-confirm-btns {
       display: flex;
-      gap: 14px;
+      gap: 12px;
       flex-wrap: wrap;
       justify-content: center;
     }
@@ -209,36 +203,18 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 13px 26px;
+      padding: 12px 22px;
       border: none;
-      border-radius: 14px;
-      font-size: 15px;
+      border-radius: 12px;
+      font-size: 14px;
       font-weight: 700;
       cursor: pointer;
       transition: transform 0.12s, opacity 0.15s;
     }
-    .btn-yes {
-      background: #8cc63f;
-      color: white;
-      box-shadow: 0 4px 18px rgba(140,198,63,0.4);
-    }
-    .btn-no {
-      background: rgba(255,255,255,0.1);
-      color: white;
-      border: 1.5px solid rgba(255,255,255,0.25);
-    }
+    .btn-yes { background: #8cc63f; color: white; box-shadow: 0 4px 16px rgba(140,198,63,0.4); }
+    .btn-no  { background: rgba(255,255,255,0.08); color: white; border: 1.5px solid rgba(255,255,255,0.2); }
     .btn-yes:hover { opacity: 0.88; transform: scale(1.04); }
-    .btn-no:hover  { background: rgba(255,255,255,0.18); transform: scale(1.04); }
-
-    /* Ondas Siri */
-    .wave-canvas {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 120px;
-      pointer-events: none;
-    }
+    .btn-no:hover  { background: rgba(255,255,255,0.15); transform: scale(1.04); }
 
     /* ─── FAB ────────────────────────────────────────────────────────────────── */
     .voice-fab-wrap {
@@ -248,9 +224,20 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 10px;
+      gap: 6px;
       z-index: 9100;
     }
+    .amalia-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      letter-spacing: 0.4px;
+      text-align: right;
+      opacity: 0.8;
+      transition: opacity 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    .voice-fab-wrap:hover .amalia-label { opacity: 1; color: #16a34a; }
 
     .voice-fab {
       position: relative;
@@ -267,17 +254,17 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
     .voice-fab:hover      { background: #15803d; transform: scale(1.06); }
     .voice-fab.active     { background: #dc2626; box-shadow: 0 4px 18px rgba(220,38,38,0.45); }
     .voice-fab.active:hover { background: #b91c1c; }
-    .voice-fab.processing { background: #d97706; box-shadow: 0 4px 18px rgba(217,119,6,0.4); }
+    .voice-fab.processing { background: #d97706; }
     .voice-fab.confirming { background: #7c3aed; box-shadow: 0 4px 18px rgba(124,58,237,0.45); }
 
     .pulse-ring {
       position: absolute; inset: -5px;
       border-radius: 50%;
-      border: 3px solid rgba(239,68,68,0.7);
+      border: 3px solid rgba(140,198,63,0.6);
       animation: pulse 1.4s ease-out infinite;
       pointer-events: none;
     }
-    @keyframes pulse { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.6);opacity:0} }
+    @keyframes pulse { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.65);opacity:0} }
 
     .fab-spinner {
       width: 22px; height: 22px;
@@ -287,27 +274,13 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
       animation: spin 0.7s linear infinite;
     }
 
-    /* Etiqueta "Hablá con Amalia" junto al botón */
-    .amalia-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #6b7280;
-      letter-spacing: 0.5px;
-      text-align: right;
-      padding-right: 4px;
-      opacity: 0.85;
-      transition: opacity 0.2s;
-      white-space: nowrap;
-    }
-    .voice-fab-wrap:hover .amalia-label { opacity: 1; color: #16a34a; }
-
-    /* ─── Burbuja post-acción ────────────────────────────────────────────────── */
+    /* Burbuja post-acción */
     .voice-bubble {
-      background: white;
+      background: rgba(10,20,10,0.92);
       border-radius: 14px;
       padding: 10px 14px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.13);
-      max-width: 260px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      max-width: 240px;
       display: flex;
       flex-direction: column;
       gap: 3px;
@@ -315,12 +288,13 @@ import { VoiceCommandService } from '../../../core/services/voice-command.servic
       animation: slideUp 0.2s ease;
     }
     @keyframes slideUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-    .vb-text  { font-size: 13px; color: #111827; line-height: 1.4; }
+    .vb-text  { font-size: 13px; color: #e5e7eb; line-height: 1.4; }
     .vb-heard { font-size: 12px; color: #6b7280; font-style: italic; }
 
     @media (max-width: 640px) {
       .voice-fab-wrap { bottom: 20px; right: 16px; }
-      .ov-confirm-text { font-size: 16px; }
+      .sphere-canvas  { width: 220px; height: 220px; }
+      .ov-amalia-name { font-size: 28px; letter-spacing: 6px; }
     }
   `]
 })
@@ -334,75 +308,139 @@ export class VoiceButtonComponent implements OnDestroy {
 
   constructor() {
     effect(() => {
-      const status = this.vc.status();
-      if (status === 'listening') {
+      const active     = this.vc.active();
+      const confirming = this.vc.awaitingConfirmation();
+      if (active || confirming) {
         setTimeout(() => {
           const el = this.waveCanvas()?.nativeElement;
-          if (el) this._startWave(el);
+          if (el) this._startSphere(el);
         }, 60);
       } else {
-        this._stopWave();
+        this._stopAnim();
       }
     });
   }
 
-  ngOnDestroy() { this._stopWave(); }
+  ngOnDestroy() { this._stopAnim(); }
 
   onOverlayClick() {
     if (!this.vc.awaitingConfirmation()) this.vc.toggle();
   }
 
-  // ── Animación de ondas tipo Siri ─────────────────────────────────────────────
-  private _startWave(canvas: HTMLCanvasElement) {
-    this._stopWave();
+  // ── Esfera de plasma tipo Amalia ─────────────────────────────────────────────
+  private _startSphere(canvas: HTMLCanvasElement) {
+    this._stopAnim();
     this._t = 0;
-    canvas.width  = window.innerWidth;
-    canvas.height = 120;
-    const ctx = canvas.getContext('2d')!;
-    const W = canvas.width, H = canvas.height;
 
-    const waves = [
-      { color: 'rgba(140,198,63,0.90)', phOff: 0,              freq: 0.020, spd: 0.038, amMult: 1.00 },
-      { color: 'rgba(80,168,30,0.60)',  phOff: Math.PI * 0.65, freq: 0.015, spd: 0.028, amMult: 0.78 },
-      { color: 'rgba(195,235,90,0.48)', phOff: Math.PI * 1.30, freq: 0.028, spd: 0.052, amMult: 0.65 },
-      { color: 'rgba(38,120,12,0.38)',  phOff: Math.PI * 0.35, freq: 0.012, spd: 0.022, amMult: 0.52 },
+    const S   = 280;
+    canvas.width  = S;
+    canvas.height = S;
+    const ctx = canvas.getContext('2d')!;
+    const cx = S / 2, cy = S / 2, R = S * 0.44;
+
+    // Cintas de plasma: a/b = frecuencias Lissajous, phX/phY = desfases
+    const ribbons = [
+      { a: 1.30, b: 0.80, px: 0.00, py: 0.50, c1: 'rgba(140,220,50,',  c2: 'rgba(200,255,80,'  },
+      { a: 0.70, b: 1.50, px: 1.05, py: 2.10, c1: 'rgba(80,200,30,',   c2: 'rgba(160,240,50,'  },
+      { a: 2.10, b: 0.60, px: 2.30, py: 0.80, c1: 'rgba(110,230,60,',  c2: 'rgba(230,255,110,' },
+      { a: 0.90, b: 1.80, px: 3.50, py: 1.30, c1: 'rgba(50,160,20,',   c2: 'rgba(130,210,50,'  },
+      { a: 1.70, b: 1.10, px: 4.80, py: 2.70, c1: 'rgba(170,240,70,',  c2: 'rgba(100,200,40,'  },
+      { a: 1.10, b: 2.30, px: 0.80, py: 3.60, c1: 'rgba(60,180,25,',   c2: 'rgba(150,230,60,'  },
     ];
 
     const draw = () => {
-      if (!this.vc.active()) return;
+      if (!this.vc.active() && !this.vc.awaitingConfirmation()) return;
       this._rafId = requestAnimationFrame(draw);
-      this._t++;
+      this._t += 0.014;
 
+      // Amplitud según mic o estado
       const analyser = this.vc.getAnalyser();
-      let amp = 0.18;
-      if (analyser) {
+      let amp = this.vc.awaitingConfirmation() ? 0.28 + 0.08 * Math.sin(this._t * 1.2) : 0.32;
+      if (analyser && this.vc.status() === 'listening') {
         const data = new Uint8Array(analyser.frequencyBinCount);
         analyser.getByteFrequencyData(data);
         const avg = data.reduce((a, b) => a + b, 0) / data.length;
-        amp = Math.max(0.12, Math.min(0.78, avg / 62));
+        amp = Math.max(0.28, Math.min(1.0, avg / 48));
+      } else if (this.vc.status() === 'processing') {
+        amp = 0.38 + 0.12 * Math.sin(this._t * 2.5);
       }
 
-      ctx.clearRect(0, 0, W, H);
+      ctx.clearRect(0, 0, S, S);
 
-      for (const w of waves) {
+      // ── Interior de la esfera ─────────────────────────────────────────────────
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.clip();
+
+      // Fondo oscuro
+      const bg = ctx.createRadialGradient(cx * 0.65, cy * 0.65, 0, cx, cy, R);
+      bg.addColorStop(0, 'rgba(8,28,6,1)');
+      bg.addColorStop(0.65, 'rgba(3,12,2,1)');
+      bg.addColorStop(1, 'rgba(0,6,0,1)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, S, S);
+
+      // Glow central
+      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.55);
+      cg.addColorStop(0, `rgba(120,210,40,${0.18 * amp})`);
+      cg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = cg;
+      ctx.fillRect(0, 0, S, S);
+
+      // Cintas de plasma (modo lighter para que se mezclen con luz)
+      ctx.globalCompositeOperation = 'lighter';
+      for (const rib of ribbons) {
         ctx.beginPath();
-        ctx.strokeStyle = w.color;
-        ctx.lineWidth   = 2.8;
-        ctx.lineJoin    = 'round';
-
-        for (let x = 0; x <= W; x += 3) {
-          const y = H * 0.42
-            + Math.sin(x * w.freq + this._t * w.spd + w.phOff)
-            * amp * H * w.amMult * 0.72;
-          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        let first = true;
+        for (let s = 0; s <= 1; s += 0.012) {
+          const ang = s * Math.PI * 4;
+          const scale = 0.35 + 0.65 * s;
+          const x = cx + Math.sin(rib.a * ang + rib.px + this._t * 0.65) * R * 0.88 * scale * amp;
+          const y = cy + Math.sin(rib.b * ang + rib.py + this._t * 0.48) * R * 0.88 * scale * amp;
+          first ? (ctx.moveTo(x, y), first = false) : ctx.lineTo(x, y);
         }
+        const la = Math.min(1, 0.35 + 0.55 * amp);
+        ctx.strokeStyle = `${rib.c1}${la})`;
+        ctx.lineWidth   = 1.2 + amp * 2.2;
+        ctx.shadowBlur  = 10 + amp * 22;
+        ctx.shadowColor = `${rib.c2}0.85)`;
         ctx.stroke();
       }
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Reflejo glass (top-left highlight)
+      const hl = ctx.createRadialGradient(cx - R * 0.32, cy - R * 0.38, 0, cx - R * 0.08, cy - R * 0.08, R * 0.62);
+      hl.addColorStop(0, 'rgba(255,255,255,0.11)');
+      hl.addColorStop(0.45, 'rgba(200,255,140,0.03)');
+      hl.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = hl;
+      ctx.fillRect(0, 0, S, S);
+
+      ctx.restore();
+
+      // ── Halo exterior ─────────────────────────────────────────────────────────
+      const halo = ctx.createRadialGradient(cx, cy, R * 0.86, cx, cy, R * 1.14);
+      halo.addColorStop(0, 'rgba(0,0,0,0)');
+      halo.addColorStop(0.38, `rgba(140,198,63,${0.38 * amp})`);
+      halo.addColorStop(0.72, `rgba(80,160,30,${0.14 * amp})`);
+      halo.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * 1.14, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Borde nítido de la esfera
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(140,198,63,${0.22 + 0.18 * amp})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
     };
     draw();
   }
 
-  private _stopWave() {
+  private _stopAnim() {
     if (this._rafId !== undefined) {
       cancelAnimationFrame(this._rafId);
       this._rafId = undefined;

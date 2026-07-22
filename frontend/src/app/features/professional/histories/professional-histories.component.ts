@@ -434,11 +434,13 @@ export class ProfessionalHistoriesComponent implements OnInit {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text(h.motivo_consulta || 'Historia Clínica', M, 9, { maxWidth: CW - 32 });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    if (h.patient_name) doc.text(`Paciente: ${h.patient_name}`, M, 16);
+    if (h.patient_name) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+      doc.text(h.patient_name, M, 17);
+    }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
     const metaLine = [h.professional_name, this.formatDate(h.fecha)].filter(Boolean).join('  ·  ');
-    if (metaLine) doc.text(metaLine, M, 22);
+    if (metaLine) doc.text(metaLine, M, h.patient_name ? 24 : 17);
 
     let y = 33;
 

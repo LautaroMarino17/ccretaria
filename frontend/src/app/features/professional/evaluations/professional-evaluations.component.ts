@@ -1008,12 +1008,14 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text(ev.nombre || 'Evaluación', M, 9);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
     const patName = this._patientName(ev);
-    if (patName) doc.text(`Paciente: ${patName}`, M, 16);
+    if (patName) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+      doc.text(patName, M, 17);
+    }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
     const metaLine = [ev.professional_name, this.formatDate(ev.fecha)].filter(Boolean).join('  ·  ');
-    if (metaLine) doc.text(metaLine, M, 22);
+    if (metaLine) doc.text(metaLine, M, patName ? 24 : 17);
 
     let y = 33;
 

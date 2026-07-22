@@ -662,11 +662,13 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text(r.titulo || 'Rutina', M, 9);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
     const pName = this.patientName();
-    if (pName) doc.text(`Paciente: ${pName}`, M, 16);
-    if (r.descripcion) doc.text(r.descripcion, M, 22, { maxWidth: CW - 30 });
+    if (pName) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+      doc.text(pName, M, 17);
+    }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+    if (r.descripcion) doc.text(r.descripcion, M, pName ? 24 : 17, { maxWidth: CW - 30 });
 
     let y = 33;
 

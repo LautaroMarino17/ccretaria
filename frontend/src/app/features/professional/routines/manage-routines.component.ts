@@ -101,7 +101,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
                   <div class="bloque-read">
                     <div class="bloque-read-header">
                       <span class="bloque-label">{{ circ.nombre || ('bloque ' + ($index + 1)) }}</span>
-                      @if (circ.rondas) { <span class="rondas-badge">{{ circ.rondas }} rondas</span> }
+                      @if (circ.rondas) { <span class="rondas-badge">{{ circ.rondas }} Serie/s</span> }
                     </div>
                     <div class="ex-table">
                       <div class="ex-head read">
@@ -226,10 +226,10 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
             <input class="bloque-name-inp" [(ngModel)]="circ.nombre" placeholder="NOMBRE BLOQUE" />
             @if (circ.rondas) {
               <span class="rondas-badge">
-                <input class="rondas-inp" [(ngModel)]="circ.rondas" placeholder="Rondas" />
+                <input class="rondas-inp" [(ngModel)]="circ.rondas" placeholder="Serie/s" />
               </span>
             } @else {
-              <input class="rondas-inp-plain" [(ngModel)]="circ.rondas" placeholder="Rondas" />
+              <input class="rondas-inp-plain" [(ngModel)]="circ.rondas" placeholder="Serie/s" />
             }
             <div class="blk-ctrl-inline">
               <button class="btn-blk-ctrl add" (click)="addCircuitAfter(ci)" title="Agregar bloque">
@@ -680,7 +680,7 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
       doc.setFillColor(240, 253, 244); doc.setDrawColor(22, 163, 74);
       doc.roundedRect(M, y, CW, 8, 1, 1, 'FD');
       doc.setTextColor(22, 101, 52); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-      doc.text((circ.nombre || 'Bloque') + (circ.rondas ? `   ·   ${circ.rondas} rondas` : ''), M + 3, y + 5.5);
+      doc.text((circ.nombre || 'Bloque') + (circ.rondas ? `   ·   ${circ.rondas} Serie/s` : ''), M + 3, y + 5.5);
       y += 11;
 
       const rows = (circ.ejercicios || []).map((ex: any) => [ex.nombre || '', ex.reps_seg_mts || '', ex.carga || '']);
@@ -782,7 +782,7 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
       // Encabezado de bloque
       ws.mergeCells(`A${row}:D${row}`);
       const bc = ws.getCell(`A${row}`);
-      const rounds = circ.rondas ? `  ·  ${circ.rondas} rondas` : '';
+      const rounds = circ.rondas ? `  ·  ${circ.rondas} Serie/s` : '';
       bc.value = (circ.nombre || 'Bloque') + rounds;
       bc.font  = { bold: true, size: 12, color: greenDark };
       bc.fill  = { type: 'pattern', pattern: 'solid', fgColor: greenBg };

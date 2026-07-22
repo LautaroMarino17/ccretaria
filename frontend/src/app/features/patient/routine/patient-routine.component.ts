@@ -39,7 +39,7 @@ import { ApiService } from '../../../core/services/api.service';
                   <div class="circuit-header">
                     <span class="circuit-name">{{ circ.nombre || 'Bloque ' + ($index + 1) }}</span>
                     @if (circ.rondas) {
-                      <span class="rondas-badge">{{ circ.rondas }} rondas</span>
+                      <span class="rondas-badge">{{ circ.rondas }} Serie/s</span>
                     }
                   </div>
 

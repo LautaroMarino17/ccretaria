@@ -46,7 +46,10 @@ def get_me(user: dict = Depends(get_current_user)):
             db = get_firestore()
             doc = db.collection("professionals").document(user["uid"]).get()
             if doc.exists:
-                result["link_code"] = doc.to_dict().get("link_code")
+                data = doc.to_dict()
+                result["link_code"] = data.get("link_code")
+                result["plan"]     = int(data.get("plan", 1))
+                result["is_admin"] = bool(data.get("is_admin", False))
 
         return result
     except Exception as e:

@@ -1,6 +1,6 @@
 import traceback
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Request
-from dependencies import get_current_user, require_professional
+from dependencies import get_current_user, require_professional, require_plan
 from services.transcription_service import transcribe_audio_file
 from services.llm_service import structure_clinical_history
 from limiter import limiter
@@ -104,10 +104,9 @@ async def transcribe_and_structure(
 async def transcribe_chunk(
     request: Request,
     audio: UploadFile = File(...),
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(require_plan(3))
 ):
-    """Transcribe un chunk de audio y devuelve el texto. Sin LLM."""
-    require_professional(user)
+    """Transcribe un chunk de audio y devuelve el texto. Sin LLM. Requiere Plan 3 (Amalia)."""
     audio_bytes = await audio.read()
     if not audio_bytes:
         raise HTTPException(status_code=400, detail="Chunk de audio vacío")
@@ -126,11 +125,10 @@ async def transcribe_chunk(
 async def transcribe_routine(
     request: Request,
     audio: UploadFile = File(...),
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(require_plan(2))
 ):
-    """Pipeline: audio → transcripción → rutina estructurada."""
+    """Pipeline: audio → transcripción → rutina estructurada. Requiere Plan 2."""
     print(f"[RECORDING] transcribe-routine. User: {user.get('uid')}")
-    require_professional(user)
 
     audio_bytes = await audio.read()
     if len(audio_bytes) == 0:

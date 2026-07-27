@@ -50,3 +50,22 @@ def require_patient(user: dict = None) -> dict:
             detail="Esta acción requiere rol de paciente"
         )
     return user
+
+
+def require_plan(min_plan: int):
+    """Factory: retorna una dependencia que exige plan >= min_plan para profesionales."""
+    from fastapi import Depends
+    from services.firebase_service import get_firestore
+
+    def _check(user: dict = Depends(get_current_user)):
+        require_professional(user)
+        db = get_firestore()
+        doc = db.collection("professionals").document(user["uid"]).get()
+        plan = int(doc.to_dict().get("plan", 1)) if doc.exists else 1
+        if plan < min_plan:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Esta función requiere el Plan {min_plan} o superior"
+            )
+        return user
+    return _check

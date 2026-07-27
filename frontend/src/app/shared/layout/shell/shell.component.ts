@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Messaging, getToken } from '@angular/fire/messaging';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
+import { PlanService } from '../../../core/services/plan.service';
 import { environment } from '../../../../environments/environment';
 import { VoiceButtonComponent } from '../../components/voice-button/voice-button.component';
 
@@ -77,7 +78,7 @@ import { VoiceButtonComponent } from '../../components/voice-button/voice-button
       </main>
     </div>
 
-    @if (isProfessional()) {
+    @if (isProfessional() && planSvc.plan() >= 3) {
       <app-voice-button />
     }
   `,
@@ -259,9 +260,11 @@ export class ShellComponent implements OnInit {
   private router      = inject(Router);
   private api         = inject(ApiService);
   private messaging   = inject(Messaging);
+  planSvc             = inject(PlanService);
 
   ngOnInit() {
     if (this.authService.currentUser?.role === 'professional') {
+      this.planSvc.load();
       this.initPush();
     }
   }
@@ -291,7 +294,7 @@ export class ShellComponent implements OnInit {
   sidebarOpen = signal(false);
   user = this.authService.currentUser;
 
-  navItems = signal(this.buildNavItems());
+  navItems = computed(() => this.buildNavItems());
 
   userInitial() {
     const user = this.authService.currentUser;
@@ -318,7 +321,7 @@ export class ShellComponent implements OnInit {
   }
 
   private professionalNav() {
-    return [
+    const items = [
       { path: '/professional/dashboard', label: 'Inicio', icon: this.icon('home') },
       { path: '/professional/patients', label: 'Pacientes', icon: this.icon('users') },
       { path: '/professional/evaluations', label: 'Evaluaciones', icon: this.icon('check') },
@@ -326,6 +329,10 @@ export class ShellComponent implements OnInit {
       { path: '/professional/appointments', label: 'Turnos', icon: this.icon('calendar') },
       { path: '/profile', label: 'Mi perfil', icon: this.icon('user') },
     ];
+    if (this.planSvc.isAdmin()) {
+      items.push({ path: '/admin', label: 'Administración', icon: this.icon('shield') });
+    }
+    return items;
   }
 
   private patientNav() {
@@ -348,6 +355,7 @@ export class ShellComponent implements OnInit {
       check: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
       user: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
       link: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+      shield: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
     };
     return icons[name] || '';
   }

@@ -152,6 +152,15 @@ export class ApiService {
     );
   }
 
+  // ── Admin ────────────────────────────────────────────────────────────────────
+  getAdminProfessionals() {
+    return this.withAuth(h => this.http.get<any[]>(`${this.base}/admin/professionals`, { headers: h }));
+  }
+
+  updateProfessionalPlan(uid: string, plan: number) {
+    return this.withAuth(h => this.http.patch<any>(`${this.base}/admin/professionals/${uid}/plan`, { plan }, { headers: h }));
+  }
+
   // ── Comandos de voz ─────────────────────────────────────────────────────────
   interpretVoiceCommand(text: string, context?: any) {
     return this.withAuth(h => this.http.post<any>(`${this.base}/voice-command/interpret`, { text, context }, { headers: h }));

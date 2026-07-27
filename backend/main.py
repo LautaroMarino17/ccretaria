@@ -8,7 +8,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 import os
 
-from routers import auth, patients, clinical_history, appointments, recording, routines, evaluations, voice_command
+from routers import auth, patients, clinical_history, appointments, recording, routines, evaluations, voice_command, admin
 from limiter import limiter
 
 app = FastAPI(
@@ -37,6 +37,7 @@ app.include_router(recording.router, prefix="/recording", tags=["recording"])
 app.include_router(routines.router, prefix="/routines", tags=["routines"])
 app.include_router(evaluations.router, prefix="/evaluations", tags=["evaluations"])
 app.include_router(voice_command.router, prefix="/voice-command", tags=["voice-command"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
 
 
 @app.get("/health")

@@ -26,15 +26,17 @@ import { VoiceButtonComponent } from '../../components/voice-button/voice-button
         </div>
 
         <nav class="sidebar-nav">
-          @for (item of navItems(); track item.path) {
-            <a
-              [routerLink]="item.path"
-              routerLinkActive="active"
-              class="nav-item"
-              (click)="closeSidebar()">
-              <span class="nav-icon" [innerHTML]="item.icon"></span>
-              <span>{{ item.label }}</span>
-            </a>
+          @if (planSvc.plan() !== null && planSvc.plan()! > 0) {
+            @for (item of navItems(); track item.path) {
+              <a
+                [routerLink]="item.path"
+                routerLinkActive="active"
+                class="nav-item"
+                (click)="closeSidebar()">
+                <span class="nav-icon" [innerHTML]="item.icon"></span>
+                <span>{{ item.label }}</span>
+              </a>
+            }
           }
         </nav>
 
@@ -78,7 +80,7 @@ import { VoiceButtonComponent } from '../../components/voice-button/voice-button
       </main>
     </div>
 
-    @if (isProfessional() && planSvc.plan() >= 3) {
+    @if (isProfessional() && (planSvc.plan() ?? 0) >= 3) {
       <app-voice-button />
     }
   `,
@@ -264,7 +266,8 @@ export class ShellComponent implements OnInit {
 
   constructor() {
     effect(() => {
-      if (this.planSvc.plan() === 0) {
+      const p = this.planSvc.plan();
+      if (p !== null && p === 0) {
         this.router.navigate(['/professional/plans']);
       }
     });

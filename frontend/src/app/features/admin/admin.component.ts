@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
 
 const PLAN_LABELS: Record<number, string> = {
+  0: 'Sin plan',
   1: 'Plan 1 · Historias',
   2: 'Plan 2 · Rutinas',
   3: 'Plan 3 · Amalia',
 };
 const PLAN_COLORS: Record<number, string> = {
-  1: '#2563eb', 2: '#7c3aed', 3: '#16a34a'
+  0: '#9ca3af', 1: '#2563eb', 2: '#7c3aed', 3: '#16a34a'
 };
 
 @Component({
@@ -47,7 +48,7 @@ const PLAN_COLORS: Record<number, string> = {
                     @if (pro.is_admin) { <span class="admin-chip">Admin</span> }
                   </td>
                   <td class="td-actions">
-                    @for (p of [1,2,3]; track p) {
+                    @for (p of [0,1,2,3]; track p) {
                       <button
                         class="plan-btn"
                         [class.active]="pro.plan === p"
@@ -55,7 +56,7 @@ const PLAN_COLORS: Record<number, string> = {
                         [style.color]="pro.plan === p ? planColor(p) : ''"
                         [disabled]="saving() === pro.uid"
                         (click)="setPlan(pro, p)">
-                        P{{ p }}
+                        {{ p === 0 ? 'P0' : 'P' + p }}
                       </button>
                     }
                   </td>

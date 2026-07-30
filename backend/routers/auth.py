@@ -22,6 +22,7 @@ def set_role(body: SetRoleRequest):
             db = get_firestore()
             db.collection("professionals").document(body.uid).set({
                 "uid": body.uid,
+                "plan": 0,
                 "created_at": SERVER_TIMESTAMP
             }, merge=True)
         return {"message": f"Rol '{body.role}' asignado al usuario {body.uid}"}

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Messaging, getToken } from '@angular/fire/messaging';
@@ -261,6 +261,14 @@ export class ShellComponent implements OnInit {
   private api         = inject(ApiService);
   private messaging   = inject(Messaging);
   planSvc             = inject(PlanService);
+
+  constructor() {
+    effect(() => {
+      if (this.planSvc.plan() === 0) {
+        this.router.navigate(['/professional/plans']);
+      }
+    });
+  }
 
   ngOnInit() {
     if (this.authService.currentUser?.role === 'professional') {

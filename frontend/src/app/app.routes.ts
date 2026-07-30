@@ -77,6 +77,10 @@ export const routes: Routes = [
         path: 'patients/:patientId/histories',
         loadComponent: () => import('./features/professional/patients/patient-clinical-histories.component')
           .then(m => m.PatientClinicalHistoriesComponent)
+      },
+      {
+        path: 'plans',
+        loadComponent: () => import('./features/professional/plans/plans.component').then(m => m.PlansComponent)
       }
     ]
   },

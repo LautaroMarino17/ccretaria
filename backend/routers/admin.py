@@ -47,7 +47,7 @@ class UpdatePlanRequest(BaseModel):
 def update_professional_plan(uid: str, body: UpdatePlanRequest, user: dict = Depends(get_current_user)):
     """Actualiza el plan de un profesional (1, 2 o 3)."""
     _require_admin(user)
-    if body.plan not in (1, 2, 3):
+    if body.plan not in (0, 1, 2, 3):
         raise HTTPException(status_code=400, detail="Plan debe ser 1, 2 o 3")
     db = get_firestore()
     db.collection("professionals").document(uid).set({"plan": body.plan}, merge=True)

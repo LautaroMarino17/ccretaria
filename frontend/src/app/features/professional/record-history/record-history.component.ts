@@ -212,6 +212,7 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
             <!-- Maniobras semiológicas -->
             <div class="mf-section">
               <span class="mf-label">Maniobras semiológicas</span>
+              <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
               <table class="maniobras-table">
                 <thead>
                   <tr>
@@ -233,6 +234,7 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
                   }
                 </tbody>
               </table>
+              </div>
             </div>
 
             <!-- Diagnóstico -->

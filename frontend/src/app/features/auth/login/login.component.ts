@@ -257,6 +257,9 @@ import { AuthService } from '../../../core/services/auth.service';
     .btn-forgot-send:disabled { opacity: 0.5; cursor: not-allowed; }
     .success-small { margin-top: 8px; color: #166534; font-size: 13px; }
     .error-small { margin-top: 8px; color: #dc2626; font-size: 13px; }
+    @media (max-width: 400px) {
+      .auth-card { padding: 28px 20px; border-radius: 16px; }
+    }
   `]
 })
 export class LoginComponent {

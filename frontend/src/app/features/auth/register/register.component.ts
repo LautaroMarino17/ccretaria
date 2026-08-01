@@ -134,6 +134,9 @@ import { environment } from '../../../../environments/environment';
     .required { color: #dc2626; }
     .field-hint { font-size: 12px; color: #9ca3af; margin-top: 2px; }
     .field-error { font-size: 12px; color: #dc2626; margin-top: 2px; }
+    @media (max-width: 400px) {
+      .auth-card { padding: 28px 20px; border-radius: 16px; }
+    }
   `]
 })
 export class RegisterComponent {

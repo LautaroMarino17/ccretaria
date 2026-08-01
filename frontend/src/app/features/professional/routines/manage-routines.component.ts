@@ -484,18 +484,43 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
     .empty-state p { font-size: 15px; margin: 0; }
 
     @media (max-width: 640px) {
-      .ex-head.edit  { grid-template-columns: 18px 1.5fr 36px; }
-      .ex-head.edit span:not(:first-child):not(:nth-child(2)):not(:last-child) { display: none; }
-      .ex-row-edit   { grid-template-columns: 18px 1.5fr 36px; }
-      .ex-row-edit input:not(:first-child) { display: none; }
-      .ex-head.read  { grid-template-columns: 1.5fr 1.5fr; }
-      .ex-head.read span:nth-child(n+3) { display: none; }
-      .ex-row-read   { grid-template-columns: 1.5fr 1.5fr; }
-      .ex-row-read span:nth-child(n+3) { display: none; }
       .header-left { flex-direction: column; gap: 10px; }
       .routine-card { padding: 16px; }
       .header-btns { flex-wrap: wrap; }
       .card-title { word-break: break-word; overflow-wrap: break-word; }
+
+      /* Edit rows — stacked card per exercise */
+      .ex-head.edit { display: none; }
+      .ex-row-edit {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        border-top: 1px solid #f0f0f0;
+      }
+      .drag-handle.block-drag-handle { display: none; }
+      .ex-row-edit input {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        border: 1.5px solid #e5e7eb;
+        border-bottom: 1.5px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 16px;
+        background: #fafafa;
+        color: #374151;
+        font-family: inherit;
+        outline: none;
+      }
+      .ex-row-edit input:focus { border-color: #16a34a; background: white; }
+      .ex-row-actions { justify-content: flex-start; }
+
+      /* Read rows — show only name + reps (most useful on mobile) */
+      .ex-head.read  { grid-template-columns: 2fr 1.5fr; }
+      .ex-head.read span:nth-child(n+3) { display: none; }
+      .ex-row-read   { grid-template-columns: 2fr 1.5fr; }
+      .ex-row-read span:nth-child(n+3) { display: none; }
     }
   `]
 })

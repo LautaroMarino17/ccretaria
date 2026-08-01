@@ -104,7 +104,7 @@ async def transcribe_and_structure(
 async def transcribe_chunk(
     request: Request,
     audio: UploadFile = File(...),
-    user: dict = Depends(require_plan(3))
+    user: dict = Depends(require_plan(1))
 ):
     """Transcribe un chunk de audio y devuelve el texto. Sin LLM. Requiere Plan 3 (Amalia)."""
     audio_bytes = await audio.read()

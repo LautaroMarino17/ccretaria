@@ -353,7 +353,7 @@ import { ApiService } from '../../../core/services/api.service';
     .signos-inputs input:focus { border-color: #16a34a; }
 
     /* Modals */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
     .modal { background: white; border-radius: 16px; padding: 28px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
     .modal-lg { max-width: 700px; max-height: 90vh; overflow-y: auto; }
     .modal h3 { font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 10px; }

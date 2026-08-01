@@ -15,7 +15,16 @@ a { text-decoration: none; }
 
 button { font-family: inherit; }
 
-input, select, textarea { font-family: inherit; color: inherit; }
+input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+  /* Prevents iOS Safari from auto-zooming when tapping inputs */
+  font-size: 16px;
+}
+
+@media (min-width: 769px) {
+  input, select, textarea { font-size: inherit; }
+}
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

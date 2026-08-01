@@ -107,6 +107,7 @@ function emptyForm() {
                     <!-- Maniobras semiológicas (siempre visible) -->
                     <div class="mf-section">
                       <span class="mf-label">Maniobras semiológicas</span>
+                      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
                       <table class="mf-man-table">
                         <thead><tr><th>Articulación</th><th>Comentario</th></tr></thead>
                         <tbody>
@@ -122,6 +123,7 @@ function emptyForm() {
                           }
                         </tbody>
                       </table>
+                    </div>
                     </div>
                     <div class="mf-section"><span class="mf-label">Diagnóstico</span><p class="mf-text">{{ h.diagnostico || '—' }}</p></div>
                     <!-- Plantillas -->
@@ -211,6 +213,7 @@ function emptyForm() {
               <!-- Maniobras -->
               <div class="mf-section">
                 <span class="mf-label">Maniobras semiológicas</span>
+                <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
                 <table class="mf-man-table mf-man-edit">
                   <thead><tr><th>Articulación</th><th>Comentario</th></tr></thead>
                   <tbody>
@@ -226,6 +229,7 @@ function emptyForm() {
                     }
                   </tbody>
                 </table>
+                </div>
               </div>
               <div class="mf-section"><span class="mf-label">Diagnóstico</span><textarea class="mf-textarea" [(ngModel)]="form.diagnostico" rows="2" placeholder="—"></textarea></div>
               <!-- Plantillas -->
@@ -323,7 +327,7 @@ function emptyForm() {
     .file-link:hover { text-decoration: underline; }
 
     /* Modal */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: flex-start; justify-content: center; z-index: 100; padding: 16px; overflow-y: auto; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: flex-start; justify-content: center; z-index: 200; padding: 16px; overflow-y: auto; }
     .modal-lg { background: white; border-radius: 16px; width: 100%; max-width: 720px; margin: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
     .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 0; }
     .modal-header h2 { font-size: 18px; font-weight: 700; color: #111827; margin: 0; }

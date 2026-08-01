@@ -79,7 +79,8 @@ const PLAN_COLORS: Record<number, string> = {
       background: white;
       border-radius: 14px;
       border: 1px solid #e5e7eb;
-      overflow: hidden;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
     table { width: 100%; border-collapse: collapse; }

@@ -32,7 +32,7 @@ def verify_token(id_token: str) -> dict:
     """Verifica el token de Firebase y retorna los claims del usuario."""
     init_firebase()
     try:
-        decoded = auth.verify_id_token(id_token)
+        decoded = auth.verify_id_token(id_token, check_revoked=True)
         return decoded
     except Exception as e:
         raise ValueError(f"Token inválido: {str(e)}")

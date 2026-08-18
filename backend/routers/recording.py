@@ -36,7 +36,8 @@ async def transcribe(
         text = transcribe_audio_file(audio_bytes, filename=audio.filename or "audio.webm")
         return {"transcription": text}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en transcripción: {str(e)}")
+        print(f"[ERROR] transcribe: {e}")
+        raise HTTPException(status_code=500, detail="Error en la transcripción")
 
 
 @router.post("/structure")
@@ -59,7 +60,8 @@ async def structure(
         structured = structure_clinical_history(transcription)
         return {"clinical_history": structured}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al estructurar: {str(e)}")
+        print(f"[ERROR] structure: {e}")
+        raise HTTPException(status_code=500, detail="Error al estructurar la historia clínica")
 
 
 @router.post("/transcribe-and-structure")
@@ -84,7 +86,7 @@ async def transcribe_and_structure(
     try:
         print("[RECORDING] Iniciando transcripción...")
         transcription = transcribe_audio_file(audio_bytes, filename=audio.filename or "audio.webm")
-        print(f"[RECORDING] Transcripción OK: {repr(transcription[:100])}")
+        print(f"[RECORDING] Transcripción OK: {len(transcription)} caracteres")
 
         print("[RECORDING] Estructurando con LLM...")
         structured = structure_clinical_history(transcription)
@@ -96,7 +98,7 @@ async def transcribe_and_structure(
         }
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error en el pipeline: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error en el pipeline de transcripción")
 
 
 @router.post("/transcribe-chunk")
@@ -113,11 +115,11 @@ async def transcribe_chunk(
     print(f"[CHUNK] {len(audio_bytes)} bytes")
     try:
         text = transcribe_audio_file(audio_bytes, filename="chunk.webm")
-        print(f"[CHUNK] OK: {repr(text[:80])}")
+        print(f"[CHUNK] OK: {len(text)} caracteres")
         return {"text": text}
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error en transcripción: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error en la transcripción")
 
 
 @router.post("/transcribe-routine")
@@ -137,7 +139,7 @@ async def transcribe_routine(
     try:
         print("[RECORDING] Transcribiendo rutina...")
         transcription = transcribe_audio_file(audio_bytes, filename=audio.filename or "audio.webm")
-        print(f"[RECORDING] OK: {repr(transcription[:100])}")
+        print(f"[RECORDING] OK: {len(transcription)} caracteres")
 
         from services.llm_service import structure_routine_from_voice
         routine = structure_routine_from_voice(transcription)
@@ -146,4 +148,4 @@ async def transcribe_routine(
         return {"transcription": transcription, "routine": routine}
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error en el pipeline: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error en el pipeline de transcripción")

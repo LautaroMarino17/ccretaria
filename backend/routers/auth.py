@@ -1,31 +1,36 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import Optional, List
 from dependencies import get_current_user, require_professional
 from services.firebase_service import set_user_role, get_user, get_firestore
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
+from limiter import limiter
 
 router = APIRouter()
 
 
 class SetRoleRequest(BaseModel):
-    uid: str
     role: str
 
 
 @router.post("/set-role")
-def set_role(body: SetRoleRequest):
-    """Asigna el rol profesional al usuario recién registrado."""
+@limiter.limit("5/minute")
+def set_role(request: Request, body: SetRoleRequest, user: dict = Depends(get_current_user)):
+    """Asigna el rol al usuario autenticado recién registrado (una sola vez)."""
+    if user.get("role"):
+        raise HTTPException(status_code=400, detail="El rol ya fue asignado a este usuario")
     try:
-        set_user_role(body.uid, body.role)
+        set_user_role(user["uid"], body.role)
         if body.role == "professional":
             db = get_firestore()
-            db.collection("professionals").document(body.uid).set({
-                "uid": body.uid,
-                "plan": 0,
-                "created_at": SERVER_TIMESTAMP
-            }, merge=True)
-        return {"message": f"Rol '{body.role}' asignado al usuario {body.uid}"}
+            doc_ref = db.collection("professionals").document(user["uid"])
+            if not doc_ref.get().exists:
+                doc_ref.set({
+                    "uid": user["uid"],
+                    "plan": 0,
+                    "created_at": SERVER_TIMESTAMP
+                })
+        return {"message": f"Rol '{body.role}' asignado"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -54,7 +59,8 @@ def get_me(user: dict = Depends(get_current_user)):
 
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"[ERROR] get_me: {e}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 class FcmTokenRequest(BaseModel):

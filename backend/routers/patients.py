@@ -1,11 +1,12 @@
 import re
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import Optional
 from dependencies import get_current_user, require_professional
 from services.firebase_service import get_firestore
 from services.llm_service import generate_routine
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
+from limiter import limiter
 
 _DNI_RE = re.compile(r'^\d{7,8}$')
 
@@ -32,6 +33,14 @@ class PatientCreate(BaseModel):
 class RoutineRequest(BaseModel):
     patient_id: str
     patient_info: dict
+
+
+class PatientUpdate(BaseModel):
+    telefono: Optional[str] = None
+    email: Optional[str] = None
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
+    dni: Optional[str] = None
 
 
 def _register_patient(db, prof_uid: str, patient_doc_id: str, dni: str, email: str = ""):
@@ -150,7 +159,7 @@ def get_patient(patient_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.patch("/{patient_id}")
-def update_patient(patient_id: str, body: dict, user: dict = Depends(get_current_user)):
+def update_patient(patient_id: str, body: PatientUpdate, user: dict = Depends(get_current_user)):
     """Profesional: actualiza datos del paciente (nombre, apellido, dni, teléfono, email)."""
     require_professional(user)
     db = get_firestore()
@@ -160,9 +169,12 @@ def update_patient(patient_id: str, body: dict, user: dict = Depends(get_current
     if not patient_doc.exists:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
-    allowed = {k: v for k, v in body.items() if k in ("telefono", "email", "nombre", "apellido", "dni")}
+    allowed = {k: v for k, v in body.model_dump(exclude_unset=True).items() if v is not None}
     if not allowed:
         raise HTTPException(status_code=400, detail="No hay campos para actualizar")
+
+    if "dni" in allowed and allowed["dni"] and not _DNI_RE.match(allowed["dni"].strip()):
+        raise HTTPException(status_code=400, detail="DNI inválido. Ingresá 7 u 8 dígitos sin puntos ni espacios.")
 
     # Si cambia el DNI, actualizar patient_registry
     if "dni" in allowed:
@@ -240,27 +252,31 @@ def get_patient_routine(patient_id: str, user: dict = Depends(get_current_user))
     role = user.get("role", "")
 
     if role == "professional":
+        resolved_id = patient_id
         doc = db.collection("professionals").document(user["uid"]) \
             .collection("patients").document(patient_id).get()
     elif role == "patient":
-        # El paciente solo puede ver su propia rutina
+        # El paciente solo puede ver su propia rutina (nunca confiar en el patient_id de la URL)
         doc = db.collection_group("patients").where("patient_uid", "==", user["uid"]).limit(1).stream()
         doc = next(doc, None)
         if doc is None:
             raise HTTPException(status_code=404, detail="No se encontró tu perfil de paciente")
+        resolved_id = doc.id
     else:
         raise HTTPException(status_code=403, detail="Sin permisos")
 
     routine_ref = db.collection("professionals").document(
         doc.to_dict().get("professional_uid", "")).collection("patients") \
-        .document(patient_id).collection("routines").order_by("created_at", direction="DESCENDING").limit(1).stream()
+        .document(resolved_id).collection("routines").order_by("created_at", direction="DESCENDING").limit(1).stream()
 
     routines = [{"id": r.id, **r.to_dict()} for r in routine_ref]
     return routines[0] if routines else {}
 
 
 @router.post("/{patient_id}/routine/generate")
+@limiter.limit("10/minute")
 def generate_patient_routine(
+    request: Request,
     patient_id: str,
     body: RoutineRequest,
     user: dict = Depends(get_current_user)

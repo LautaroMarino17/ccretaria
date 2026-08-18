@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
 @Component({
@@ -164,7 +164,9 @@ export class RegisterComponent {
 
     this.authService.register(email!, password!, displayName!).subscribe({
       next: async (cred) => {
-        this.http.post(`${environment.apiUrl}/auth/set-role`, { uid: cred.user.uid, role: 'professional' }).subscribe({
+        const token = await cred.user.getIdToken();
+        const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+        this.http.post(`${environment.apiUrl}/auth/set-role`, { role: 'professional' }, { headers }).subscribe({
           next: async () => {
             await this.authService.refreshUser();
             this.router.navigate(['/professional/dashboard']);

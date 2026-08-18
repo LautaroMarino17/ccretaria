@@ -288,7 +288,7 @@ Cuándo usar requiere_confirmacion: true:
 
 def interpret_voice_command(text: str, context: dict = None) -> dict:
     from datetime import datetime
-    print(f"[Groq LLM] Interpretando comando de voz: {text}")
+    print(f"[Groq LLM] Interpretando comando de voz ({len(text)} caracteres)")
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M (%A)")
 
     context_lines = []

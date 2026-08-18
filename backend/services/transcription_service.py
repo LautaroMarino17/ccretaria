@@ -87,7 +87,7 @@ def transcribe_audio_file(audio_bytes: bytes, filename: str = "audio.webm") -> s
 
     if total <= MAX_CHUNK_BYTES:
         text = _transcribe_chunk(audio_bytes, filename)
-        print(f"[Groq Whisper] OK: {repr(text[:100])}")
+        print(f"[Groq Whisper] OK: {len(text)} caracteres transcritos")
         return text
 
     print(f"[Groq Whisper] Audio grande ({total} bytes), dividiendo por clusters WebM...")
@@ -98,9 +98,9 @@ def transcribe_audio_file(audio_bytes: bytes, filename: str = "audio.webm") -> s
     for i, chunk in enumerate(chunks):
         print(f"[Groq Whisper] Chunk {i+1}/{len(chunks)} ({len(chunk)} bytes)...")
         part = _transcribe_chunk(chunk, f"chunk_{i}.webm")
-        print(f"[Groq Whisper] Chunk {i+1} OK: {repr(part[:60])}")
+        print(f"[Groq Whisper] Chunk {i+1} OK: {len(part)} caracteres")
         parts.append(part)
 
     full = " ".join(p for p in parts if p)
-    print(f"[Groq Whisper] Completo ({len(parts)} chunks): {repr(full[:100])}")
+    print(f"[Groq Whisper] Completo ({len(parts)} chunks): {len(full)} caracteres")
     return full

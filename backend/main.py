@@ -14,7 +14,10 @@ from limiter import limiter
 app = FastAPI(
     title="SecretarIA API",
     description="Backend para gestión de pacientes y profesionales de la salud",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 app.state.limiter = limiter

@@ -7,7 +7,6 @@ from services.firebase_service import verify_token
 
 
 def get_current_user(authorization: str = Header(...)) -> dict:
-    print(f"[AUTH] Header recibido: {authorization[:30]}...")
     """
     Extrae y valida el Bearer token de Firebase.
     Retorna los claims del usuario autenticado.

@@ -904,6 +904,14 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     return this.sanitizer.bypassSecurityTrustHtml(this._buildSvg(m, 190, 108));
   }
 
+  private _esc(s: string): string {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   private _buildSvg(m: Medida, W: number, H: number): string {
     const pl = 10, pr = 10, pt = 20, pb = 26;
     const iW = W - pl - pr, iH = H - pt - pb;
@@ -917,15 +925,15 @@ export class ProfessionalEvaluationsComponent implements OnInit {
     for (const rl of cd.refLines) {
       const ry = pt + iH - rl.yPx;
       s += `<line x1="${pl}" y1="${ry}" x2="${W - pr}" y2="${ry}" stroke="${rl.color}" stroke-width="1" stroke-dasharray="4 3" opacity="0.8"/>`;
-      s += `<text x="${W - pr - 2}" y="${ry - 2}" font-size="8" fill="${rl.color}" text-anchor="end">${rl.label}</text>`;
+      s += `<text x="${W - pr - 2}" y="${ry - 2}" font-size="8" fill="${rl.color}" text-anchor="end">${this._esc(rl.label)}</text>`;
     }
     for (const b of cd.bars) {
       const bx = pl + b.xPx, by = pt + iH - b.hPx;
       s += `<rect x="${bx}" y="${by}" width="${b.wPx}" height="${b.hPx}" fill="${b.color}" rx="3"/>`;
-      if (b.topLabel) s += `<text x="${bx + b.wPx / 2}" y="${by - 3}" font-size="9" fill="#374151" text-anchor="middle" font-weight="600">${b.topLabel}</text>`;
-      if (b.botLabel) s += `<text x="${bx + b.wPx / 2}" y="${pt + iH + 14}" font-size="8" fill="#6b7280" text-anchor="middle">${b.botLabel}</text>`;
+      if (b.topLabel) s += `<text x="${bx + b.wPx / 2}" y="${by - 3}" font-size="9" fill="#374151" text-anchor="middle" font-weight="600">${this._esc(b.topLabel)}</text>`;
+      if (b.botLabel) s += `<text x="${bx + b.wPx / 2}" y="${pt + iH + 14}" font-size="8" fill="#6b7280" text-anchor="middle">${this._esc(b.botLabel)}</text>`;
     }
-    if (cd.footnote) s += `<text x="${W / 2}" y="${H - 5}" font-size="8" fill="#6b7280" text-anchor="middle">${cd.footnote}</text>`;
+    if (cd.footnote) s += `<text x="${W / 2}" y="${H - 5}" font-size="8" fill="#6b7280" text-anchor="middle">${this._esc(cd.footnote)}</text>`;
     return s + '</svg>';
   }
 

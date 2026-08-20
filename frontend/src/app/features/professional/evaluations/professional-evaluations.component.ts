@@ -1151,11 +1151,10 @@ export class ProfessionalEvaluationsComponent implements OnInit {
       if (!ctx) { resolve(''); return; }
       ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
       const img = new Image();
-      const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      img.onload = () => { ctx.drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url); resolve(canvas.toDataURL('image/png', 0.9)); };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
-      img.src = url;
+      const b64 = btoa(unescape(encodeURIComponent(svgStr)));
+      img.onload = () => { ctx.drawImage(img, 0, 0, w, h); resolve(canvas.toDataURL('image/png', 0.9)); };
+      img.onerror = () => resolve('');
+      img.src = `data:image/svg+xml;base64,${b64}`;
     });
   }
 

@@ -40,6 +40,7 @@ export const routes: Routes = [
       },
       {
         path: 'patients/:id',
+        pathMatch: 'full',
         loadComponent: () => import('./features/professional/patients/patient-detail.component')
           .then(m => m.PatientDetailComponent)
       },

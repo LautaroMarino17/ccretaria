@@ -36,10 +36,18 @@ function emptyForm() {
             <h1>Historias clínicas</h1>
             <p class="subtitle">{{ patientName() }}</p>
           </div>
-          <button class="btn-primary" (click)="openNew()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Nueva historia
-          </button>
+          <div class="header-btns">
+            @if (histories().length > 0) {
+              <button class="btn-expediente" (click)="downloadExpediente()" [disabled]="generatingExpediente()" title="Descargar todas las consultas en un PDF">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                {{ generatingExpediente() ? 'Generando...' : 'Expediente completo' }}
+              </button>
+            }
+            <button class="btn-primary" (click)="openNew()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nueva historia
+            </button>
+          </div>
         </div>
       </div>
 
@@ -295,8 +303,12 @@ function emptyForm() {
     .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
     .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
+    .header-btns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .btn-primary { display: flex; align-items: center; gap: 7px; padding: 10px 18px; background: #16a34a; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-expediente { display: flex; align-items: center; gap: 7px; padding: 10px 16px; background: white; color: #374151; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+    .btn-expediente:hover:not(:disabled) { border-color: #16a34a; color: #16a34a; }
+    .btn-expediente:disabled { opacity: 0.6; cursor: not-allowed; }
     .loading-text { padding: 40px; text-align: center; color: #9ca3af; }
     .empty-state { text-align: center; padding: 56px; display: flex; flex-direction: column; align-items: center; gap: 12px; color: #9ca3af; }
     .empty-state p { font-size: 15px; margin: 0; }
@@ -404,15 +416,16 @@ export class PatientClinicalHistoriesComponent implements OnInit {
   private api   = inject(ApiService);
   private route = inject(ActivatedRoute);
 
-  patientId   = this.route.snapshot.params['patientId'];
-  histories   = signal<any[]>([]);
-  loading     = signal(true);
-  expanded    = signal<string | null>(null);
-  showModal   = signal(false);
-  editingId   = signal<string | null>(null);
-  saving      = signal(false);
-  formError   = signal('');
-  patientName = signal('');
+  patientId            = this.route.snapshot.params['patientId'];
+  histories            = signal<any[]>([]);
+  loading              = signal(true);
+  expanded             = signal<string | null>(null);
+  showModal            = signal(false);
+  editingId            = signal<string | null>(null);
+  saving               = signal(false);
+  formError            = signal('');
+  patientName          = signal('');
+  generatingExpediente = signal(false);
 
   maniobra_sections = MANIOBRA_SECTIONS;
   form: ReturnType<typeof emptyForm> = emptyForm();
@@ -549,6 +562,157 @@ export class PatientClinicalHistoriesComponent implements OnInit {
     if (!date) return '—';
     try { return new Date(date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }); }
     catch { return '—'; }
+  }
+
+  async downloadExpediente() {
+    const hs = [...this.histories()].sort((a, b) => {
+      const toMs = (f: any) => f?.seconds ? f.seconds * 1000 : new Date(f).getTime();
+      return toMs(a.fecha) - toMs(b.fecha);
+    });
+    if (!hs.length) return;
+
+    this.generatingExpediente.set(true);
+    try {
+      const { jsPDF } = await import('jspdf');
+      const logo = await this._loadLogo();
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const W = 210, M = 14, CW = 182;
+      const patientLabel = this.patientName();
+
+      // ── Portada ──────────────────────────────────────────────────────
+      doc.setFillColor(140, 198, 63);
+      doc.rect(0, 0, W, 50, 'F');
+      if (logo) doc.addImage(logo, 'PNG', W - 32, 4, 24, 24);
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+      doc.text('EXPEDIENTE CLÍNICO', M, 14);
+      doc.setFontSize(20);
+      doc.text(patientLabel, M, 26);
+
+      const firstDate = this.formatDate(hs[0].fecha?.seconds ? hs[0].fecha.toDate() : hs[0].fecha);
+      const lastDate  = this.formatDate(hs[hs.length - 1].fecha?.seconds ? hs[hs.length - 1].fecha.toDate() : hs[hs.length - 1].fecha);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.text(`${hs.length} consulta${hs.length !== 1 ? 's' : ''}  ·  ${firstDate} — ${lastDate}`, M, 36);
+      doc.text('Generado por SecretarIA', M, 43);
+
+      // ── Índice de consultas ───────────────────────────────────────────
+      let y = 62;
+      doc.setTextColor(17, 24, 39);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+      doc.text('ÍNDICE DE CONSULTAS', M, y); y += 7;
+      doc.setDrawColor(229, 231, 235); doc.line(M, y, W - M, y); y += 5;
+
+      hs.forEach((h, i) => {
+        if (y > 270) { doc.addPage(); y = 14; }
+        const d = this.formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha);
+        const motivo = h.motivo_consulta ? h.motivo_consulta.substring(0, 60) + (h.motivo_consulta.length > 60 ? '...' : '') : '—';
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+        doc.setTextColor(107, 114, 128);
+        doc.text(`${i + 1}.`, M, y);
+        doc.setTextColor(17, 24, 39);
+        doc.text(`${d}  ·  ${motivo}`, M + 7, y);
+        y += 6;
+      });
+
+      // ── Consultas ─────────────────────────────────────────────────────
+      const addSection = (label: string, text: string) => {
+        if (!text?.trim()) return;
+        const lines = doc.splitTextToSize(text, CW);
+        const blockH = 6 + lines.length * 5.2 + 4;
+        if (y + blockH > 278) { doc.addPage(); y = 14; }
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+        doc.setTextColor(107, 114, 128);
+        doc.text(label.toUpperCase(), M, y); y += 4.5;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+        doc.setTextColor(17, 24, 39);
+        doc.text(lines, M, y); y += lines.length * 5.2 + 4;
+      };
+
+      for (let i = 0; i < hs.length; i++) {
+        const h = hs[i];
+        doc.addPage(); y = 14;
+
+        // Cabecera de consulta
+        doc.setFillColor(240, 253, 244);
+        doc.rect(0, y - 4, W, 22, 'F');
+        doc.setDrawColor(134, 239, 172);
+        doc.line(0, y - 4, 0, y + 18);
+        doc.setLineWidth(3); doc.line(0, y - 4, 0, y + 18); doc.setLineWidth(0.2);
+
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+        doc.setTextColor(22, 101, 52);
+        doc.text(`CONSULTA ${i + 1} DE ${hs.length}`, M, y + 2);
+
+        const dateLabel = this.formatDate(h.fecha?.seconds ? h.fecha.toDate() : h.fecha);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+        doc.setTextColor(5, 46, 22);
+        doc.text(dateLabel, M, y + 9);
+
+        if (h.professional_name) {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+          doc.setTextColor(22, 163, 74);
+          doc.text(h.professional_name, M, y + 15);
+        }
+        y += 26;
+
+        // Signos vitales
+        const sv = h.signos_vitales;
+        if (sv) {
+          const svParts = [
+            sv.tension_arterial    ? `TA: ${sv.tension_arterial}` : '',
+            sv.frecuencia_cardiaca ? `FC: ${sv.frecuencia_cardiaca}` : '',
+            sv.temperatura         ? `Temp: ${sv.temperatura}` : '',
+            sv.peso                ? `Peso: ${sv.peso}` : '',
+            sv.talla               ? `Talla: ${sv.talla}` : '',
+            sv.saturacion          ? `SatO2: ${sv.saturacion}` : '',
+          ].filter(Boolean);
+          if (svParts.length) addSection('Signos vitales', svParts.join('   ·   '));
+        }
+
+        addSection('Motivo de consulta',        h.motivo_consulta          || '');
+        addSection('Antecedentes y síntomas',   h.antecedentes_sintomas    || '');
+        addSection('Exploración estática',       h.exploracion_estatica     || '');
+        addSection('Inspección dinámica',        h.exploracion_dinamica     || '');
+        addSection('Diagnóstico',                h.diagnostico              || '');
+        addSection('Plan terapéutico',           h.plan_terapeutico         || '');
+        addSection('Estudios complementarios',   h.estudios_complementarios || '');
+        addSection('Laboratorio',                h.laboratorio              || '');
+        addSection('Medicación',                 h.medicacion               || '');
+
+        if (h.observaciones) {
+          const obsLines = doc.splitTextToSize(h.observaciones, CW - 8);
+          const obsH = 10 + obsLines.length * 5.2 + 6;
+          if (y + obsH > 278) { doc.addPage(); y = 14; }
+          doc.setFillColor(255, 251, 235); doc.setDrawColor(217, 119, 6);
+          doc.roundedRect(M, y, CW, obsH, 3, 3, 'FD');
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(146, 64, 14);
+          doc.text('OBSERVACIONES', M + 4, y + 6);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(120, 53, 15);
+          doc.text(obsLines, M + 4, y + 12);
+          y += obsH + 4;
+        }
+
+        const plantillasText = h.plantillas
+          ? `Indicadas${h.descripcion_pedografia ? ' — ' + h.descripcion_pedografia : ''}`
+          : '';
+        if (plantillasText) addSection('Plantillas', plantillasText);
+      }
+
+      // Paginado
+      const pages = (doc.internal as any).getNumberOfPages();
+      for (let i = 1; i <= pages; i++) {
+        doc.setPage(i);
+        doc.setTextColor(156, 163, 175); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text(`${patientLabel}  ·  Expediente clínico  ·  Pág. ${i}/${pages}`, W / 2, 292, { align: 'center' });
+      }
+
+      const safeName = patientLabel.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      doc.save(`expediente_${safeName}.pdf`);
+    } finally {
+      this.generatingExpediente.set(false);
+    }
   }
 
   async downloadHistory(h: any) {

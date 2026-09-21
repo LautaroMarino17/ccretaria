@@ -16,6 +16,20 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent)
   },
 
+  // ── Legal (públicas, sin guard) ─────────────────────────────────────
+  {
+    path: 'legal/privacidad',
+    loadComponent: () => import('./features/legal/privacy-policy.component').then(m => m.PrivacyPolicyComponent)
+  },
+  {
+    path: 'legal/terminos',
+    loadComponent: () => import('./features/legal/terms.component').then(m => m.TermsComponent)
+  },
+  {
+    path: 'legal/modelo-consentimiento',
+    loadComponent: () => import('./features/legal/patient-consent.component').then(m => m.PatientConsentComponent)
+  },
+
   // ── Profesional ──────────────────────────────────────────────────
   {
     path: 'professional',

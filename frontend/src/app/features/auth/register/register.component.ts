@@ -1,14 +1,15 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
+import { ApiService } from '../../../core/services/api.service';
 import { environment } from '../../../../environments/environment';
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink],
   template: `
     <div class="auth-layout">
       <div class="auth-card">
@@ -47,11 +48,31 @@ import { environment } from '../../../../environments/environment';
             </div>
           </div>
 
+          <div class="consent-group">
+            <label class="checkbox-row">
+              <input type="checkbox" [(ngModel)]="acceptedTerms" [ngModelOptions]="{standalone: true}" />
+              <span>
+                Leí y acepto los <a routerLink="/legal/terminos" target="_blank">Términos y Condiciones</a>
+                y la <a routerLink="/legal/privacidad" target="_blank">Política de Privacidad</a>.
+              </span>
+            </label>
+            <label class="checkbox-row">
+              <input type="checkbox" [(ngModel)]="acceptedAiTransfer" [ngModelOptions]="{standalone: true}" />
+              <span>
+                Entiendo que los datos de salud de mis pacientes (incluido el audio de las consultas) se
+                procesan mediante servicios de inteligencia artificial de terceros con servidores en el
+                exterior (Groq, EE. UU.), y que soy responsable de obtener el consentimiento informado de mis
+                pacientes para este tratamiento, para lo cual la plataforma provee un
+                <a routerLink="/legal/modelo-consentimiento" target="_blank">modelo de consentimiento</a>.
+              </span>
+            </label>
+          </div>
+
           @if (error) {
             <div class="error-banner">{{ error }}</div>
           }
 
-          <button type="submit" class="btn-primary" [disabled]="loading || form.invalid">
+          <button type="submit" class="btn-primary" [disabled]="loading || form.invalid || !acceptedTerms || !acceptedAiTransfer">
             @if (loading) {
               <span class="spinner"></span>
             } @else {
@@ -134,6 +155,10 @@ import { environment } from '../../../../environments/environment';
     .required { color: #dc2626; }
     .field-hint { font-size: 12px; color: #9ca3af; margin-top: 2px; }
     .field-error { font-size: 12px; color: #dc2626; margin-top: 2px; }
+    .consent-group { display: flex; flex-direction: column; gap: 10px; }
+    .checkbox-row { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #4b5563; line-height: 1.5; cursor: pointer; }
+    .checkbox-row input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; width: 15px; height: 15px; accent-color: #16a34a; cursor: pointer; }
+    .checkbox-row a { color: #16a34a; font-weight: 600; text-decoration: underline; }
     @media (max-width: 400px) {
       .auth-card { padding: 28px 20px; border-radius: 16px; }
     }
@@ -142,12 +167,15 @@ import { environment } from '../../../../environments/environment';
 export class RegisterComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private api = inject(ApiService);
   private http = inject(HttpClient);
   private router = inject(Router);
 
   loading = false;
   error = '';
   showPassword = false;
+  acceptedTerms = false;
+  acceptedAiTransfer = false;
 
   form = this.fb.group({
     displayName: ['', Validators.required],
@@ -156,7 +184,7 @@ export class RegisterComponent {
   });
 
   onSubmit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid || !this.acceptedTerms || !this.acceptedAiTransfer) return;
     this.loading = true;
     this.error = '';
 
@@ -169,6 +197,11 @@ export class RegisterComponent {
         this.http.post(`${environment.apiUrl}/auth/set-role`, { role: 'professional' }, { headers }).subscribe({
           next: async () => {
             await this.authService.refreshUser();
+            this.api.acceptLegal().subscribe({
+              // La aceptación queda registrada con fecha y versión; si falla el registro puntual,
+              // no bloqueamos el alta ya que las cuentas se crean solo con los checkboxes tildados.
+              error: () => {}
+            });
             this.router.navigate(['/professional/dashboard']);
           },
           error: () => {

@@ -36,6 +36,10 @@ export class ApiService {
     return this.withAuth(h => this.http.patch<any>(`${this.base}/auth/patient-phone`, { telefono }, { headers: h }));
   }
 
+  acceptLegal() {
+    return this.withAuth(h => this.http.post<{ message: string; version: string }>(`${this.base}/auth/accept-legal`, {}, { headers: h }));
+  }
+
   assignAppointment(data: { patient_id: string; patient_name: string; datetime_iso: string; duration_minutes: number; notes?: string; lugar?: string; tipo?: string }) {
     return this.withAuth(h => this.http.post<any>(`${this.base}/appointments/assign`, data, { headers: h }));
   }

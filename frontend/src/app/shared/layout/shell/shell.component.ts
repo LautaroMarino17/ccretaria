@@ -54,6 +54,12 @@ import { VoiceButtonComponent } from '../../components/voice-button/voice-button
             </svg>
           </button>
         </div>
+
+        <div class="sidebar-legal">
+          <a routerLink="/legal/privacidad">Privacidad</a>
+          <span>·</span>
+          <a routerLink="/legal/terminos">Términos</a>
+        </div>
       </aside>
 
       <!-- Overlay mobile -->
@@ -154,6 +160,17 @@ import { VoiceButtonComponent } from '../../components/voice-button/voice-button
       padding: 16px 20px;
       border-top: 1px solid rgba(255,255,255,0.08);
     }
+
+    .sidebar-legal {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 20px 16px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+    }
+    .sidebar-legal a { color: rgba(255,255,255,0.4); text-decoration: none; }
+    .sidebar-legal a:hover { color: rgba(255,255,255,0.7); text-decoration: underline; }
 
     .user-avatar {
       width: 34px; height: 34px;

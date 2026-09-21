@@ -1,13 +1,14 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="page">
 
@@ -206,6 +207,37 @@ import { ApiService } from '../../core/services/api.service';
         }
       </div>
 
+      <!-- Legal -->
+      @if (user?.role === 'professional') {
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-icon slate">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
+            </div>
+            <div>
+              <h2>Legal y privacidad</h2>
+              <p class="section-sub">
+                @if (legalAcceptedAt()) {
+                  Aceptaste los Términos y la Política de Privacidad (v. {{ legalVersion() }}) el {{ legalAcceptedAt() | date:'dd/MM/yyyy' }}
+                } @else {
+                  Todavía no registramos tu aceptación de los Términos y la Política de Privacidad
+                }
+              </p>
+            </div>
+          </div>
+          <div class="legal-links">
+            <a routerLink="/legal/privacidad" class="legal-link">Política de Privacidad</a>
+            <a routerLink="/legal/terminos" class="legal-link">Términos y Condiciones</a>
+            <a routerLink="/legal/modelo-consentimiento" class="legal-link">Modelo de consentimiento para pacientes</a>
+          </div>
+          @if (!legalAcceptedAt()) {
+            <button class="btn-primary btn-accept-legal" (click)="acceptLegalNow()" [disabled]="acceptingLegal()">
+              @if (acceptingLegal()) { <span class="spinner"></span> } Aceptar Términos y Política de Privacidad
+            </button>
+          }
+        </div>
+      }
+
     </div>
   `,
   styles: [`
@@ -375,6 +407,17 @@ import { ApiService } from '../../core/services/api.service';
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Legal ── */
+    .legal-links { display: flex; flex-direction: column; gap: 4px; }
+    .legal-link {
+      font-size: 13.5px; font-weight: 600; color: #16a34a;
+      text-decoration: none; padding: 8px 0;
+      border-top: 1px solid #f3f4f6;
+    }
+    .legal-links .legal-link:first-child { border-top: none; }
+    .legal-link:hover { text-decoration: underline; }
+    .btn-accept-legal { margin-top: 14px; width: 100%; }
+
     /* ── Alerts ── */
     .alert { padding: 10px 14px; border-radius: 8px; font-size: 13px; }
     .alert.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
@@ -413,6 +456,10 @@ export class ProfileComponent implements OnInit {
   pwError  = signal('');
   pwSuccess = signal(false);
 
+  legalAcceptedAt = signal<string | null>(null);
+  legalVersion    = signal<string | null>(null);
+  acceptingLegal  = signal(false);
+
   initial(): string {
     return (this.user?.displayName || this.user?.email || '?')[0].toUpperCase();
   }
@@ -430,6 +477,15 @@ export class ProfileComponent implements OnInit {
         this._lugaresOrig = this.lugaresText;
       }
     });
+
+    if (this.user?.role === 'professional') {
+      this.api.getMe().subscribe({
+        next: (data) => {
+          this.legalAcceptedAt.set(data.legal_accepted_at || null);
+          this.legalVersion.set(data.legal_version || null);
+        }
+      });
+    }
   }
 
   startEditContact() {
@@ -475,6 +531,18 @@ export class ProfileComponent implements OnInit {
         error: (err: any) => { this.savingContact.set(false); this.contactError.set(err.error?.detail || 'Error al guardar'); }
       });
     }
+  }
+
+  acceptLegalNow() {
+    this.acceptingLegal.set(true);
+    this.api.acceptLegal().subscribe({
+      next: (res) => {
+        this.acceptingLegal.set(false);
+        this.legalVersion.set(res.version);
+        this.legalAcceptedAt.set(new Date().toISOString());
+      },
+      error: () => { this.acceptingLegal.set(false); }
+    });
   }
 
   cancelPw() {

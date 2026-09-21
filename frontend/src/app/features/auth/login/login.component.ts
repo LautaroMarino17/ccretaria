@@ -92,6 +92,11 @@ import { AuthService } from '../../../core/services/auth.service';
           ¿No tenés cuenta?
           <a routerLink="/register">Registrarse</a>
         </p>
+        <p class="legal-footer">
+          <a routerLink="/legal/privacidad">Política de Privacidad</a>
+          ·
+          <a routerLink="/legal/terminos">Términos y Condiciones</a>
+        </p>
       </div>
     </div>
   `,
@@ -244,6 +249,14 @@ import { AuthService } from '../../../core/services/auth.service';
       font-weight: 600;
       text-decoration: none;
     }
+
+    .legal-footer {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .legal-footer a { color: #9ca3af; text-decoration: underline; }
 
     .forgot-link-row { text-align: right; margin-top: -6px; }
     .btn-link { background: none; border: none; color: #16a34a; font-size: 13px; cursor: pointer; padding: 0; text-decoration: underline; }

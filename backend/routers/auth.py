@@ -8,6 +8,10 @@ from limiter import limiter
 
 router = APIRouter()
 
+# Se incrementa (fecha) cada vez que cambia el contenido de Términos o Política de Privacidad.
+# Al cambiar, el profesional deberá volver a aceptar (ver /accept-legal y GET /me → legal_version).
+LEGAL_VERSION = "2026-09-21"
+
 
 class SetRoleRequest(BaseModel):
     role: str
@@ -56,11 +60,27 @@ def get_me(user: dict = Depends(get_current_user)):
                 result["link_code"] = data.get("link_code")
                 result["plan"]     = int(data.get("plan", 1))
                 result["is_admin"] = bool(data.get("is_admin", False))
+                result["legal_version"] = data.get("legal_version")
+                legal_at = data.get("legal_accepted_at")
+                result["legal_accepted_at"] = legal_at.isoformat() if legal_at else None
 
         return result
     except Exception as e:
         print(f"[ERROR] get_me: {e}")
         raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+
+@router.post("/accept-legal")
+@limiter.limit("10/minute")
+def accept_legal(request: Request, user: dict = Depends(get_current_user)):
+    """Registra la aceptación de los Términos y Condiciones y la Política de Privacidad
+    (con fecha y versión vigente) como constancia de consentimiento informado."""
+    db = get_firestore()
+    db.collection("professionals").document(user["uid"]).set({
+        "legal_accepted_at": SERVER_TIMESTAMP,
+        "legal_version": LEGAL_VERSION,
+    }, merge=True)
+    return {"message": "Aceptación registrada", "version": LEGAL_VERSION}
 
 
 class FcmTokenRequest(BaseModel):

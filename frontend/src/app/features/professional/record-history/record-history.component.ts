@@ -710,7 +710,10 @@ export class RecordHistoryComponent implements OnDestroy {
   }
 
   private _startChunkRecorder(stream: MediaStream) {
-    const rec = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    // Safari/iOS no soporta audio/webm: dejar que use su formato nativo (mp4)
+    const rec = MediaRecorder.isTypeSupported('audio/webm')
+      ? new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      : new MediaRecorder(stream);
     const blobs: Blob[] = [];
     rec.ondataavailable = (e) => { if (e.data.size > 0) blobs.push(e.data); };
     rec.onstop = () => { if (blobs.length) this._groups.push(new Blob(blobs, { type: 'audio/webm' })); };

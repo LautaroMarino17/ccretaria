@@ -885,7 +885,10 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
     navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
       this._stream = stream;
       this._chunks = [];
-      this._recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      // Safari/iOS no soporta audio/webm: dejar que use su formato nativo (mp4)
+      this._recorder = MediaRecorder.isTypeSupported('audio/webm')
+        ? new MediaRecorder(stream, { mimeType: 'audio/webm' })
+        : new MediaRecorder(stream);
       this._recorder.ondataavailable = e => { if (e.data.size > 0) this._chunks.push(e.data); };
       this._recorder.onstop = () => {
         this._stream?.getTracks().forEach(t => t.stop());

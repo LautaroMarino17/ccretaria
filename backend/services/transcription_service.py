@@ -1,19 +1,11 @@
-import os
-import tempfile
-import groq as groq_module
-from groq import Groq
+import logging
 from dotenv import load_dotenv
+
+from services import groq_gateway
 
 load_dotenv()
 
-_client = None
-
-def _get_client():
-    global _client
-    if _client is None:
-        _client = Groq(api_key=os.getenv("GROQ_API_KEY"), max_retries=0, timeout=20.0)
-    return _client
-
+log = logging.getLogger("secretaria.ia")
 
 MAX_CHUNK_BYTES = 20 * 1024 * 1024  # 20 MB
 
@@ -56,51 +48,16 @@ def _split_webm(data: bytes, max_bytes: int) -> list[bytes]:
     return chunks
 
 
-def _transcribe_chunk(chunk: bytes, chunk_name: str) -> str:
-    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
-        tmp.write(chunk)
-        tmp_path = tmp.name
-    try:
-        with open(tmp_path, "rb") as f:
-            result = _get_client().audio.transcriptions.create(
-                file=(chunk_name, f, "audio/webm"),
-                model="whisper-large-v3",
-                language="es",
-                response_format="text"
-            )
-        return result.strip() if isinstance(result, str) else result.text.strip()
-    except Exception as e:
-        print(f"[Groq Whisper] ERROR en {chunk_name} ({len(chunk)} bytes): {type(e).__name__}: {e}")
-        raise
-    finally:
-        try:
-            os.unlink(tmp_path)
-        except FileNotFoundError:
-            pass
-
-
-def transcribe_audio_file(audio_bytes: bytes, filename: str = "audio.webm") -> str:
-    """Transcribe audio usando Whisper large-v3 via Groq API.
-    Archivos >20 MB se dividen en chunks WebM válidos (header + clusters)."""
+def transcribe_audio_file(audio_bytes: bytes, uid: str, tipo: str) -> str:
+    """Transcribe audio usando Whisper via Groq (con control de cupo, ver groq_gateway).
+    Archivos >20 MB se dividen en chunks WebM válidos (header + clusters).
+    El audio se manda desde memoria: no se escribe en disco."""
     total = len(audio_bytes)
-    print(f"[Groq Whisper] Transcribiendo {total} bytes...")
 
     if total <= MAX_CHUNK_BYTES:
-        text = _transcribe_chunk(audio_bytes, filename)
-        print(f"[Groq Whisper] OK: {len(text)} caracteres transcritos")
-        return text
+        return groq_gateway.transcribe(uid, tipo, audio_bytes, "audio.webm")
 
-    print(f"[Groq Whisper] Audio grande ({total} bytes), dividiendo por clusters WebM...")
     chunks = _split_webm(audio_bytes, MAX_CHUNK_BYTES)
-    print(f"[Groq Whisper] {len(chunks)} chunks generados")
-
-    parts: list[str] = []
-    for i, chunk in enumerate(chunks):
-        print(f"[Groq Whisper] Chunk {i+1}/{len(chunks)} ({len(chunk)} bytes)...")
-        part = _transcribe_chunk(chunk, f"chunk_{i}.webm")
-        print(f"[Groq Whisper] Chunk {i+1} OK: {len(part)} caracteres")
-        parts.append(part)
-
-    full = " ".join(p for p in parts if p)
-    print(f"[Groq Whisper] Completo ({len(parts)} chunks): {len(full)} caracteres")
-    return full
+    log.info("[Whisper] audio grande (%d bytes) dividido en %d chunks", total, len(chunks))
+    parts = [groq_gateway.transcribe(uid, tipo, chunk, f"chunk_{i}.webm") for i, chunk in enumerate(chunks)]
+    return " ".join(p for p in parts if p)

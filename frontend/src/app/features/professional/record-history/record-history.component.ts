@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
+import { AiUsageService, aiErrorCode, aiErrorMessage } from '../../../core/services/ai-usage.service';
 import { ClinicalHistory, EMPTY_SIGNOS_VITALES, MANIOBRA_SECTIONS, emptyManiobras } from '../../../core/models/clinical-history.model';
 
 type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewing' | 'saving' | 'done';
@@ -27,10 +28,29 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
         </div>
       </div>
 
+      <!-- Cupo de IA: aviso al 80 % y avisos de la grabación (el backend arma los textos) -->
+      @if (state() === 'idle' && usage.status()?.aviso && !usage.status()?.bloqueado) {
+        <div class="quota-warning">{{ usage.status()?.mensaje }}</div>
+      }
+      @if (notice()) {
+        <div class="quota-warning">{{ notice() }}</div>
+      }
+
       <!-- Estado: IDLE / RECORDING / STOPPED -->
       @if (state() === 'idle' || state() === 'recording' || state() === 'stopped') {
         <div class="record-card">
-          @if (state() !== 'stopped') {
+          @if (state() === 'idle' && usage.status()?.bloqueado) {
+            <div class="stopped-visual">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <p class="record-label">{{ usage.status()?.mensaje }}</p>
+            <p class="record-hint">La grabación con IA no está disponible, pero podés escribir la historia clínica a mano.</p>
+            <div class="stopped-actions">
+              <button class="btn-manual" (click)="fillManually()">Completar manualmente</button>
+            </div>
+          } @else if (state() !== 'stopped') {
             <div class="record-visual" [class.active]="state() === 'recording'">
               <div class="pulse-ring"></div>
               <button class="record-btn" (click)="toggleRecording()">
@@ -122,6 +142,9 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
           <div class="processing-spinner"></div>
           <h3>Procesando consulta</h3>
           <p>{{ processingMessage() }}</p>
+          @if (aiPending()) {
+            <p class="pending-hint">Procesando, puede demorar: el servicio de IA tiene mucha demanda y seguimos intentando.</p>
+          }
           <div class="processing-steps">
             <div class="step" [class.done]="processingStep() > 0" [class.active]="processingStep() === 0">
               <span class="step-icon">1</span> Transcribiendo audio con Whisper
@@ -372,6 +395,13 @@ type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewi
     }
     h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 4px; }
     .subtitle { color: #6b7280; font-size: 14px; margin: 0; }
+
+    /* ── Cupo de IA ── */
+    .quota-warning {
+      background: #fffbeb; border: 1px solid #fcd34d; color: #92400e;
+      border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: 14px;
+    }
+    .pending-hint { color: #b45309; font-size: 13px; margin-top: 8px; }
 
     /* ── Record card ── */
     .record-card {
@@ -627,12 +657,15 @@ export class RecordHistoryComponent implements OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
+  usage = inject(AiUsageService);
+  aiPending = this.api.aiPending;
 
   patientId = this.route.snapshot.params['patientId'] || '';
   maniobra_sections = MANIOBRA_SECTIONS;
 
   state = signal<RecordingState>('idle');
   error = signal('');
+  notice = signal('');
   processingMessage = signal('Transcribiendo audio con Whisper...');
   processingStep = signal(0);
   elapsedSeconds = signal(0);
@@ -664,7 +697,13 @@ export class RecordHistoryComponent implements OnDestroy {
   private mediaRecorder: MediaRecorder | null = null;
   private mediaStream: MediaStream | null = null;
   private _groups: Blob[] = [];
+  /** Texto ya transcripto de cada parte: al reintentar no se vuelve a mandar (ni a cobrar). */
+  private _texts: (string | undefined)[] = [];
   private _chunkInterval: any = null;
+
+  constructor() {
+    this.usage.refresh();
+  }
   private timerInterval: any = null;
   private waveInterval: any = null;
 
@@ -678,10 +717,16 @@ export class RecordHistoryComponent implements OnDestroy {
 
   private async startRecording() {
     this.error.set('');
+    this.notice.set('');
+    const quota = await this.usage.refresh();
+    if (quota?.bloqueado) return;
+    // Corte automático al agotar el cupo: se procesa lo grabado y no se pierde la consulta
+    const limitSeconds = quota?.restante_min != null ? Math.floor(quota.restante_min * 60) : null;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.mediaStream = stream;
       this._groups = [];
+      this._texts = [];
 
       this._startChunkRecorder(stream);
 
@@ -696,6 +741,11 @@ export class RecordHistoryComponent implements OnDestroy {
 
       this.timerInterval = setInterval(() => {
         this.elapsedSeconds.update(v => v + 1);
+        if (limitSeconds !== null && this.elapsedSeconds() >= limitSeconds) {
+          this.stopRecording();
+          this.notice.set('Llegaste al límite de tu cupo de IA y la grabación se detuvo. Podés generar la historia con lo grabado.');
+          this.cdr.detectChanges();
+        }
       }, 1000);
 
       this.waveInterval = setInterval(() => {
@@ -743,21 +793,31 @@ export class RecordHistoryComponent implements OnDestroy {
     this.cdr.detectChanges();
 
     try {
-    const groups = this._groups;
-    const texts: string[] = [];
+      const groups = this._groups;
       let failedChunks = 0;
       for (let i = 0; i < groups.length; i++) {
+        if (this._texts[i] !== undefined) continue;  // ya transcripta en un intento anterior
         this.processingMessage.set(`Transcribiendo parte ${i + 1} de ${groups.length}...`);
         this.cdr.detectChanges();
         try {
           const { text } = await firstValueFrom(this.api.transcribeChunk(groups[i]));
-          texts.push(text);
+          this._texts[i] = text;
         } catch (chunkErr) {
-          console.warn(`[Record] Chunk ${i + 1} fallido, se omite`, chunkErr);
+          const code = aiErrorCode(chunkErr);
+          // Pendiente: se corta y el audio queda guardado para reintentar
+          if (code === 'pendiente' || (code === 'cupo_agotado' && !this._texts.some(t => t !== undefined))) {
+            throw chunkErr;
+          }
+          if (code === 'cupo_agotado') {
+            this.notice.set(`${aiErrorMessage(chunkErr)} Se usó lo transcripto hasta ese momento.`);
+            break;
+          }
+          console.warn(`[Record] Chunk ${i + 1} fallido, se omite`);
           failedChunks++;
         }
       }
 
+      const texts = this._texts.filter((t): t is string => t !== undefined);
       if (texts.length === 0) {
         throw new Error('No se pudo transcribir ninguna parte del audio.');
       }
@@ -767,7 +827,14 @@ export class RecordHistoryComponent implements OnDestroy {
       this.cdr.detectChanges();
 
       const transcription = texts.join(' ');
-      const { clinical_history: ch } = await firstValueFrom(this.api.structureText(transcription));
+      let ch: any = {};
+      try {
+        ({ clinical_history: ch } = await firstValueFrom(this.api.structureText(transcription)));
+      } catch (structErr) {
+        // Consulta demasiado larga para el plan de Groq: queda la transcripción para completar a mano
+        if (aiErrorCode(structErr) !== 'demasiado_largo') throw structErr;
+        this.notice.set(aiErrorMessage(structErr) || '');
+      }
 
       this.history.set({
         patient_id: this.patientId,
@@ -798,22 +865,25 @@ export class RecordHistoryComponent implements OnDestroy {
       this.processingStep.set(2);
       this.state.set('reviewing');
       this.cdr.detectChanges();
+      this.usage.refresh();
 
     } catch (err: unknown) {
       const httpErr = err as any;
-      const detail: string = httpErr?.error?.detail || '';
-      if (detail.includes('rate_limit_exceeded') || detail.includes('Rate limit') || httpErr?.status === 429) {
-        this.error.set('');
-        this.state.set('idle');
-        this._groups = [];
-        this.elapsedSeconds.set(0);
-        this.cdr.detectChanges();
-        alert('Límite de transcripciones alcanzado. Esperá unos minutos e intentá de nuevo.');
+      const code = aiErrorCode(err);
+      // En todos los casos el audio queda guardado: se puede reintentar o completar a mano
+      if (code === 'pendiente') {
+        this.error.set('Procesando, puede demorar: el servicio de IA sigue con mucha demanda. El audio quedó guardado; reintentá en unos minutos.');
+      } else if (code) {
+        this.error.set(aiErrorMessage(err) || 'Error al procesar el audio. Podés reintentar.');
+        if (code === 'cupo_agotado') this.usage.refresh();
+      } else if (httpErr?.status === 429) {
+        this.error.set('Demasiados pedidos seguidos. Esperá un minuto y reintentá; el audio quedó guardado.');
       } else {
-        this.error.set(detail || 'Error al procesar el audio. Podés reintentar.');
-        this.state.set('stopped');
-        this.cdr.detectChanges();
+        const detail = typeof httpErr?.error?.detail === 'string' ? httpErr.error.detail : '';
+        this.error.set(detail || httpErr?.message || 'Error al procesar el audio. Podés reintentar.');
       }
+      this.state.set('stopped');
+      this.cdr.detectChanges();
     }
   }
 
@@ -852,7 +922,9 @@ export class RecordHistoryComponent implements OnDestroy {
   startOver() {
     this.state.set('idle');
     this.error.set('');
+    this.notice.set('');
     this._groups = [];
+    this._texts = [];
     this.elapsedSeconds.set(0);
   }
 

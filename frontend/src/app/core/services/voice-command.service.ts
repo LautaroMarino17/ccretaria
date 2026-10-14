@@ -1,6 +1,7 @@
 import { Injectable, NgZone, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
+import { AiUsageService, aiErrorCode, aiErrorMessage } from './ai-usage.service';
 
 export type VoiceStatus = 'idle' | 'listening' | 'processing';
 
@@ -9,6 +10,7 @@ export class VoiceCommandService {
   private api    = inject(ApiService);
   private router = inject(Router);
   private zone   = inject(NgZone);
+  private usage  = inject(AiUsageService);
 
   active               = signal(false);
   status               = signal<VoiceStatus>('idle');
@@ -42,6 +44,11 @@ export class VoiceCommandService {
 
   // ── Arranque ────────────────────────────────────────────────────────────────
   private async start() {
+    const quota = await this.usage.refresh();
+    if (quota?.bloqueado) {
+      this._finalize(quota.mensaje || 'Llegaste al límite de uso de IA.');
+      return;
+    }
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
@@ -102,7 +109,7 @@ export class VoiceCommandService {
       if (this.status() === 'processing') this.zone.run(() => this._finalize(''));
     }, 30000);
 
-    this.api.transcribeChunk(blob).subscribe({
+    this.api.transcribeChunk(blob, 'amalia').subscribe({
       next: (res) => {
         const text = res.text?.trim();
         if (!text) { if (this.active()) this._record(); return; }
@@ -138,11 +145,23 @@ export class VoiceCommandService {
               this._runtimeError = '';
             });
           },
-          error: () => this.zone.run(() => this._finalize('Ocurrió un error al procesar el comando.'))
+          error: (err) => this.zone.run(() => this._finalize(this._aiErrorText(err) || 'Ocurrió un error al procesar el comando.'))
         });
       },
-      error: () => { if (this.active()) this._record(); }
+      error: (err) => {
+        const msg = this._aiErrorText(err);
+        if (msg) this.zone.run(() => this._finalize(msg));
+        else if (this.active()) this._record();
+      }
     });
+  }
+
+  /** Mensaje para errores de cupo / IA saturada; undefined si es otro tipo de error. */
+  private _aiErrorText(err: any): string | undefined {
+    const code = aiErrorCode(err);
+    if (code === 'cupo_agotado') this.usage.refresh();
+    if (code === 'pendiente') return 'El servicio de IA tiene mucha demanda. Probá de nuevo en un minuto.';
+    return code ? aiErrorMessage(err) : undefined;
   }
 
   // ── Confirmación ─────────────────────────────────────────────────────────────
@@ -297,7 +316,7 @@ export class VoiceCommandService {
                 error: () => resolve()
               });
             },
-            error: () => resolve()
+            error: (err) => { this._runtimeError = this._aiErrorText(err) || ''; resolve(); }
           });
           break;
         }

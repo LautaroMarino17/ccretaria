@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { PlanService } from '../../../core/services/plan.service';
+import { AiUsageService, aiErrorCode, aiErrorMessage } from '../../../core/services/ai-usage.service';
 
 interface Exercise { nombre: string; enlace: string; reps_seg_mts: string; carga: string; }
 interface Circuit  { nombre: string; rondas: string; ejercicios: Exercise[]; }
@@ -181,7 +182,7 @@ const EMPTY_ROU = (): Routine  => ({ titulo: '', descripcion: '', circuitos: [EM
             <div class="voice-overlay-content">
               <div class="rec-spinner"></div>
               <p class="rec-done-title">Generando rutina con IA...</p>
-              <p class="rec-hint">Esto puede tomar unos segundos</p>
+              <p class="rec-hint">{{ aiPending() ? 'Procesando, puede demorar: el servicio de IA tiene mucha demanda.' : 'Esto puede tomar unos segundos' }}</p>
             </div>
           }
         </div>
@@ -528,6 +529,8 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
   private api   = inject(ApiService);
   private route = inject(ActivatedRoute);
   planSvc       = inject(PlanService);
+  usage         = inject(AiUsageService);
+  aiPending     = this.api.aiPending;
 
   patientId       = this.route.snapshot.params['patientId'];
   patientName     = signal('');
@@ -880,8 +883,16 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
     URL.revokeObjectURL(url);
   }
 
-  openVoice() {
+  async openVoice() {
     this.voiceError.set('');
+    const quota = await this.usage.refresh();
+    if (quota?.bloqueado) {
+      // Cupo agotado: no se graba, la rutina se puede cargar a mano
+      this.voiceError.set(`${quota.mensaje} Podés cargar la rutina a mano.`);
+      setTimeout(() => this.voiceError.set(''), 8000);
+      return;
+    }
+    const limitSeconds = quota?.restante_min != null ? Math.floor(quota.restante_min * 60) : null;
     navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
       this._stream = stream;
       this._chunks = [];
@@ -898,7 +909,10 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
       this._recorder.start(1000);
       this.voiceSeconds.set(0);
       this.voiceState.set('recording');
-      this._voiceTimer = setInterval(() => this.voiceSeconds.update(v => v + 1), 1000);
+      this._voiceTimer = setInterval(() => {
+        this.voiceSeconds.update(v => v + 1);
+        if (limitSeconds !== null && this.voiceSeconds() >= limitSeconds) this.stopVoice();  // cupo agotado
+      }, 1000);
       this._waveInterval = setInterval(() => {
         this.voiceWave.set(Array.from({ length: 20 }, () => Math.floor(Math.random() * 30) + 4));
       }, 150);
@@ -927,10 +941,11 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
   processVoice() {
     if (!this._chunks.length) return;
     const blob = new Blob(this._chunks, { type: 'audio/webm' });
-    this._chunks = [];
     this.voiceState.set('processing');
     this.api.transcribeRoutine(blob).subscribe({
       next: (res: any) => {
+        this._chunks = [];
+        this.usage.refresh();
         const r = res.routine;
         if (r) {
           this.form.set({
@@ -951,10 +966,21 @@ export class ManageRoutinesComponent implements OnInit, OnDestroy {
         }
         this.voiceState.set('idle');
       },
-      error: () => {
-        this.voiceError.set('Error al procesar el audio. Intentá de nuevo.');
-        this.voiceState.set('idle');
-        setTimeout(() => this.voiceError.set(''), 4000);
+      error: (err) => {
+        const code = aiErrorCode(err);
+        if (code === 'cupo_agotado') {
+          this._chunks = [];
+          this.usage.refresh();
+          this.voiceError.set(`${aiErrorMessage(err)} Podés cargar la rutina a mano.`);
+          this.voiceState.set('idle');
+        } else {
+          // El audio queda grabado: "Generar rutina" lo reintenta
+          this.voiceError.set(code === 'pendiente'
+            ? 'Procesando, puede demorar: el servicio de IA tiene mucha demanda. Reintentá en unos minutos.'
+            : aiErrorMessage(err) || 'Error al procesar el audio. Intentá de nuevo.');
+          this.voiceState.set('stopped');
+        }
+        setTimeout(() => this.voiceError.set(''), 8000);
       }
     });
   }

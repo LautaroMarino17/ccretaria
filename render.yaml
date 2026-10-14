@@ -14,3 +14,40 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+      # Control de uso de IA (ver backend/.env.example)
+      - key: APP_TIMEZONE
+        value: America/Argentina/Buenos_Aires
+      - key: AI_QUOTA_PLAN1_AUDIO_MIN_MONTH
+        value: "1950"
+      - key: AI_QUOTA_PLAN1_AUDIO_MIN_DAY
+        value: "90"
+      - key: AI_QUOTA_WARN_PCT
+        value: "80"
+      - key: GROQ_WHISPER_MODEL
+        value: whisper-large-v3
+      - key: GROQ_LIMIT_WHISPER_RPM
+        value: "20"
+      - key: GROQ_LIMIT_WHISPER_RPD
+        value: "2000"
+      - key: GROQ_LIMIT_WHISPER_ASH
+        value: "7200"
+      - key: GROQ_LIMIT_WHISPER_ASD
+        value: "28800"
+      - key: GROQ_LIMIT_LLM_RPM
+        value: "30"
+      - key: GROQ_LIMIT_LLM_RPD
+        value: "1000"
+      - key: GROQ_LIMIT_LLM_TPM
+        value: "8000"
+      - key: GROQ_LIMIT_LLM_TPD
+        value: "200000"
+      - key: GROQ_ACCOUNT_MARGIN_PCT
+        value: "90"
+      - key: GROQ_RETRY_MAX_ATTEMPTS
+        value: "3"
+      - key: GROQ_RETRY_BASE_SECONDS
+        value: "2"
+      - key: GROQ_RETRY_MAX_WAIT_SECONDS
+        value: "20"
+      - key: AI_ALERT_EMAIL
+        sync: false

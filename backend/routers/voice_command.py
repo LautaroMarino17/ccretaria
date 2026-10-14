@@ -17,4 +17,4 @@ class VoiceCommandRequest(BaseModel):
 @limiter.limit("10/minute")
 def interpret_command(request: Request, body: VoiceCommandRequest, user: dict = Depends(require_plan(3))):
     """Interpreta un comando de voz y devuelve acciones + respuesta hablada. Requiere Plan 3 (Amalia)."""
-    return interpret_voice_command(body.text, body.context or {})
+    return interpret_voice_command(body.text, user["uid"], body.context or {})

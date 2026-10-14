@@ -1,19 +1,12 @@
 import os
 import json
-from groq import Groq
 from dotenv import load_dotenv
+
+from services import groq_gateway
 
 load_dotenv()
 
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
-
-_client = None
-
-def _get_client():
-    global _client
-    if _client is None:
-        _client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-    return _client
 
 
 CLINICAL_HISTORY_PROMPT = """Actuás como un asistente especializado en estructurar conversaciones clínicas en formato de ficha médica.
@@ -150,18 +143,9 @@ def _parse_json(raw: str) -> dict:
     return json.loads(cleaned)
 
 
-def structure_clinical_history(transcription: str) -> dict:
-    print("[Groq LLM] Estructurando historia clínica...")
-    response = _get_client().chat.completions.create(
-        model=GROQ_MODEL,
-        messages=[
-            {"role": "user", "content": CLINICAL_HISTORY_PROMPT + transcription}
-        ],
-        temperature=0.2,
-        max_tokens=2048,
-    )
-    raw = response.choices[0].message.content
-    print("[Groq LLM] OK")
+def structure_clinical_history(transcription: str, uid: str) -> dict:
+    raw = groq_gateway.chat(uid, "estructuracion", GROQ_MODEL, CLINICAL_HISTORY_PROMPT + transcription,
+                            temperature=0.2, max_tokens=2048)
     try:
         return _parse_json(raw)
     except json.JSONDecodeError:
@@ -179,16 +163,9 @@ def structure_clinical_history(transcription: str) -> dict:
         }
 
 
-def structure_routine_from_voice(transcription: str) -> dict:
-    print("[Groq LLM] Estructurando rutina desde voz...")
-    response = _get_client().chat.completions.create(
-        model=GROQ_MODEL,
-        messages=[{"role": "user", "content": VOICE_ROUTINE_PROMPT + transcription}],
-        temperature=0.1,
-        max_tokens=2048,
-    )
-    raw = response.choices[0].message.content
-    print("[Groq LLM] OK")
+def structure_routine_from_voice(transcription: str, uid: str) -> dict:
+    raw = groq_gateway.chat(uid, "rutina_voz", GROQ_MODEL, VOICE_ROUTINE_PROMPT + transcription,
+                            temperature=0.1, max_tokens=2048)
     try:
         return _parse_json(raw)
     except json.JSONDecodeError:
@@ -286,9 +263,8 @@ Cuándo usar requiere_confirmacion: true:
 """
 
 
-def interpret_voice_command(text: str, context: dict = None) -> dict:
+def interpret_voice_command(text: str, uid: str, context: dict = None) -> dict:
     from datetime import datetime
-    print(f"[Groq LLM] Interpretando comando de voz ({len(text)} caracteres)")
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M (%A)")
 
     context_lines = []
@@ -300,14 +276,8 @@ def interpret_voice_command(text: str, context: dict = None) -> dict:
 
     prompt = VOICE_COMMAND_PROMPT.replace("{TODAY}", now_str).replace("{CONTEXT_BLOCK}", context_block)
 
-    response = _get_client().chat.completions.create(
-        model=GROQ_MODEL,
-        messages=[{"role": "user", "content": prompt + f"\nComando: {text}"}],
-        temperature=0.1,
-        max_tokens=2048,
-    )
-    raw = response.choices[0].message.content
-    print("[Groq LLM] OK")
+    raw = groq_gateway.chat(uid, "comando_voz", GROQ_MODEL, prompt + f"\nComando: {text}",
+                            temperature=0.1, max_tokens=2048)
     try:
         result = _parse_json(raw)
         if "requiere_confirmacion" not in result:
@@ -324,19 +294,10 @@ def interpret_voice_command(text: str, context: dict = None) -> dict:
         }
 
 
-def generate_routine(patient_info: dict) -> dict:
-    print("[Groq LLM] Generando rutina...")
+def generate_routine(patient_info: dict, uid: str) -> dict:
     info_str = json.dumps(patient_info, ensure_ascii=False, indent=2)
-    response = _get_client().chat.completions.create(
-        model=GROQ_MODEL,
-        messages=[
-            {"role": "user", "content": ROUTINE_PROMPT + info_str}
-        ],
-        temperature=0.3,
-        max_tokens=2048,
-    )
-    raw = response.choices[0].message.content
-    print("[Groq LLM] OK")
+    raw = groq_gateway.chat(uid, "estructuracion", GROQ_MODEL, ROUTINE_PROMPT + info_str,
+                            temperature=0.3, max_tokens=2048)
     try:
         return _parse_json(raw)
     except json.JSONDecodeError:

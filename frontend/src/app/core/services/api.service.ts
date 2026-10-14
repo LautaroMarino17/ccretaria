@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { from, Observable, switchMap } from 'rxjs';
+import { finalize, from, Observable, retry, switchMap, throwError, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 
@@ -9,6 +9,30 @@ export class ApiService {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
   private base = environment.apiUrl;
+
+  /** true mientras algún pedido de IA espera porque Groq está saturado ("Procesando, puede demorar"). */
+  aiPending = signal(false);
+
+  /**
+   * Si el backend responde 503 { codigo: 'pendiente', reintentar_en }, espera y reintenta
+   * (con token nuevo). El audio nunca sale del navegador mientras tanto.
+   */
+  private retryWhilePending<T>(maxRetries = 20) {
+    return (source: Observable<T>) => source.pipe(
+      retry({
+        count: maxRetries,
+        delay: (err: any) => {
+          if (err?.status !== 503 || err?.error?.detail?.codigo !== 'pendiente') {
+            return throwError(() => err);
+          }
+          this.aiPending.set(true);
+          const secs = Number(err.error.detail.reintentar_en) || 30;
+          return timer(Math.min(secs, 120) * 1000);
+        }
+      }),
+      finalize(() => this.aiPending.set(false))
+    );
+  }
 
   private withAuth<T>(request: (headers: HttpHeaders) => Observable<T>): Observable<T> {
     return from(this.auth.getIdToken()).pipe(
@@ -165,27 +189,40 @@ export class ApiService {
     return this.withAuth(h => this.http.patch<any>(`${this.base}/admin/professionals/${uid}/plan`, { plan }, { headers: h }));
   }
 
+  getAdminAiUsage() {
+    return this.withAuth(h => this.http.get<any>(`${this.base}/admin/ai-usage`, { headers: h }));
+  }
+
+  // ── Cupo de IA ──────────────────────────────────────────────────────────────
+  getAiUsage() {
+    return this.withAuth(h => this.http.get<any>(`${this.base}/usage/me`, { headers: h }));
+  }
+
   // ── Comandos de voz ─────────────────────────────────────────────────────────
   interpretVoiceCommand(text: string, context?: any) {
-    return this.withAuth(h => this.http.post<any>(`${this.base}/voice-command/interpret`, { text, context }, { headers: h }));
+    return this.withAuth(h => this.http.post<any>(`${this.base}/voice-command/interpret`, { text, context }, { headers: h }))
+      .pipe(this.retryWhilePending(1));
   }
 
   // ── Grabación / Transcripción ────────────────────────────────────
-  transcribeChunk(audioBlob: Blob): Observable<{ text: string }> {
+  /** origen: 'consulta' (grabación de historia clínica) o 'amalia' (comando de voz). */
+  transcribeChunk(audioBlob: Blob, origen: 'consulta' | 'amalia' = 'consulta'): Observable<{ text: string }> {
     return from(this.auth.getIdToken()).pipe(
       switchMap(token => {
         const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
         const formData = new FormData();
         formData.append('audio', audioBlob, 'chunk.webm');
+        formData.append('origen', origen);
         return this.http.post<{ text: string }>(`${this.base}/recording/transcribe-chunk`, formData, { headers });
-      })
+      }),
+      this.retryWhilePending(origen === 'amalia' ? 1 : 20)
     );
   }
 
   structureText(transcription: string): Observable<{ clinical_history: any }> {
     return this.withAuth(h =>
       this.http.post<any>(`${this.base}/recording/structure`, { transcription }, { headers: h })
-    );
+    ).pipe(this.retryWhilePending());
   }
 
   transcribeRoutine(audioBlob: Blob): Observable<any> {
@@ -195,7 +232,8 @@ export class ApiService {
         const formData = new FormData();
         formData.append('audio', audioBlob, 'recording.webm');
         return this.http.post<any>(`${this.base}/recording/transcribe-routine`, formData, { headers });
-      })
+      }),
+      this.retryWhilePending()
     );
   }
 

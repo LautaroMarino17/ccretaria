@@ -2,7 +2,7 @@ import re
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import Optional
-from dependencies import get_current_user, require_professional
+from dependencies import get_current_user, require_professional, require_plan
 from services.firebase_service import get_firestore
 from services.llm_service import generate_routine
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
@@ -279,13 +279,12 @@ def generate_patient_routine(
     request: Request,
     patient_id: str,
     body: RoutineRequest,
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(require_plan(1))
 ):
     """Genera un plan de rutina personalizado usando el LLM y lo guarda en Firestore."""
-    require_professional(user)
     db = get_firestore()
 
-    routine = generate_routine(body.patient_info)
+    routine = generate_routine(body.patient_info, user["uid"])
     routine["created_at"] = SERVER_TIMESTAMP
     routine["professional_uid"] = user["uid"]
     routine["patient_id"] = patient_id

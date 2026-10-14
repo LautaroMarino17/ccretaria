@@ -66,6 +66,56 @@ const PLAN_COLORS: Record<number, string> = {
           </table>
         </div>
       }
+
+      <!-- ── Uso de IA ─────────────────────────────── -->
+      <div class="usage-head">
+        <h2 class="title">Uso de IA</h2>
+        <button class="plan-btn refresh-btn" (click)="loadUsage()">Actualizar</button>
+      </div>
+      @if (usage(); as u) {
+        <p class="subtitle">Cuenta Groq (compartida) · {{ u.fecha_ar }} · se deja de llamar al {{ u.margen_cuenta_pct }} % de hora y día</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Límite</th><th>Ventana</th><th>Usado</th><th>Máximo</th><th>%</th></tr></thead>
+            <tbody>
+              @for (l of u.cuenta; track l.limite + l.ventana) {
+                <tr>
+                  <td>{{ l.limite }}</td>
+                  <td>{{ ventanaLabel(l.ventana) }}</td>
+                  <td>{{ l.usado }}</td>
+                  <td>{{ l.maximo }}</td>
+                  <td><span class="pct" [class.warn]="l.porcentaje >= u.aviso_pct" [class.full]="l.porcentaje >= 100">{{ l.porcentaje }} %</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <p class="subtitle usage-sub">Por profesional (hora Argentina)</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Profesional</th><th>Plan</th><th>Hoy</th><th>Mes</th><th>Cupo</th></tr></thead>
+            <tbody>
+              @for (p of u.profesionales; track p.uid) {
+                <tr>
+                  <td class="td-name">{{ p.display_name || p.email || p.uid }}</td>
+                  <td>{{ 'P' + p.plan }}</td>
+                  <td>{{ p.hoy.minutos_audio }} min @if (p.limite_dia_min) { / {{ p.limite_dia_min }} }<br><small>{{ p.hoy.requests }} pedidos · {{ p.hoy.tokens }} tokens</small></td>
+                  <td>{{ p.mes.minutos_audio }} min @if (p.limite_mes_min) { / {{ p.limite_mes_min }} }<br><small>{{ p.mes.requests }} pedidos · {{ p.mes.tokens }} tokens</small></td>
+                  <td>
+                    @if (p.ilimitado) { <span class="pct">Sin tope</span> }
+                    @else { <span class="pct" [class.warn]="p.aviso" [class.full]="p.bloqueado">{{ p.porcentaje }} %</span> }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else if (usageError()) {
+        <div class="error">{{ usageError() }}</div>
+      } @else {
+        <div class="loading">Cargando uso de IA...</div>
+      }
     </div>
   `,
   styles: [`
@@ -136,6 +186,14 @@ const PLAN_COLORS: Record<number, string> = {
     .plan-btn:hover:not([disabled]) { border-color: #6b7280; color: #111; }
     .plan-btn.active { background: #f0fdf4; }
     .plan-btn:disabled { opacity: 0.5; cursor: default; }
+
+    .usage-head { display: flex; align-items: center; justify-content: space-between; margin-top: 36px; }
+    .refresh-btn { width: auto; padding: 0 12px; color: #374151; }
+    .usage-sub { margin-top: 20px; margin-bottom: 10px; }
+    td small { color: #9ca3af; font-size: 11px; }
+    .pct { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #f0fdf4; color: #166534; }
+    .pct.warn { background: #fffbeb; color: #92400e; }
+    .pct.full { background: #fef2f2; color: #b91c1c; }
   `]
 })
 export class AdminComponent implements OnInit {
@@ -145,13 +203,26 @@ export class AdminComponent implements OnInit {
   loading       = signal(true);
   error         = signal('');
   saving        = signal('');
+  usage         = signal<any | null>(null);
+  usageError    = signal('');
 
   ngOnInit() {
     this.api.getAdminProfessionals().subscribe({
       next:  (list) => { this.professionals.set(list); this.loading.set(false); },
       error: ()     => { this.error.set('No se pudo cargar la lista. ¿Tenés permisos de admin?'); this.loading.set(false); }
     });
+    this.loadUsage();
   }
+
+  loadUsage() {
+    this.usageError.set('');
+    this.api.getAdminAiUsage().subscribe({
+      next:  (u) => this.usage.set(u),
+      error: ()  => this.usageError.set('No se pudo cargar el uso de IA.')
+    });
+  }
+
+  ventanaLabel(v: string) { return ({ minuto: 'Último minuto', hora: 'Hora actual', dia: 'Últimas 24 h' } as any)[v] ?? v; }
 
   planLabel(plan: number) { return PLAN_LABELS[plan] ?? `Plan ${plan}`; }
   planColor(plan: number) { return PLAN_COLORS[plan] ?? '#6b7280'; }

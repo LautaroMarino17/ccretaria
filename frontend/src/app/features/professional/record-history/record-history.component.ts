@@ -6,6 +6,10 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import { AiUsageService, aiErrorCode, aiErrorMessage } from '../../../core/services/ai-usage.service';
 import { structureTranscription } from '../../../core/services/structure-transcription';
+
+/** Duración máxima de una grabación y aviso previo al corte. */
+const MAX_RECORDING_SECONDS = 50 * 60;
+const RECORDING_WARN_SECONDS = 5 * 60;
 import { ClinicalHistory, EMPTY_SIGNOS_VITALES, MANIOBRA_SECTIONS, emptyManiobras } from '../../../core/models/clinical-history.model';
 
 type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewing' | 'saving' | 'done';
@@ -721,8 +725,11 @@ export class RecordHistoryComponent implements OnDestroy {
     this.notice.set('');
     const quota = await this.usage.refresh();
     if (quota?.bloqueado) return;
-    // Corte automático al agotar el cupo: se procesa lo grabado y no se pierde la consulta
-    const limitSeconds = quota?.restante_min != null ? Math.floor(quota.restante_min * 60) : null;
+    // Corte automático al agotar el cupo o al llegar a la duración máxima: se procesa lo grabado
+    // y no se pierde la consulta. Las grabaciones muy largas agotan el límite por hora de Groq.
+    const quotaSeconds = quota?.restante_min != null ? Math.floor(quota.restante_min * 60) : null;
+    const byQuota = quotaSeconds !== null && quotaSeconds < MAX_RECORDING_SECONDS;
+    const limitSeconds = byQuota ? quotaSeconds! : MAX_RECORDING_SECONDS;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.mediaStream = stream;
@@ -742,9 +749,15 @@ export class RecordHistoryComponent implements OnDestroy {
 
       this.timerInterval = setInterval(() => {
         this.elapsedSeconds.update(v => v + 1);
-        if (limitSeconds !== null && this.elapsedSeconds() >= limitSeconds) {
+        const remaining = limitSeconds - this.elapsedSeconds();
+        if (remaining <= 0) {
           this.stopRecording();
-          this.notice.set('Llegaste al límite de tu cupo de IA y la grabación se detuvo. Podés generar la historia con lo grabado.');
+          this.notice.set(byQuota
+            ? 'Llegaste al límite de tu cupo de IA y la grabación se detuvo. Podés generar la historia con lo grabado.'
+            : `La grabación llegó al máximo de ${MAX_RECORDING_SECONDS / 60} minutos y se detuvo. Podés generar la historia con lo grabado.`);
+          this.cdr.detectChanges();
+        } else if (remaining === RECORDING_WARN_SECONDS && !byQuota) {
+          this.notice.set(`La grabación se detiene automáticamente en ${RECORDING_WARN_SECONDS / 60} minutos (máximo ${MAX_RECORDING_SECONDS / 60} minutos por consulta).`);
           this.cdr.detectChanges();
         }
       }, 1000);
@@ -761,10 +774,13 @@ export class RecordHistoryComponent implements OnDestroy {
   }
 
   private _startChunkRecorder(stream: MediaStream) {
-    // Safari/iOS no soporta audio/webm: dejar que use su formato nativo (mp4)
+    // Safari/iOS no soporta audio/webm: dejar que use su formato nativo (mp4).
+    // 32 kbps alcanza para voz y coincide con lo que estima el backend por tamaño
+    // (con el bitrate por defecto, ~128 kbps, la cuenta de Groq se frenaba antes de tiempo).
+    const audioBitsPerSecond = 32_000;
     const rec = MediaRecorder.isTypeSupported('audio/webm')
-      ? new MediaRecorder(stream, { mimeType: 'audio/webm' })
-      : new MediaRecorder(stream);
+      ? new MediaRecorder(stream, { mimeType: 'audio/webm', audioBitsPerSecond })
+      : new MediaRecorder(stream, { audioBitsPerSecond });
     const blobs: Blob[] = [];
     rec.ondataavailable = (e) => { if (e.data.size > 0) blobs.push(e.data); };
     rec.onstop = () => { if (blobs.length) this._groups.push(new Blob(blobs, { type: 'audio/webm' })); };

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
+import { aiErrorMessage } from '../../../core/services/ai-usage.service';
+import { structureTranscription } from '../../../core/services/structure-transcription';
 import { MANIOBRA_SECTIONS, ALL_JOINTS, emptyManiobras } from '../../../core/models/clinical-history.model';
 
 function emptyForm() {
@@ -154,6 +156,21 @@ function emptyForm() {
                     <div class="mf-section"><span class="mf-label">Medicación</span><p class="mf-text">{{ h.medicacion || '—' }}</p></div>
                     <div class="mf-section mf-last"><span class="mf-label">Comentarios</span><p class="mf-text">{{ h.observaciones || '—' }}</p></div>
                   </div>
+                  @if (h.transcripcion_original) {
+                    <details class="transcript-box">
+                      <summary>Transcripción de la consulta</summary>
+                      <div class="transcript-actions">
+                        <button type="button" class="transcript-copy" (click)="copyTranscript(h)">{{ copiedId() === h.id ? 'Copiada' : 'Copiar' }}</button>
+                        <button type="button" class="transcript-copy transcript-ai" [disabled]="structuringId()" (click)="structureFromTranscript(h)">
+                          {{ structuringId() === h.id ? structuringMsg() : 'Completar campos con IA' }}
+                        </button>
+                      </div>
+                      @if (structureError() && lastStructuredId === h.id) {
+                        <p class="transcript-error">{{ structureError() }}</p>
+                      }
+                      <p class="transcript-text">{{ h.transcripcion_original }}</p>
+                    </details>
+                  }
                   @if (h.imagenes?.length > 0 || h.estudios?.length > 0) {
                     <div class="attachments-row">
                       @if (h.imagenes?.length > 0) {
@@ -403,6 +420,14 @@ function emptyForm() {
     .mf-man-input { border: none; outline: none; width: 100%; background: transparent; font-family: Georgia, serif; font-size: 13px; color: #111827; border-bottom: 1px dotted #9ca3af; padding: 1px 2px; }
     .mf-man-input:focus { border-bottom-color: #16a34a; }
     /* Attachments */
+    .transcript-box { padding: 12px 16px; border-top: 1px solid #e5e7eb; }
+    .transcript-box summary { cursor: pointer; font-size: 13px; font-weight: 600; color: #16a34a; }
+    .transcript-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 6px; }
+    .transcript-ai { border-color: #16a34a; color: #16a34a; font-weight: 600; }
+    .transcript-ai:disabled { opacity: .7; cursor: default; }
+    .transcript-error { font-size: 12px; color: #dc2626; margin: 0 0 8px; }
+    .transcript-copy { margin: 0; padding: 4px 12px; font-size: 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; cursor: pointer; }
+    .transcript-text { max-height: 320px; overflow-y: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.5; color: #374151; margin: 0; }
     .attachments-row { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid #e5e7eb; }
     .att-label { display: block; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-family: Arial, sans-serif; }
 
@@ -483,6 +508,50 @@ export class PatientClinicalHistoriesComponent implements OnInit {
   }
 
   closeModal() { this.showModal.set(false); this.editingId.set(null); }
+
+  copiedId = signal<string | null>(null);
+  structuringId = signal<string | null>(null);
+  structuringMsg = signal('');
+  structureError = signal('');
+  lastStructuredId: string | null = null;
+
+  /** Genera los campos desde la transcripción guardada y abre el formulario para revisar.
+   *  Solo completa los campos vacíos: no pisa lo que el profesional ya escribió. Nada se guarda sin confirmar. */
+  async structureFromTranscript(h: any) {
+    this.structuringId.set(h.id);
+    this.lastStructuredId = h.id;
+    this.structureError.set('');
+    this.structuringMsg.set('Procesando...');
+    try {
+      const ch = await structureTranscription(this.api, h.transcripcion_original, (part, total) =>
+        this.structuringMsg.set(total > 1 ? `Procesando parte ${part} de ${total}...` : 'Procesando...'));
+      this.openEdit(h);
+      const f: any = this.form;
+      for (const [k, v] of Object.entries(ch || {})) {
+        if (k === 'signos_vitales') {
+          for (const [sk, sv] of Object.entries((v as any) || {})) {
+            if (sv && !f.signos_vitales[sk]) f.signos_vitales[sk] = sv;
+          }
+        } else if (k === 'plantillas') {
+          f.plantillas = f.plantillas || !!v;
+        } else if (k in f && typeof v === 'string' && v && !f[k]) {
+          f[k] = v;
+        }
+      }
+    } catch (err) {
+      this.structureError.set(aiErrorMessage(err) || 'No se pudo procesar la transcripción. Reintentá en unos minutos.');
+    } finally {
+      this.structuringId.set(null);
+    }
+  }
+
+  async copyTranscript(h: any) {
+    try {
+      await navigator.clipboard.writeText(h.transcripcion_original || '');
+      this.copiedId.set(h.id);
+      setTimeout(() => this.copiedId.set(null), 2000);
+    } catch {}
+  }
 
   save() {
     this.saving.set(true);

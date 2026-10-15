@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import { AiUsageService, aiErrorCode, aiErrorMessage } from '../../../core/services/ai-usage.service';
+import { structureTranscription } from '../../../core/services/structure-transcription';
 import { ClinicalHistory, EMPTY_SIGNOS_VITALES, MANIOBRA_SECTIONS, emptyManiobras } from '../../../core/models/clinical-history.model';
 
 type RecordingState = 'idle' | 'recording' | 'stopped' | 'processing' | 'reviewing' | 'saving' | 'done';
@@ -829,7 +830,12 @@ export class RecordHistoryComponent implements OnDestroy {
       const transcription = texts.join(' ');
       let ch: any = {};
       try {
-        ({ clinical_history: ch } = await firstValueFrom(this.api.structureText(transcription)));
+        ch = await structureTranscription(this.api, transcription, (part, total) => {
+          if (total > 1) {
+            this.processingMessage.set(`Estructurando historia clínica con IA (parte ${part} de ${total})...`);
+            this.cdr.detectChanges();
+          }
+        });
       } catch (structErr) {
         // Consulta demasiado larga para el plan de Groq: queda la transcripción para completar a mano
         if (aiErrorCode(structErr) !== 'demasiado_largo') throw structErr;

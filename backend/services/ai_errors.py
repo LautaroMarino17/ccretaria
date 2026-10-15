@@ -42,7 +42,7 @@ class TextoDemasiadoLargo(AIControlError):
         super().__init__({
             "codigo": "demasiado_largo",
             "mensaje": "La consulta es demasiado larga para estructurarla automáticamente. "
-                       "La transcripción quedó disponible para completarla a mano.",
+                       "Completá la historia clínica a mano.",
         })
 
 

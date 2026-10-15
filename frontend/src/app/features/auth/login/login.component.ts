@@ -303,6 +303,16 @@ export class LoginComponent {
     this.authService.login(email!, password!).subscribe({
       next: async () => {
         await this.authService.refreshUser();
+        if (!this.authService.currentUser?.role) {
+          // Cuenta cuyo registro no terminó (falló la asignación de rol): se completa ahora.
+          try {
+            await this.authService.assignProfessionalRole();
+          } catch {
+            this.error = 'No pudimos completar la configuración de tu cuenta. Intentá de nuevo en unos minutos.';
+            this.loading = false;
+            return;
+          }
+        }
         const user = this.authService.currentUser;
         this.router.navigate([user?.role === 'patient' ? '/patient/dashboard' : '/professional/dashboard']);
       },

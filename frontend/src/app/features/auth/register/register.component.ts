@@ -2,10 +2,8 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
-import { environment } from '../../../../environments/environment';
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -168,7 +166,6 @@ export class RegisterComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private api = inject(ApiService);
-  private http = inject(HttpClient);
   private router = inject(Router);
 
   loading = false;
@@ -191,24 +188,21 @@ export class RegisterComponent {
     const { email, password, displayName } = this.form.value;
 
     this.authService.register(email!, password!, displayName!).subscribe({
-      next: async (cred) => {
-        const token = await cred.user.getIdToken();
-        const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-        this.http.post(`${environment.apiUrl}/auth/set-role`, { role: 'professional' }, { headers }).subscribe({
-          next: async () => {
-            await this.authService.refreshUser();
-            this.api.acceptLegal().subscribe({
-              // La aceptación queda registrada con fecha y versión; si falla el registro puntual,
-              // no bloqueamos el alta ya que las cuentas se crean solo con los checkboxes tildados.
-              error: () => {}
-            });
-            this.router.navigate(['/professional/dashboard']);
-          },
-          error: () => {
-            this.error = 'Error al configurar la cuenta. Contactá al administrador.';
-            this.loading = false;
-          }
+      next: async () => {
+        try {
+          await this.authService.assignProfessionalRole();
+        } catch {
+          // La cuenta ya existe en Firebase: al iniciar sesión se reintenta asignar el rol.
+          this.error = 'Tu cuenta se creó pero no pudimos terminar de configurarla. Iniciá sesión en unos minutos para completarla.';
+          this.loading = false;
+          return;
+        }
+        this.api.acceptLegal().subscribe({
+          // La aceptación queda registrada con fecha y versión; si falla el registro puntual,
+          // no bloqueamos el alta ya que las cuentas se crean solo con los checkboxes tildados.
+          error: () => {}
         });
+        this.router.navigate(['/professional/dashboard']);
       },
       error: (err) => {
         this.error = err.code === 'auth/email-already-in-use'

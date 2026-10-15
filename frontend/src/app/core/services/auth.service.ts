@@ -3,8 +3,10 @@ import {
   Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut, onAuthStateChanged, User, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail
 } from '@angular/fire/auth';
-import { BehaviorSubject, from } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BehaviorSubject, firstValueFrom, from } from 'rxjs';
 import { AppUser, UserRole } from '../models/user.model';
+import { environment } from '../../../environments/environment';
 
 // undefined = todavía cargando, null = no autenticado, AppUser = autenticado
 type AuthState = AppUser | null | undefined;
@@ -12,6 +14,7 @@ type AuthState = AppUser | null | undefined;
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private auth = inject(Auth);
+  private http = inject(HttpClient);
   private currentUserSubject = new BehaviorSubject<AuthState>(undefined);
 
   currentUser$ = this.currentUserSubject.asObservable();
@@ -78,6 +81,30 @@ export class AuthService {
       displayName: user.displayName,
       role
     });
+  }
+
+  /**
+   * Asigna el rol 'professional' al usuario actual y refresca sus claims.
+   * Reintenta una vez: el backend puede estar despertando (Render) o rechazar
+   * un token recién emitido por desfasaje de reloj.
+   */
+  async assignProfessionalRole(): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('No hay usuario autenticado');
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const token = await user.getIdToken();
+        const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+        await firstValueFrom(
+          this.http.post(`${environment.apiUrl}/auth/set-role`, { role: 'professional' }, { headers })
+        );
+        break;
+      } catch (err) {
+        if (attempt >= 1) throw err;
+        await new Promise(r => setTimeout(r, 3000));
+      }
+    }
+    await this.refreshUser();
   }
 
   changePassword(currentPassword: string, newPassword: string) {

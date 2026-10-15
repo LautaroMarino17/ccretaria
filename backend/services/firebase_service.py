@@ -32,7 +32,9 @@ def verify_token(id_token: str) -> dict:
     """Verifica el token de Firebase y retorna los claims del usuario."""
     init_firebase()
     try:
-        decoded = auth.verify_id_token(id_token, check_revoked=True)
+        # Tolerancia de reloj: el token recién emitido al registrarse puede llegar
+        # "antes de tiempo" si el reloj del servidor está levemente atrasado.
+        decoded = auth.verify_id_token(id_token, check_revoked=True, clock_skew_seconds=10)
         return decoded
     except Exception as e:
         raise ValueError(f"Token inválido: {str(e)}")
